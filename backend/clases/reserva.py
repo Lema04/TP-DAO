@@ -5,15 +5,22 @@ from cliente import Cliente
 from vehiculo import Vehiculo
 
 class Reserva:
-    def __init__(self, id_reserva: int, patente: str, id_cliente: int,
-                 fecha_reserva: date, fecha_inicio_deseada: date, fecha_fin_deseada: date):
+    def __init__(self, id_reserva: int, fecha_reserva: date,
+                 fecha_inicio_deseada: date, fecha_fin_deseada: date,
+                 cliente: Cliente, vehiculo: Optional[Vehiculo] = None):
+
+        if cliente is None:
+            raise ValueError("Una reserva debe estar asociada a un cliente.")
+
         self.id_reserva = id_reserva
-        self.patente = patente
-        self.id_cliente = id_cliente
         self.fecha_reserva = fecha_reserva
         self.fecha_inicio_deseada = fecha_inicio_deseada
         self.fecha_fin_deseada = fecha_fin_deseada
+        self.cliente = cliente
+        self.vehiculo = vehiculo
 
-        # Relaciones
-        self.cliente: Optional[Cliente] = None
-        self.vehiculo: Optional[Vehiculo] = None
+        # Relaciones bidireccionales
+        cliente.agregar_reserva(self)
+        if vehiculo:
+            vehiculo.agregar_reserva(self)
+            vehiculo.marcar_no_disponible()

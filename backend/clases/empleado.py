@@ -10,6 +10,10 @@ class Empleado:
         self.apellido = apellido
         self.dni = dni
         self.puesto = puesto
-        self.id_supervisor = id_supervisor  # referencia a otro empleado (opcional)
+        ## no se como hacer lo de la fk que se relaciona con la pk
 
-        self.alquileres: List['Alquiler'] = []
+        self.alquileres: List[Alquiler] = []
+
+    def agregar_alquiler(self, alquiler: Alquiler):
+        if alquiler not in self.alquileres:
+            self.alquileres.append(alquiler)

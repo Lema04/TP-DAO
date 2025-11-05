@@ -13,9 +13,17 @@ class Cliente:
         self.telefono = telefono
         self.email = email
 
-        # Son typehints pero pueden no estar
-        self.alquileres: List['Alquiler'] = []
-        self.reservas: List['Reserva'] = []
+        # Relaciones
+        self.reservas: List[Reserva] = []
+        self.alquileres: List[Alquiler] = []
+
+    def agregar_reserva(self, reserva: Reserva):
+        if reserva not in self.reservas:
+            self.reservas.append(reserva)
+
+    def agregar_alquiler(self, alquiler: Alquiler):
+        if alquiler not in self.alquileres:
+            self.alquileres.append(alquiler)
 
     # para cdo se hace un print, ver
     # def __repr__(self):
