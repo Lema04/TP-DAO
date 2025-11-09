@@ -42,6 +42,15 @@ class ClienteService:
             return {"estado": "error", "mensaje": "Cliente no encontrado."}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al buscar cliente: {e}"}
+    
+    def buscar_clientes(self, valor):
+        try:
+            resultados = self.dao.buscar_por_nombre_o_dni(valor)
+            if resultados:
+                return {"estado": "ok", "data": resultados}
+            return {"estado": "error", "mensaje": "No se encontraron coincidencias."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error en la búsqueda: {e}"}
 
     def actualizar_cliente(self, id_cliente, nuevos_datos):
         try:

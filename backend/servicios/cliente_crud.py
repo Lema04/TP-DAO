@@ -68,3 +68,15 @@ class ClienteCRUD(ORMBase):
 
     def eliminar_cliente(self, id_cliente):
         self.eliminar(id_cliente)
+
+    def buscar_por_nombre_o_dni(self, valor_busqueda):
+        sql = f"""
+            SELECT {self.clave_primaria}, {', '.join(self.campos)}
+            FROM {self.tabla}
+            WHERE nombre LIKE ? OR apellido LIKE ? OR dni = ?
+        """
+        with self.conexion.conectar() as conn:
+            cursor = conn.cursor()
+            patron = f"%{valor_busqueda}%"
+            cursor.execute(sql, (patron, patron, valor_busqueda))
+            return cursor.fetchall()
