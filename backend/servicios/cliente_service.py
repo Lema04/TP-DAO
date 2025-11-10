@@ -1,5 +1,6 @@
-from .cliente_crud import ClienteCRUD
 from clases.cliente import Cliente
+from Crud.cliente_crud import ClienteCRUD
+
 
 class ClienteService:
     def __init__(self):

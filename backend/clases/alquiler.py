@@ -42,10 +42,6 @@ class Alquiler:
             raise ValueError("El costo total no puede ser negativo.")
         self._costo_total = valor
 
-    # def agregar_multa(self, multa: 'MultaDano'):
-    #     if multa not in self.multas:
-    #         self.multas.append(multa)
-    
     def agregar_multa(self, multa: "MultaDano"):
         if multa not in self.multas:
             self.multas.append(multa)
