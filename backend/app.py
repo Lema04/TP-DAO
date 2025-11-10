@@ -18,6 +18,10 @@ servicio_alquiler = AlquilerService()
 servicio_reserva = ReservaService()
 servicio_multa = MultaService()
 
+@app.route("/")
+def principal():
+    return("TP-DA0-2025")
+
 # --- Rutas de Clientes ---
 @app.route("/clientes", methods=["GET"])
 def listar_clientes():
