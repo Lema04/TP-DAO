@@ -1,4 +1,4 @@
-from cliente_crud import ClienteCRUD
+from ..Crud import ClienteCRUD
 from ..clases.cliente import Cliente
 
 class ClienteService:

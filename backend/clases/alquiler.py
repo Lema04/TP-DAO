@@ -4,7 +4,8 @@ from datetime import date
 from cliente import Cliente
 from empleado import Empleado
 from vehiculo import Vehiculo
-from multa import MultaDano
+# Genera depencia circular
+# from multa import MultaDano
 
 class Alquiler:
     def __init__(self, id_alquiler: int, fecha_inicio: date, fecha_fin: date,
@@ -24,7 +25,7 @@ class Alquiler:
         self.cliente = cliente
         self.empleado = empleado
         self.vehiculo = vehiculo
-        self.multas: List[MultaDano] = []
+        self.multas: List['MultaDano'] = []
 
         # Relaciones bidireccionales
         cliente.agregar_alquiler(self)
@@ -44,7 +45,7 @@ class Alquiler:
     # def agregar_multa(self, multa: 'MultaDano'):
     #     if multa not in self.multas:
     #         self.multas.append(multa)
-    
-    def agregar_multa(self, multa: MultaDano):
+
+    def agregar_multa(self, multa: 'MultaDano'):
         if multa not in self.multas:
             self.multas.append(multa)
