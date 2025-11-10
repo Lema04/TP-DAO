@@ -1,7 +1,7 @@
 # servicios/vehiculo_service.py
 
-from ..Crud import VehiculoCRUD
-from ..clases.vehiculo import Vehiculo
+from Crud.vehiculo_crud import VehiculoCRUD
+from clases.vehiculo import Vehiculo
 
 class VehiculoService:
     def __init__(self):

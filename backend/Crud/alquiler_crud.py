@@ -1,7 +1,7 @@
 # servicios/alquiler_crud.py
 
-from ..servicios import ORMBase
-from ..clases.alquiler import Alquiler
+from servicios.orm_base import ORMBase
+from clases.alquiler import Alquiler
 
 class AlquilerCRUD(ORMBase):
     tabla = "ALQUILER"

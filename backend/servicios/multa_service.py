@@ -1,19 +1,14 @@
-# servicios/multa_service.py
-
 from datetime import date
-from ..clases.multa import MultaDano
-from ..Crud import MultaCRUD
-# ¡Importante! Multa depende de Alquiler.
-# PERO, el __init__ de Alquiler necesita los CRUDs.
-# Para evitar líos, MultaService solo usará AlquilerCRUD.
-from ..Crud import AlquilerCRUD 
-from servicios.alquiler_service import AlquilerService # ¡Necesitamos este para ensamblar!
+
+from clases.multa import MultaDano
+from Crud.multa_crud import MultaCRUD
+from Crud.alquiler_crud import AlquilerCRUD 
+from servicios.alquiler_service import AlquilerService
 
 class MultaService:
     def __init__(self):
         self.multa_dao = MultaCRUD()
         self.alquiler_dao = AlquilerCRUD()
-        # Usamos el AlquilerService para "ensamblar" un objeto Alquiler
         self.alquiler_service = AlquilerService() 
 
     def crear_multa(self, datos):

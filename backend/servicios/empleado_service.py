@@ -1,7 +1,7 @@
 # servicios/empleado_service.py
 
-from ..Crud import EmpleadoCRUD
-from ..clases.empleado import Empleado
+from Crud.empleado_crud import EmpleadoCRUD
+from clases.empleado import Empleado
 
 class EmpleadoService:
     def __init__(self):

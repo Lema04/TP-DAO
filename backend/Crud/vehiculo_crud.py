@@ -1,7 +1,5 @@
-# servicios/vehiculo_crud.py
-
-from ..servicios import ORMBase
-from ..clases.vehiculo import Vehiculo
+from servicios.orm_base import ORMBase
+from clases.vehiculo import Vehiculo
 
 class VehiculoCRUD(ORMBase):
     tabla = "VEHICULO"

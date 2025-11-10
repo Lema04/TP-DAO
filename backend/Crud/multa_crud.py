@@ -1,7 +1,5 @@
-# servicios/multa_crud.py
-
-from ..servicios import ORMBase
-from ..clases.multa import MultaDano
+from servicios.orm_base import ORMBase
+from clases.multa import MultaDano
 
 class MultaCRUD(ORMBase):
     tabla = "MULTA_DANO"

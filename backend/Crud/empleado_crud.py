@@ -1,7 +1,5 @@
-# servicios/empleado_crud.py
-
-from ..servicios import ORMBase
-from ..clases.empleado import Empleado 
+from servicios.orm_base import ORMBase
+from clases.empleado import Empleado 
 
 class EmpleadoCRUD(ORMBase):
     tabla = "EMPLEADO"

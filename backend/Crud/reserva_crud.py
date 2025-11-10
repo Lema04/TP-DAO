@@ -1,7 +1,5 @@
-# servicios/reserva_crud.py
-
-from ..servicios import ORMBase
-from ..clases.reserva import Reserva
+from servicios.orm_base import ORMBase
+from clases.reserva import Reserva
 
 class ReservaCRUD(ORMBase):
     tabla = "RESERVA"

@@ -1,11 +1,10 @@
-# servicios/alquiler_service.py
-
 from datetime import date
-from ..clases.alquiler import Alquiler
-from ..Crud import AlquilerCRUD
-from ..Crud import ClienteCRUD
-from ..Crud import EmpleadoCRUD
-from ..Crud import VehiculoCRUD
+
+from clases.alquiler import Alquiler
+from Crud.alquiler_crud import AlquilerCRUD
+from Crud.cliente_crud import ClienteCRUD
+from Crud.empleado_crud import EmpleadoCRUD
+from Crud.vehiculo_crud import VehiculoCRUD
 
 class AlquilerService:
     def __init__(self):

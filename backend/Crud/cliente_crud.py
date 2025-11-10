@@ -1,11 +1,7 @@
-
-<<<<<<< HEAD:backend/servicios/cliente_crud.py
-from .orm_base import ORMBase
 from clases.cliente import Cliente
-=======
-from ..servicios import ORMBase
-from ..clases.cliente import Cliente
->>>>>>> 0c6a55ad4acdf0ae935279f124acada563092fcc:backend/Crud/cliente_crud.py
+from servicios.orm_base import ORMBase
+
+
 
 class ClienteCRUD(ORMBase):
     tabla = "CLIENTE"

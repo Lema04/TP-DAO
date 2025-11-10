@@ -1,10 +1,9 @@
-# servicios/reserva_service.py
-
 from datetime import date
-from ..clases.reserva import Reserva
-from ..Crud import ReservaCRUD
-from ..Crud import ClienteCRUD
-from ..Crud import VehiculoCRUD
+
+from clases.reserva import Reserva
+from Crud.reserva_crud import ReservaCRUD
+from Crud.cliente_crud import ClienteCRUD
+from Crud.vehiculo_crud import VehiculoCRUD
 
 class ReservaService:
     def __init__(self):
