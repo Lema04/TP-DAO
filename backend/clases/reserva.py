@@ -1,13 +1,14 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 from datetime import date
 
-from cliente import Cliente
-from vehiculo import Vehiculo
+if TYPE_CHECKING:
+    from .cliente import Cliente
+    from .vehiculo import Vehiculo
 
 class Reserva:
     def __init__(self, id_reserva: int, fecha_reserva: date,
                  fecha_inicio_deseada: date, fecha_fin_deseada: date,
-                 cliente: Cliente, vehiculo: Optional[Vehiculo] = None):
+                 cliente: "Cliente", vehiculo: Optional["Vehiculo"] = None):
 
         if cliente is None:
             raise ValueError("Una reserva debe estar asociada a un cliente.")

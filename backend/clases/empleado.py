@@ -1,6 +1,8 @@
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 import re
-from alquiler import Alquiler
+
+if TYPE_CHECKING:
+    from .alquiler import Alquiler
 
 class Empleado:
     def __init__(self, id_empleado: int, nombre: str, apellido: str,
@@ -14,7 +16,7 @@ class Empleado:
         self.id_supervisor = id_supervisor
         ## no se como hacer lo de la fk que se relaciona con la pk
 
-        self.alquileres: List[Alquiler] = []
+        self.alquileres: List["Alquiler"] = []
     
     # --- Getter/Setter para apellido ---
     @property
@@ -50,6 +52,6 @@ class Empleado:
             raise ValueError("El puesto no puede estar vacío.")
         self._puesto = valor.strip()
 
-    def agregar_alquiler(self, alquiler: Alquiler):
+    def agregar_alquiler(self, alquiler: "Alquiler"):
         if alquiler not in self.alquileres:
             self.alquileres.append(alquiler)

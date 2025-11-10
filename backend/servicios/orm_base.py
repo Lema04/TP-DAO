@@ -1,4 +1,4 @@
-from conexion import ConexionDB
+from .conexion import ConexionDB
 
 class ORMBase:
     tabla = None

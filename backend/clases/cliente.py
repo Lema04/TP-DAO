@@ -1,7 +1,9 @@
-from typing import List
-from alquiler import Alquiler
-from reserva import Reserva
+from typing import List, TYPE_CHECKING
 import re
+
+if TYPE_CHECKING:
+    from .alquiler import Alquiler
+    from .reserva import Reserva
 
     # # --- VALIDACIONES ---
     # def validar_datos(self, cliente: Cliente):
@@ -28,8 +30,8 @@ class Cliente:
         self.email = email
 
         # Relaciones
-        self.reservas: List[Reserva] = []
-        self.alquileres: List[Alquiler] = []
+        self.reservas: List["Reserva"] = []
+        self.alquileres: List["Alquiler"] = []
 
     # El guion bajo (_) en self._dni se usa por convención
     # para crear un atributo "interno" o "privado" que almacene
@@ -64,11 +66,11 @@ class Cliente:
             raise ValueError("Teléfono inválido. Solo números, 7 a 15 dígitos.")
         self._telefono = valor
 
-    def agregar_reserva(self, reserva: Reserva):
+    def agregar_reserva(self, reserva: "Reserva"):
         if reserva not in self.reservas:
             self.reservas.append(reserva)
 
-    def agregar_alquiler(self, alquiler: Alquiler):
+    def agregar_alquiler(self, alquiler: "Alquiler"):
         if alquiler not in self.alquileres:
             self.alquileres.append(alquiler)
 

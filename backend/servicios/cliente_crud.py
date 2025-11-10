@@ -1,6 +1,6 @@
 
-from orm_base import ORMBase
-from ..clases.cliente import Cliente
+from .orm_base import ORMBase
+from clases.cliente import Cliente
 
 class ClienteCRUD(ORMBase):
     tabla = "CLIENTE"
@@ -22,7 +22,6 @@ class ClienteCRUD(ORMBase):
 
     # --- CRUD ---
     def crear_cliente(self, cliente: Cliente):
-        self.validar_datos(cliente)
         if self.existe_duplicado(cliente.dni, cliente.email):
             raise ValueError("Ya existe un cliente con el mismo DNI o email.")
         return self.insertar([
@@ -44,7 +43,6 @@ class ClienteCRUD(ORMBase):
         return None
 
     def actualizar_cliente(self, cliente: Cliente):
-        self.validar_datos(cliente)
         self.actualizar(cliente.id_cliente, [
             cliente.nombre,
             cliente.apellido,

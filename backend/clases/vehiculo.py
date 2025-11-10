@@ -1,7 +1,9 @@
-from typing import List
-from reserva import Reserva
-from mantenimiento import Mantenimiento
-from alquiler import Alquiler
+from typing import List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .reserva import Reserva
+    from .mantenimiento import Mantenimiento
+    from .alquiler import Alquiler
 
 
 class Vehiculo:
@@ -15,9 +17,9 @@ class Vehiculo:
         self.estado = estado
 
         # Relaciones
-        self.reservas: List[Reserva] = []
-        self.alquileres: List[Alquiler] = []
-        self.mantenimientos: List[Mantenimiento] = []
+        self.reservas: List["Reserva"] = []
+        self.alquileres: List["Alquiler"] = []
+        self.mantenimientos: List["Mantenimiento"] = []
 
     def marcar_no_disponible(self):
         self.estado = "No disponible"
@@ -25,14 +27,14 @@ class Vehiculo:
     def marcar_disponible(self):
         self.estado = "Disponible"
 
-    def agregar_reserva(self, reserva: Reserva):
+    def agregar_reserva(self, reserva: "Reserva"):
         if reserva not in self.reservas:
             self.reservas.append(reserva)
 
-    def agregar_alquiler(self, alquiler: Alquiler):
+    def agregar_alquiler(self, alquiler: "Alquiler"):
         if alquiler not in self.alquileres:
             self.alquileres.append(alquiler)
 
-    def agregar_mantenimiento(self, mantenimiento: Mantenimiento):
+    def agregar_mantenimiento(self, mantenimiento: "Mantenimiento"):
         if mantenimiento not in self.mantenimientos:
             self.mantenimientos.append(mantenimiento)

@@ -1,11 +1,12 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from datetime import date
 
-from vehiculo import Vehiculo
+if TYPE_CHECKING:
+    from .vehiculo import Vehiculo
 
 class Mantenimiento:
     def __init__(self, id_mantenimiento: int, fecha_inicio: date, fecha_fin: date,
-                 tipo_servicio: str, costo: float, vehiculo: Vehiculo):
+                 tipo_servicio: str, costo: float, vehiculo: "Vehiculo"):
 
         if vehiculo is None:
             raise ValueError("Un mantenimiento debe estar asociado a un vehículo.")
