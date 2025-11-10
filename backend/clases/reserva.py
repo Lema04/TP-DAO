@@ -11,6 +11,12 @@ class Reserva:
 
         if cliente is None:
             raise ValueError("Una reserva debe estar asociada a un cliente.")
+        # Validación de fechas cruzadas
+        if fecha_fin_deseada < fecha_inicio_deseada:
+            raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+        
+        if fecha_inicio_deseada < fecha_reserva:
+             raise ValueError("La fecha de inicio deseada no puede ser anterior a la fecha de reserva.")
 
         self.id_reserva = id_reserva
         self.fecha_reserva = fecha_reserva

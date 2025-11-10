@@ -1,4 +1,4 @@
-import re
+
 from orm_base import ORMBase
 from ..clases.cliente import Cliente
 
@@ -10,19 +10,7 @@ class ClienteCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
-    # --- VALIDACIONES ---
-    def validar_datos(self, cliente: Cliente):
-        # DNI: solo números, 7 u 8 dígitos
-        if not re.fullmatch(r"\d{7,8}", cliente.dni):
-            raise ValueError("DNI inválido. Debe contener 7 u 8 dígitos numéricos.")
 
-        # Email: formato simple válido
-        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", cliente.email):
-            raise ValueError("Email inválido.")
-
-        # Teléfono: solo números (7 a 15 dígitos)
-        if not re.fullmatch(r"\d{7,15}", cliente.telefono):
-            raise ValueError("Teléfono inválido. Solo números, 7 a 15 dígitos.")
 
     def existe_duplicado(self, dni, email):
         sql = f"SELECT COUNT(*) FROM {self.tabla} WHERE dni=? OR email=?"

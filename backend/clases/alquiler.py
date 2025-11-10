@@ -13,6 +13,8 @@ class Alquiler:
 
         if cliente is None or empleado is None or vehiculo is None:
             raise ValueError("Un alquiler debe tener cliente, empleado y vehículo asociados.")
+        if fecha_fin < fecha_inicio:
+            raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
 
         self.id_alquiler = id_alquiler
         self.fecha_inicio = fecha_inicio
@@ -29,7 +31,20 @@ class Alquiler:
         empleado.agregar_alquiler(self)
         vehiculo.agregar_alquiler(self)
         vehiculo.marcar_no_disponible()
+    @property
+    def costo_total(self):
+        return self._costo_total
 
+    @costo_total.setter
+    def costo_total(self, valor: float):
+        if not isinstance(valor, (int, float)) or valor < 0:
+            raise ValueError("El costo total no puede ser negativo.")
+        self._costo_total = valor
+
+    # def agregar_multa(self, multa: 'MultaDano'):
+    #     if multa not in self.multas:
+    #         self.multas.append(multa)
+    
     def agregar_multa(self, multa: MultaDano):
         if multa not in self.multas:
             self.multas.append(multa)
