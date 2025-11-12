@@ -1,0 +1,39 @@
+
+
+import React, { createContext, useState, useContext } from 'react';
+
+const AuthContext = createContext();
+
+// Permisos: Define qué puede ver cada rol
+const PERMISSIONS = {
+  Gerente: ['RegistroAlquiler', 'GestionMultas', 'Reportes'],
+  Empleado: ['RegistroAlquiler', 'GestionMultas'],
+  Cliente: ['MisAlquileres'], // Un componente para que el cliente vea solo lo suyo
+  Anonimo: []
+};
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null); // { rol: 'Gerente', id_usuario: 1 }
+
+  const login = (userData) => {
+    // Almacenamos rol e id del usuario
+    setUser({ rol: userData.rol, id_usuario: userData.id_usuario });
+  };
+
+  const logout = () => {
+    setUser(null);
+  };
+
+  const hasPermission = (componentName) => {
+    const rol = user ? user.rol : 'Anonimo';
+    return PERMISSIONS[rol].includes(componentName);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, hasPermission }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => useContext(AuthContext);

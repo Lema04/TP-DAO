@@ -1,38 +1,105 @@
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+/* /frontend/src/App.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f4f4;
 }
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  padding: 10px 20px;
   color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.App-link {
-  color: #61dafb;
+.App-nav a {
+  color: white;
+  margin: 0 15px;
+  text-decoration: none;
+  font-weight: bold;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.App-nav a:hover {
+  text-decoration: underline;
+}
+
+.App-main {
+  padding: 20px;
+  max-width: 800px;
+  margin: 20px auto;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* --- Formulario General --- */
+.form-container, .reportes-container {
+  padding: 20px;
+}
+
+.form-container h2, .reportes-container h2 {
+    color: #cc0000; /* Rojo RentCar */
+    border-bottom: 2px solid #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+label, input, select, textarea, button {
+  display: block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+input, select, textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #cc0000; /* Rojo RentCar */
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+button:hover {
+  background-color: #990000;
+}
+
+.mensaje {
+  padding: 10px;
+  margin-top: 15px;
+  border-radius: 4px;
+  font-weight: bold;
+  background-color: #e0ffe0;
+  color: #008000;
+}
+
+.mensaje.error {
+    background-color: #ffe0e0;
+    color: #cc0000;
+}
+
+.note {
+    background-color: #fffacd;
+    border-left: 5px solid #ffcc00;
+    padding: 10px;
+    margin-top: 20px;
+}
+
+/* --- Logo --- */
+.logo-container {
+    height: 60px; /* Altura fija para el logo */
+}
+.logo-img {
+    height: 100%;
+    width: auto;
 }

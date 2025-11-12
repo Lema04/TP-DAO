@@ -6,6 +6,11 @@ from servicios.alquiler_service import AlquilerService
 from servicios.reserva_service import ReservaService
 from servicios.multa_service import MultaService
 from flask_cors import CORS
+# agg para reportes
+from servicios.reporte_service import ReporteService #
+from datetime import datetime # Necesario para los reportes de año
+
+from servicios.usuario_service import UsuarioService
 
 app = Flask(__name__)
 CORS(app)
@@ -17,6 +22,10 @@ servicio_vehiculo = VehiculoService()
 servicio_alquiler = AlquilerService()
 servicio_reserva = ReservaService()
 servicio_multa = MultaService()
+
+servicio_reporte = ReporteService() #
+
+servicio_usuario = UsuarioService() #
 
 
 # --- Ruta raíz ---
@@ -174,7 +183,88 @@ def actualizar_multa(id_multa):
 def eliminar_multa(id_multa):
     return jsonify(servicio_multa.eliminar_multa(id_multa))
 
+# =============================
+#          REPORTES 
+# =============================
 
+# Listado detallado de alquileres por cliente 
+@app.route("/reportes/alquileres_por_cliente/<int:cliente_id>", methods=["GET"])
+def reporte_alquileres_por_cliente(cliente_id):
+    try:
+        archivo_path = servicio_reporte.generar_reporte_alquileres_por_cliente(cliente_id, formato="pdf")
+        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+    except Exception as e:
+        return jsonify({"estado": "error", "mensaje": str(e)})
+
+# Vehículos más alquilados 
+@app.route("/reportes/vehiculos_mas_alquilados", methods=["GET"])
+def reporte_vehiculos_mas_alquilados():
+    try:
+        # Aquí se podría pasar el límite por query param, pero se usa un límite por defecto para el servicio.
+        archivo_path = servicio_reporte.generar_reporte_vehiculos_mas_alquilados(limite=5) 
+        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+    except Exception as e:
+        return jsonify({"estado": "error", "mensaje": str(e)})
+
+# Estadística de facturación mensual en gráfico de barras 
+@app.route("/reportes/facturacion_mensual", methods=["GET"])
+def reporte_facturacion_mensual():
+    try:
+        # Recibe el año como parámetro de consulta (query param)
+        anio = request.args.get('anio', type=int, default=datetime.now().year)
+        
+        archivo_path = servicio_reporte.generar_reporte_facturacion_mensual(anio)
+        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+    except Exception as e:
+        return jsonify({"estado": "error", "mensaje": str(e)})
+
+# Alquileres por período (mes, trimestre) 
+@app.route("/reportes/alquileres_por_periodo", methods=["GET"])
+def reporte_alquileres_por_periodo():
+    try:
+        # Recibe la frecuencia (M o Q) y el año como parámetros de consulta
+        frecuencia = request.args.get('frecuencia', type=str, default='M') 
+        anio = request.args.get('anio', type=int, default=datetime.now().year)
+        
+        archivo_path = servicio_reporte.generar_reporte_alquileres_por_periodo(frecuencia.upper(), anio)
+        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+    except Exception as e:
+        return jsonify({"estado": "error", "mensaje": str(e)})
+
+
+# =============================
+#     USUARIOS / LOGIN
+# =============================
+
+@app.route("/usuarios/login", methods=["POST"])
+def login_usuario():
+    datos = request.get_json()
+    nombre_usuario = datos.get('nombre_usuario')
+    contraseña = datos.get('contraseña')
+    
+    if not nombre_usuario or not contraseña:
+        return jsonify({"estado": "error", "mensaje": "Faltan nombre de usuario o contraseña"}), 400
+    
+    # Llama al servicio de usuario para autenticar (asumo que tienes un método 'autenticar' o similar)
+    # try:
+        # Nota: Asumo que UsuarioService tiene un método 'autenticar'
+      # VER  resultado = servicio_usuario.autenticar_usuario(nombre_usuario, contraseña)
+        
+        # if resultado.get("estado") == "ok":
+        #     # Devolvemos el rol y el ID para el frontend
+        #     usuario_data = resultado.get("data", {})
+        #     return jsonify({
+        #         "estado": "ok",
+        #         "mensaje": "Login exitoso",
+        #         "rol": usuario_data.get("rol"), # Ej: 'Gerente', 'Empleado', 'Cliente'
+        #         "id_usuario": usuario_data.get("id_usuario")
+        #     })
+        # else:
+        #     return jsonify({"estado": "error", "mensaje": resultado.get("mensaje")}), 401
+            
+    # except Exception as e:
+    #     return jsonify({"estado": "error", "mensaje": f"Error de servidor: {e}"}), 500
+      
 # =============================
 #     MAIN
 # =============================
