@@ -30,6 +30,11 @@ class AlquilerCRUD(ORMBase):
     # Buscar un alquiler existente por ID
     def buscar_por_id(self, id_alquiler):
         return self.obtener_por_id(id_alquiler)
+
+    # Buscar alquileres por ID de cliente
+    def buscar_por_cliente(self, id_cliente):
+        condicion = f"id_cliente = {id_cliente}"
+        return self.obtener_por_condicion(condicion)
     
     # Actualizar un alquiler existente
     def actualizar_alquiler(self, alquiler: Alquiler):

@@ -38,6 +38,18 @@ class VehiculoService:
             return {"estado": "ok", "data": vehiculos}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al listar vehículos: {e}"}
+    
+    # Buscar un vehículo por su patente
+    def buscar_por_id(self, patente: str):
+        # El 'id_valor' ahora es la patente
+        try:
+            vehiculo = self.dao.buscar_por_id(patente.strip().upper())
+            if vehiculo:
+                return {"estado": "ok", "data": vehiculo}
+            else:
+                return {"estado": "error", "mensaje": "Vehículo no encontrado."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar vehículo: {e}"}
 
     # Actualizar los datos de un vehículo existente
     def actualizar_vehiculo(self, patente, nuevos_datos):

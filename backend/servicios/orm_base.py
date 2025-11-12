@@ -31,6 +31,13 @@ class ORMBase:
             cursor.execute(sql, (id_valor,))
             return cursor.fetchone()
 
+    def obtener_por_condicion(self, condicion):
+        sql = f"SELECT {self.clave_primaria}, {', '.join(self.campos)} FROM {self.tabla} WHERE {condicion}"
+        with self.conexion.conectar() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            return cursor.fetchall()
+
     def actualizar(self, id_valor, valores):
         asignaciones = ", ".join([f"{campo}=?" for campo in self.campos])
         sql = f"UPDATE {self.tabla} SET {asignaciones} WHERE {self.clave_primaria} = ?"
