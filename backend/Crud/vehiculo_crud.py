@@ -10,11 +10,11 @@ class VehiculoCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
+    # Crear un nuevo vehículo
     def crear_vehiculo(self, vehiculo: Vehiculo):
         # Como la 'patente' no es autoincremental, la pasamos
         # como parte de los valores de inserción.
         # Debemos SOBREESCRIBIR el método 'insertar' de ORMBase
-        
         # Valores: todos los campos + la clave primaria (patente)
         campos_totales = self.campos + [self.clave_primaria]
         valores = [
@@ -36,9 +36,11 @@ class VehiculoCRUD(ORMBase):
             # No retornamos lastrowid, retornamos la patente que ya conocemos
             return vehiculo.patente 
 
+    # Listar todos los vehículos existentes
     def listar_vehiculos(self):
         return self.obtener_todos()
 
+    # Buscar vehículo existente por su patente
     def buscar_por_id(self, patente: str):
         # El 'id_valor' ahora es la patente
         fila = self.obtener_por_id(patente)
@@ -61,6 +63,7 @@ class VehiculoCRUD(ORMBase):
             )
         return None
 
+    # Actualizar los datos de un vehículo existente
     def actualizar_vehiculo(self, vehiculo: Vehiculo):
         valores = [
             vehiculo.marca,
@@ -72,6 +75,7 @@ class VehiculoCRUD(ORMBase):
         # El 'id_valor' es la patente
         self.actualizar(vehiculo.patente, valores)
 
+    # Eliminar un vehículo existente por su patente
     def eliminar_vehiculo(self, patente: str):
         # El 'id_valor' es la patente
         self.eliminar(patente)

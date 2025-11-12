@@ -11,6 +11,7 @@ class ReservaService:
         self.cliente_dao = ClienteCRUD()
         self.vehiculo_dao = VehiculoCRUD()
 
+    # Crear una nueva reserva
     def crear_reserva(self, datos):
         """
         datos: dict con claves

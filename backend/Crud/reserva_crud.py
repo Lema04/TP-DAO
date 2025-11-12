@@ -10,6 +10,7 @@ class ReservaCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
+    # Crear una nueva reserva
     def crear_reserva(self, reserva: Reserva):
         valores = [
             reserva.vehiculo.patente if reserva.vehiculo else None,

@@ -1,5 +1,3 @@
-# servicios/alquiler_crud.py
-
 from servicios.orm_base import ORMBase
 from clases.alquiler import Alquiler
 
@@ -12,8 +10,8 @@ class AlquilerCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
+    # Crear un nuevo alquiler
     def crear_alquiler(self, alquiler: Alquiler):
-        # Extraemos los IDs de los objetos anidados
         valores = [
             alquiler.fecha_inicio,
             alquiler.fecha_fin,
@@ -25,16 +23,17 @@ class AlquilerCRUD(ORMBase):
         ]
         return self.insertar(valores)
 
+    # Listar todos los alquileres existentes
     def listar_alquileres(self):
         return self.obtener_todos()
 
-    def buscar_por_id_simple(self, id_alquiler):
-        # Este método solo devuelve la fila (con los IDs)
-        # El "ensamblaje" lo hará el Service
+    # Buscar un alquiler existente por ID
+    def buscar_por_id(self, id_alquiler):
         return self.obtener_por_id(id_alquiler)
-        
+    
+    # Actualizar un alquiler existente
     def actualizar_alquiler(self, alquiler: Alquiler):
-        self.actualizar(alquiler.id_alquiler, [
+        valores = [
             alquiler.fecha_inicio,
             alquiler.fecha_fin,
             alquiler.costo_total,
@@ -42,7 +41,9 @@ class AlquilerCRUD(ORMBase):
             alquiler.empleado.id_empleado,
             alquiler.vehiculo.patente,
             alquiler.cliente.id_cliente
-        ])
+        ]
+        self.actualizar(alquiler.id_alquiler, valores)
 
+    # Eliminar un alquiler existente por ID
     def eliminar_alquiler(self, id_alquiler):
         self.eliminar(id_alquiler)

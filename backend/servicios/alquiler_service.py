@@ -9,11 +9,11 @@ from Crud.vehiculo_crud import VehiculoCRUD
 class AlquilerService:
     def __init__(self):
         self.alquiler_dao = AlquilerCRUD()
-        # El Servicio de Alquiler NECESITA los DAOs de sus dependencias
         self.cliente_dao = ClienteCRUD()
         self.empleado_dao = EmpleadoCRUD()
         self.vehiculo_dao = VehiculoCRUD()
 
+    # Crear un nuevo alquiler
     def crear_alquiler(self, datos):
         """
         datos: dict con claves
@@ -60,11 +60,11 @@ class AlquilerService:
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear alquiler: {e}"}
 
+    # Listar todos los alquileres
     def listar_alquileres(self):
         try:
-            # Esto devuelve una lista de tuplas con los IDs,
-            # lo cual es rápido y está bien para una API.
             alquileres = self.alquiler_dao.listar_alquileres()
             return {"estado": "ok", "data": alquileres}
+        
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al listar alquileres: {e}"}

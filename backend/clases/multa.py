@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from datetime import date
 
 if TYPE_CHECKING:
@@ -8,6 +8,7 @@ class MultaDano:
     def __init__(self, id_multa: int, descripcion: str, monto: float,
                  fecha_incidente: date, alquiler: "Alquiler"):
 
+        # Validaciones iniciales
         if alquiler is None:
             raise ValueError("Una multa o daño debe estar asociado a un alquiler.")
 
@@ -17,9 +18,10 @@ class MultaDano:
         self.fecha_incidente = fecha_incidente
         self.alquiler = alquiler
 
-            # Relación bidireccional
+        # Relaciones
         alquiler.agregar_multa(self)
-        # --- Getter/Setter para descripcion ---
+    
+    # Propiedades con validación
     @property
     def descripcion(self):
         return self._descripcion
@@ -30,7 +32,6 @@ class MultaDano:
             raise ValueError("La descripción de la multa no puede estar vacía.")
         self._descripcion = valor.strip()
 
-    # --- Getter/Setter para monto ---
     @property
     def monto(self):
         return self._monto
@@ -40,4 +41,7 @@ class MultaDano:
         if not isinstance(valor, (int, float)) or valor <= 0:
             raise ValueError("El monto de la multa debe ser un número positivo.")
         self._monto = valor
-
+    
+    # Representación legible
+    def __repr__(self):
+        return (f"Multa {self.id_multa} - Alquiler {self.alquiler.id_alquiler}")

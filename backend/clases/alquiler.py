@@ -1,4 +1,4 @@
-from typing import Optional, List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 from datetime import date
 
 if TYPE_CHECKING:
@@ -12,6 +12,7 @@ class Alquiler:
                  costo_total: float, fecha_registro: date,
                  cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo"):
 
+        # Validaciones iniciales
         if cliente is None or empleado is None or vehiculo is None:
             raise ValueError("Un alquiler debe tener cliente, empleado y vehículo asociados.")
         if fecha_fin < fecha_inicio:
@@ -25,13 +26,15 @@ class Alquiler:
         self.cliente = cliente
         self.empleado = empleado
         self.vehiculo = vehiculo
-        self.multas: List["MultaDano"] = []
 
-        # Relaciones bidireccionales
+        # Relaciones
+        self.multas: List["MultaDano"] = []
         cliente.agregar_alquiler(self)
         empleado.agregar_alquiler(self)
         vehiculo.agregar_alquiler(self)
         vehiculo.marcar_no_disponible()
+    
+    # Propiedades con validación
     @property
     def costo_total(self):
         return self._costo_total
@@ -42,6 +45,11 @@ class Alquiler:
             raise ValueError("El costo total no puede ser negativo.")
         self._costo_total = valor
 
+    # Métodos de relación
     def agregar_multa(self, multa: "MultaDano"):
         if multa not in self.multas:
             self.multas.append(multa)
+    
+    # Representación legible
+    def __repr__(self):
+        return f"Alquiler {self.id_alquiler} - Cliente {self.cliente.nombre} {self.cliente.apellido} - Vehículo {self.vehiculo.patente}"

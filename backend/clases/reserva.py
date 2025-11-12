@@ -1,4 +1,4 @@
-from typing import List, Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING
 from datetime import date
 
 if TYPE_CHECKING:
@@ -10,12 +10,11 @@ class Reserva:
                  fecha_inicio_deseada: date, fecha_fin_deseada: date,
                  cliente: "Cliente", vehiculo: Optional["Vehiculo"] = None):
 
+        # Validaciones iniciales
         if cliente is None:
             raise ValueError("Una reserva debe estar asociada a un cliente.")
-        # Validación de fechas cruzadas
         if fecha_fin_deseada < fecha_inicio_deseada:
             raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
-        
         if fecha_inicio_deseada < fecha_reserva:
              raise ValueError("La fecha de inicio deseada no puede ser anterior a la fecha de reserva.")
 
@@ -26,8 +25,12 @@ class Reserva:
         self.cliente = cliente
         self.vehiculo = vehiculo
 
-        # Relaciones bidireccionales
+        # Relaciones
         cliente.agregar_reserva(self)
         if vehiculo:
             vehiculo.agregar_reserva(self)
             vehiculo.marcar_no_disponible()
+        
+        # Representación legible
+        def __repr__(self):
+            return f"Reserva {self.id_reserva} - Cliente {self.cliente.nombre} {self.cliente.apellido}"

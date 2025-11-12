@@ -1,6 +1,7 @@
 from datetime import date
 
 from clases.multa import MultaDano
+from clases.alquiler import Alquiler
 from Crud.multa_crud import MultaCRUD
 from Crud.alquiler_crud import AlquilerCRUD 
 from servicios.alquiler_service import AlquilerService
@@ -11,25 +12,20 @@ class MultaService:
         self.alquiler_dao = AlquilerCRUD()
         self.alquiler_service = AlquilerService() 
 
+    # Crear una nueva multa por daño
     def crear_multa(self, datos):
         """
         datos: dict con claves
         { 'id_alquiler', 'descripcion', 'monto', 'fecha_incidente' }
         """
         try:
-            # Para crear una Multa, necesito el objeto Alquiler.
-            # Pero el __init__ de Alquiler es complejo...
-            # Simplificación: El __init__ de MultaDano SÍ espera un objeto Alquiler.
-            # Debemos ensamblarlo.
-            
             # 1. Buscamos la fila simple del alquiler
             id_alquiler = datos.get('id_alquiler')
-            fila_alquiler_simple = self.alquiler_dao.buscar_por_id_simple(id_alquiler)
+            fila_alquiler_simple = self.alquiler_dao.buscar_por_id(id_alquiler)
             if not fila_alquiler_simple:
                  raise ValueError("Alquiler no encontrado.")
             
             # 2. Ensamblamos el objeto Alquiler completo
-            # (fila_simple[0]=id_alquiler, fila_simple[5]=id_empleado, fila_simple[6]=patente, fila_simple[7]=id_cliente)
             cliente = self.alquiler_service.cliente_dao.buscar_por_id(fila_alquiler_simple[7])
             empleado = self.alquiler_service.empleado_dao.buscar_por_id(fila_alquiler_simple[5])
             vehiculo = self.alquiler_service.vehiculo_dao.buscar_por_id(fila_alquiler_simple[6])
@@ -61,3 +57,21 @@ class MultaService:
             return {"estado": "error", "mensaje": str(e)}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear multa: {e}"}
+    
+    # Buscar multas por daño existentes por el ID de un cliente
+    def buscar_multas_por_id_cliente(self, id_cliente: int):
+        try:
+            multas = self.multa_dao.buscar_por_id_cliente(id_cliente)
+            return {"estado": "ok", "data": multas}
+        
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar multas: {e}"}
+    
+    # Buscar multas por daño existentes por la patente de un vehículo
+    def buscar_multas_por_patente(self, patente: str):
+        try:
+            multas = self.multa_dao.buscar_por_patente(patente)
+            return {"estado": "ok", "data": multas}
+        
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar multas: {e}"}

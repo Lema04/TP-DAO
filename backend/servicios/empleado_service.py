@@ -1,5 +1,3 @@
-# servicios/empleado_service.py
-
 from Crud.empleado_crud import EmpleadoCRUD
 from clases.empleado import Empleado
 
@@ -7,6 +5,7 @@ class EmpleadoService:
     def __init__(self):
         self.dao = EmpleadoCRUD()
 
+    # Crear un nuevo empleado
     def crear_empleado(self, datos):
         """
         datos: dict con claves
@@ -30,13 +29,16 @@ class EmpleadoService:
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear empleado: {e}"}
 
+    # Listar todos los empleados existentes
     def listar_empleados(self):
         try:
             empleados = self.dao.listar_empleados()
             return {"estado": "ok", "data": empleados}
+        
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al listar empleados: {e}"}
 
+    # Actualizar los datos de un empleado existente
     def actualizar_empleado(self, id_empleado, nuevos_datos):
         try:
             empleado = self.dao.buscar_por_id(id_empleado)
@@ -45,7 +47,6 @@ class EmpleadoService:
 
             for clave, valor in nuevos_datos.items():
                 if hasattr(empleado, clave):
-                    # Aquí se disparan los setters (@property) y se valida
                     setattr(empleado, clave, valor) 
 
             self.dao.actualizar_empleado(empleado)
@@ -56,9 +57,11 @@ class EmpleadoService:
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al actualizar empleado: {e}"}
 
+    # Eliminar un empleado existente por su ID
     def eliminar_empleado(self, id_empleado):
         try:
             self.dao.eliminar_empleado(id_empleado)
             return {"estado": "ok", "mensaje": "Empleado eliminado."}
+        
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al eliminar empleado: {e}"}

@@ -1,4 +1,4 @@
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from datetime import date
 
 if TYPE_CHECKING:
@@ -8,6 +8,7 @@ class Mantenimiento:
     def __init__(self, id_mantenimiento: int, fecha_inicio: date, fecha_fin: date,
                  tipo_servicio: str, costo: float, vehiculo: "Vehiculo"):
 
+        # Validaciones iniciales
         if vehiculo is None:
             raise ValueError("Un mantenimiento debe estar asociado a un vehículo.")
 
@@ -21,7 +22,7 @@ class Mantenimiento:
         # Relación bidireccional
         vehiculo.agregar_mantenimiento(self)
 
-    # --- Getter/Setter para tipo_servicio ---
+    # Propiedades con validación
     @property
     def tipo_servicio(self):
         return self._tipo_servicio
@@ -32,7 +33,6 @@ class Mantenimiento:
             raise ValueError("El tipo de servicio no puede estar vacío.")
         self._tipo_servicio = valor.strip()
 
-    # --- Getter/Setter para costo ---
     @property
     def costo(self):
         return self._costo
@@ -42,3 +42,7 @@ class Mantenimiento:
         if not isinstance(valor, (int, float)) or valor < 0:
             raise ValueError("El costo del mantenimiento no puede ser negativo.")
         self._costo = valor
+    
+    # Representación legible
+    def __repr__(self):
+        return (f"Mantenimiento {self.id_mantenimiento} - Vehículo {self.vehiculo.patente}")
