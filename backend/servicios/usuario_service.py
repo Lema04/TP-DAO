@@ -84,3 +84,15 @@ class UsuarioService:
         
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al eliminar usuario: {e}"}
+
+    # Autenticar un usuario por nombre y contraseña
+    def autenticar_usuario(self, datos: dict):
+        try:
+            nombre_usuario = datos.get("nombre_usuario", "").strip()
+            contraseña = datos.get("contraseña", "").strip()
+            usuario = self.dao.buscar_por_nombre(nombre_usuario)
+            if usuario and usuario.contraseña == contraseña:
+                return {"estado": "ok", "mensaje": "Autenticación exitosa.", "rol": usuario.rol}
+            return {"estado": "error", "mensaje": "Nombre de usuario o contraseña incorrectos."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error en la autenticación: {e}"}

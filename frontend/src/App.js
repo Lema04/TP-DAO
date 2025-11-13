@@ -44,7 +44,7 @@ function App() {
                 {hasPermission('RegistroAlquiler') && <Link to="/">Registrar Alquiler</Link>}
                 {hasPermission('GestionMultas') && <Link to="/gestion">Gestión de Multas</Link>}
                 {hasPermission('Reportes') && <Link to="/reportes">Reportes Estratégicos</Link>}
-                <span className="user-info">Hola, {user.rol}</span>
+                {/* <span className="user-info">Hola, {user.rol}</span> */}
                 <button onClick={logout} className="logout-button">Salir</button>
               </>
             ) : (

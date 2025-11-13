@@ -244,11 +244,7 @@ def registrar_usuario():
 @app.route("/usuarios/login", methods=["POST"])
 def login_usuario():
     datos = request.get_json()
-    nombre_usuario = datos.get('nombre_usuario')
-    contraseña = datos.get('contraseña')
-    
-    if not nombre_usuario or not contraseña:
-        return jsonify({"estado": "error", "mensaje": "Faltan nombre de usuario o contraseña"}), 400
+    return jsonify(servicio_usuario.autenticar_usuario(datos))
     
     # Llama al servicio de usuario para autenticar (asumo que tienes un método 'autenticar' o similar)
     # try:

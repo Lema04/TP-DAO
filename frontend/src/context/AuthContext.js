@@ -6,9 +6,9 @@ const AuthContext = createContext();
 
 // Permisos: Define qué puede ver cada rol
 const PERMISSIONS = {
-  Gerente: ['RegistroAlquiler', 'GestionMultas', 'Reportes'],
-  Empleado: ['RegistroAlquiler', 'GestionMultas'],
-  Cliente: ['MisAlquileres'], // Un componente para que el cliente vea solo lo suyo
+  supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes'],
+  atencion: ['RegistroAlquiler', 'GestionMultas'],
+  cliente: ['MisAlquileres'], // Un componente para que el cliente vea solo lo suyo
   Anonimo: []
 };
 
@@ -26,6 +26,7 @@ export const AuthProvider = ({ children }) => {
 
   const hasPermission = (componentName) => {
     const rol = user ? user.rol : 'Anonimo';
+    console.log(`Verificando permiso para rol: ${rol} en componente: ${componentName}`)
     return PERMISSIONS[rol].includes(componentName);
   };
 
