@@ -30,6 +30,14 @@ class VehiculoService:
             return {"estado": "error", "mensaje": str(e)}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear vehículo: {e}"}
+        
+    def buscar_vehiculo(self, patente):
+        try:
+            vehiculo = self.dao.buscar_por_id(patente)
+            if vehiculo:
+                return {"estado": "ok", "data": vehiculo}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar vehículo: {e}"}
 
     # Listar todos los vehículos existentes
     def listar_vehiculos(self):
@@ -73,3 +81,14 @@ class VehiculoService:
             return {"estado": "error", "mensaje": str(e)}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al actualizar vehículo: {e}"}
+        
+    # Eliminar un vehículo existente por su patente
+    def eliminar_vehiculo(self, patente):
+        try:
+            vehiculo = self.dao.buscar_por_id(patente)
+            if not vehiculo:
+                return {"estado": "error", "mensaje": "Vehiculo no encontrado."}
+            self.dao.eliminar_vehiculo(patente)
+            return {"estado": "ok", "mensaje": "Vehículo eliminado."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al eliminar vehículo: {e}"}
