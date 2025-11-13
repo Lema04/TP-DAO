@@ -37,6 +37,15 @@ class EmpleadoService:
         
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al listar empleados: {e}"}
+    
+    def buscar_empleado(self, id_empleado):
+        try:
+            empleado = self.dao.buscar_por_id(id_empleado)
+            if empleado:
+                return {"estado": "ok", "data": empleado}
+            
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar empleado: {e}"}
 
     # Actualizar los datos de un empleado existente
     def actualizar_empleado(self, id_empleado, nuevos_datos):
