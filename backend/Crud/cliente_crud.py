@@ -1,5 +1,5 @@
 from clases.cliente import Cliente
-from servicios.orm_base import ORMBase
+from orm_base import ORMBase
 
 class ClienteCRUD(ORMBase):
     tabla = "CLIENTE"

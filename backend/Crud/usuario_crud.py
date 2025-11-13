@@ -1,5 +1,5 @@
 from clases.usuario import Usuario
-from servicios.orm_base import ORMBase
+from orm_base import ORMBase
 
 class UsuarioCRUD(ORMBase):
     """

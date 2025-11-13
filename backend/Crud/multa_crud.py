@@ -1,4 +1,4 @@
-from servicios.orm_base import ORMBase
+from orm_base import ORMBase
 from clases.multa import MultaDano
 
 class MultaCRUD(ORMBase):
