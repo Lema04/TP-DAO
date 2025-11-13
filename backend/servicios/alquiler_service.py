@@ -59,6 +59,15 @@ class AlquilerService:
             return {"estado": "error", "mensaje": str(e)}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear alquiler: {e}"}
+        
+    def buscar_alquiler(self, id_alquiler):
+        try:
+            alquiler = self.alquiler_dao.buscar_por_id(id_alquiler)
+            if alquiler:
+                return {"estado": "ok", "data": alquiler}
+        
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar alquiler: {e}"}
 
     # Listar todos los alquileres
     def listar_alquileres(self):
@@ -77,3 +86,11 @@ class AlquilerService:
         
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al buscar alquileres por cliente: {e}"}
+        
+    # def actualizar_alquiler(self, id_alquiler, datos):
+    #     try:
+    #         alquiler = self.alquiler_dao.buscar_por_id(id_alquiler)
+    #         if not alquiler:
+    #             return {"estado": "error", "mensaje": "Alquiler no encontrado."}
+            
+    # FALTA TERMINAR Y METODO PARA ELIMINAR ALQUILER
