@@ -2,7 +2,9 @@ import sqlite3, os
 
 # Subimos un nivel: de /servicios a /backend
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+BASE_DIR = os.path.join(BASE_DIR, "backend")
 DB_PATH = os.path.join(BASE_DIR, "bd_alquiler_vehiculos.db")
+DB_PATH = DB_PATH.replace('\\', "/")
 
 class ConexionDB:
     def __init__(self, nombre_bd=DB_PATH):

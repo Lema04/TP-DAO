@@ -9,8 +9,8 @@ class Usuario:
             raise ValueError("El nombre de usuario es obligatorio.")
         if not contraseña:
             raise ValueError("La contraseña es obligatoria.")
-        if rol not in ("cliente", "empleado", "gerente"):
-            raise ValueError("El rol debe ser 'cliente', 'empleado' o 'gerente'.")
+        if rol not in ("cliente", "atencion", "supervisor"):
+            raise ValueError("El rol debe ser 'cliente', 'atencion' o 'supervisor'.")
         if rol == "cliente" and id_cliente is None:
             raise ValueError("Un usuario con rol 'cliente' debe tener asignado un id_cliente.")
         if rol in ("empleado", "gerente") and id_empleado is None:

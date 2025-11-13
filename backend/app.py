@@ -236,6 +236,11 @@ def reporte_alquileres_por_periodo():
 #     USUARIOS / LOGIN
 # =============================
 
+@app.route("/usuarios", methods=["POST"])
+def registrar_usuario():
+    datos = request.get_json()
+    return jsonify(servicio_usuario.crear_usuario(datos))
+
 @app.route("/usuarios/login", methods=["POST"])
 def login_usuario():
     datos = request.get_json()
