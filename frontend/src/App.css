@@ -1,4 +1,4 @@
-/* /frontend/src/App.css */
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -102,4 +102,36 @@ button:hover {
 .logo-img {
     height: 100%;
     width: auto;
+}
+
+/* --- Estilo para botones de menú --- */
+.menu-button {
+  background-color: #cc0000; /* Rojo RentCar */
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 10px 0; /* Espacio vertical */
+  text-decoration: none; /* Quita el subrayado */
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  display: block; /* Para que cada uno ocupe su propia línea */
+  transition: background-color 0.3s ease;
+}
+
+.menu-button:hover {
+  background-color: #990000;
+}
+
+/* --- Mejoras para el Aviso (Opcional: puedes eliminar el .note por completo si no lo necesitas) --- */
+.note {
+    background-color: transparent; /* Fondo transparente para quitar el amarillo */
+    border-left: none; /* Quitar la barra amarilla */
+    padding: 0;
+    margin-top: 20px;
+    font-weight: normal;
+    text-align: center;
+    color: #666;
 }

@@ -1,12 +1,14 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 
-const API_BASE_URL = 'http://127.0.0.1:5000'; // Asegúrate de que esta URL sea correcta
+const API_BASE_URL = 'http://127.0.0.1:5000'; 
 
 const Login = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +27,8 @@ const Login = () => {
       const result = await response.json();
 
       if (response.ok && result.estado === 'ok') {
-        login(result); // Guarda el rol y el ID en el contexto
+        login(result);
+        navigate('/home'); 
       } else {
         setError(result.mensaje || 'Credenciales inválidas. Intente de nuevo.');
       }

@@ -75,8 +75,8 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         <select name="id_cliente" onChange={handleChange} required value={datos.id_cliente}>
           <option value="">Seleccione Cliente</option>
           {clientes.map(c => (
-            <option key={c.id_cliente} value={c.id_cliente}>
-              {c.nombre} {c.apellido} (DNI: {c.dni})
+            <option key={c[0]} value={c[0]}>
+              {c[1]} {c[2]} (DNI: {c[3]}) {/* 👈 USO DE ÍNDICES */}
             </option>
           ))}
         </select>
@@ -86,8 +86,8 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         <select name="id_empleado" onChange={handleChange} required value={datos.id_empleado}>
           <option value="">Seleccione Empleado</option>
           {empleados.map(e => (
-            <option key={e.id_empleado} value={e.id_empleado}>
-              {e.nombre} {e.apellido}
+            <option key={e[0]} value={e[0]}>
+              {e[1]} {e[2]} {/* 👈 USO DE ÍNDICES */}
             </option>
           ))}
         </select>
@@ -97,10 +97,10 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         <select name="patente" onChange={handleChange} required value={datos.patente}>
           <option value="">Seleccione Vehículo Disponible</option>
           {vehiculos
-            .filter(v => v.estado === 'disponible') // **Validación de disponibilidad simple**
+            .filter(v => v[5] && v[5].toString().toLowerCase().trim() === 'disponible')
             .map(v => (
-            <option key={v.patente} value={v.patente}>
-              {v.marca} {v.modelo} ({v.patente})
+            <option key={v[0]} value={v[0]}>
+              {v[1]} {v[2]} ({v[0]}) {/* 👈 USO DE ÍNDICES */}
             </option>
           ))}
         </select>
