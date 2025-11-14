@@ -163,13 +163,17 @@ def eliminar_reserva(id_reserva):
 #     MULTAS CRUD
 # =============================
 
-@app.route("/multas", methods=["GET"])
-def listar_multas():
-    return jsonify(servicio_multa.listar_multas())
+# @app.route("/multas", methods=["GET"])
+# def listar_multas():
+#     return jsonify(servicio_multa.listar_multas())
 
-@app.route("/multas/<int:id_multa>", methods=["GET"])
-def obtener_multa(id_multa):
-    return jsonify(servicio_multa.buscar_multa(id_multa))
+@app.route("/multas/<int:id_patente>", methods=["GET"])
+def obtener_multa_por_patente(patente):
+    return jsonify(servicio_multa.buscar_multas_por_patente(patente))
+
+@app.route("/multas/<int:id_cliente>", methods=["GET"])
+def obtener_multa_por_cliente(id_cliente):
+    return jsonify(servicio_multa.buscar_multas_por_id_cliente(id_cliente))
 
 @app.route("/multas", methods=["POST"])
 def crear_multa():

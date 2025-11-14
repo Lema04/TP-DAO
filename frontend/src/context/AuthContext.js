@@ -26,7 +26,6 @@ export const AuthProvider = ({ children }) => {
 
   const hasPermission = (componentName) => {
     const rol = user ? user.rol : 'Anonimo';
-    console.log(`Verificando permiso para rol: ${rol} en componente: ${componentName}`)
     return PERMISSIONS[rol].includes(componentName);
   };
 

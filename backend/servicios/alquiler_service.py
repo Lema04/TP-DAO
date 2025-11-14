@@ -87,10 +87,26 @@ class AlquilerService:
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al buscar alquileres por cliente: {e}"}
         
-    # def actualizar_alquiler(self, id_alquiler, datos):
-    #     try:
-    #         alquiler = self.alquiler_dao.buscar_por_id(id_alquiler)
-    #         if not alquiler:
-    #             return {"estado": "error", "mensaje": "Alquiler no encontrado."}
+    def actualizar_alquiler(self, id_alquiler, datos):
+        try:
+            alquiler = self.alquiler_dao.buscar_por_id(id_alquiler)
+            if not alquiler:
+                return {"estado": "error", "mensaje": "Alquiler no encontrado."}
+            alquiler.fecha_inicio = date.fromisoformat(datos.get('fecha_inicio', alquiler.fecha_inicio.isoformat()))
+            alquiler.fecha_fin = date.fromisoformat(datos.get('fecha_fin', alquiler.fecha_fin.isoformat()))
+            alquiler.costo_total = float(datos.get('costo_total', alquiler.costo_total))
+            self.alquiler_dao.actualizar_alquiler(alquiler)
+            return {"estado": "ok", "mensaje": "Alquiler actualizado correctamente."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al actualizar alquiler: {e}"}
+        
+    def eliminar_alquiler(self, id_alquiler):
+        try:
+            alquiler = self.alquiler_dao.buscar_por_id(id_alquiler)
+            if not alquiler:
+                return {"estado": "error", "mensaje": "Alquiler no encontrado."}
+            self.alquiler_dao.eliminar_alquiler(id_alquiler)
+            return {"estado": "ok", "mensaje": "Alquiler eliminado correctamente."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al eliminar alquiler: {e}"}
             
-    # FALTA TERMINAR Y METODO PARA ELIMINAR ALQUILER

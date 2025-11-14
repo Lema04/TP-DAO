@@ -24,6 +24,7 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         // Asumiendo que el resultado es { estado: "ok", data: [...] }
         if (data.estado === 'ok' && data.data) {
           setter(data.data);
+          console.log(`Datos cargados: ${data.data}`)
         }
       } catch (error) {
         console.error(`Error cargando ${endpoint}:`, error);

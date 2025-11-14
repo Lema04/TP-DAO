@@ -54,3 +54,21 @@ class MultaCRUD(ORMBase):
             for fila in filas:
                 multas.append(MultaDano(*fila))
             return multas
+        
+    def buscar_por_id(self, id_multa: int):
+        multa = self.obtener_por_id(id_multa)
+        if multa:
+            return MultaDano(*multa)
+        return None
+        
+    def actualizar_multa(self, multa: MultaDano):
+        valores = [
+            multa.alquiler.id_alquiler,
+            multa.descripcion,
+            multa.monto,
+            multa.fecha_incidente
+        ]
+        self.actualizar(multa.id_multa, valores)
+
+    def eliminar_multa(self, id_multa: int):
+        self.eliminar(id_multa)

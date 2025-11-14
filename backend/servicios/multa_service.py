@@ -75,3 +75,19 @@ class MultaService:
         
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al buscar multas: {e}"}
+        
+    # def actualizar_multa(self, id_multa: int, datos):
+    #     try:
+    #         multa = self.multa_dao.obtener_por_id(id_multa)
+    #         if not multa:
+    #             return {"estado": "error", "mensaje": "Multa no encontrada."}
+            
+    def eliminar_multa(self, id_multa: int):
+        try:
+            multa = self.multa_dao.obtener_por_id(id_multa)
+            if not multa:
+                return {"estado": "error", "mensaje": "Multa no encontrada."}
+            self.multa_dao.eliminar(id_multa)
+            return {"estado": "ok", "mensaje": "Multa eliminada correctamente."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al eliminar multa: {e}"}

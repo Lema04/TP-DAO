@@ -45,3 +45,43 @@ class ReservaService:
             return {"estado": "error", "mensaje": str(e)}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al crear reserva: {e}"}
+        
+    def listar_reservas(self):
+        try:
+            reservas = self.reserva_dao.listar_reservas()
+            return {"estado": "ok", "data": reservas}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al listar reservas: {e}"}
+    
+    def buscar_reserva(self, id_reserva):
+        try:
+            reserva = self.reserva_dao.buscar_por_id(id_reserva)
+            if reserva:
+                return {"estado": "ok", "data": reserva}
+            else:
+                return {"estado": "error", "mensaje": "Reserva no encontrada."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar reserva: {e}"}
+        
+    def actualizar_reserva(self, id_reserva, datos):
+        try:
+            reserva = self.reserva_dao.buscar_por_id(id_reserva)
+            if not reserva:
+                return {"estado": "error", "mensaje": "Reserva no encontrada."}
+            reserva.fecha_inicio_deseada = date.fromisoformat(datos.get("fecha_inicio_deseada", reserva.fecha_inicio_desesada.isoformat()))
+            reserva.fecha_fin_deseada = date.fromisoformat(datos.get("fecha_fin_deseada", reserva.fecha_fin_deseada.isoformat()))
+            reserva.vehiculo = self.vehiculo_dao.buscar_por_id(datos.get("patente")) if datos.get("patente") else reserva.vehiculo
+            self.reserva_dao.actualizar_reserva(reserva)
+            return {"estado": "ok", "mensaje": "Reserva actualizada correctamente."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar reserva: {e}"}
+        
+    def eliminar_reserva(self, id_reserva):
+        try:
+            reserva = self.reserva_dao.buscar_por_id(id_reserva)
+            if not reserva:
+                return {"estado": "error", "mensaje": "Reserva no encontrada."}
+            self.reserva_dao.eliminar_reserva(id_reserva)
+            return {"estado": "ok", "mensaje": "Reserva eliminada correctamente."}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al eliminar reserva: {e}"}
