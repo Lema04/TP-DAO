@@ -92,7 +92,8 @@ class UsuarioService:
             contraseña = datos.get("contraseña", "").strip()
             usuario = self.dao.buscar_por_nombre(nombre_usuario)
             if usuario and usuario.contraseña == contraseña:
-                return {"estado": "ok", "mensaje": "Autenticación exitosa.", "rol": usuario.rol}
+                return {"estado": "ok", "mensaje": "Autenticación exitosa.", "rol": usuario.rol, "id_cliente": usuario.id_cliente, 
+                    "id_empleado": usuario.id_empleado}
             return {"estado": "error", "mensaje": "Nombre de usuario o contraseña incorrectos."}
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error en la autenticación: {e}"}

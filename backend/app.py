@@ -134,6 +134,14 @@ def eliminar_alquiler(id_alquiler):
     return jsonify(servicio_alquiler.eliminar_alquiler(id_alquiler))
 
 
+@app.route("/alquileres", methods=["GET"])
+def obtener_alquiler_por_cliente():
+    id_cliente = request.args.get('id_cliente', type=int)
+    if id_cliente:
+        return jsonify(servicio_alquiler.buscar_alquileres_por_cliente(id_cliente))
+    else:
+        return jsonify({"estado": "error", "mensaje": "Falta el parámetro id_cliente"}), 400
+
 # =============================
 #     RESERVAS CRUD
 # =============================

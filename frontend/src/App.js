@@ -11,7 +11,10 @@ import Logo from './components/Logo';
 import './App.css'; // Importa estilos base
 import HomeMenu from './components/HomeMenu';
 import HeaderNav from './components/HeaderNav';
-
+import RegistroCliente from './components/RegistroCliente';
+import MisAlquileres from './components/MisAlquileres';
+import RegistroUsuario from './components/RegistroUsuario';
+import MisMultas from './components/MisMultas';
 // URL BASE de tu API de Flask
 const API_BASE_URL = 'http://127.0.0.1:5000'; 
 // Componente para proteger las rutas
@@ -54,6 +57,7 @@ function App() {
                 <HomeMenu /> 
               </ProtectedRoute>
             } />
+            <Route path="/registrarme" element={<RegistroUsuario />} />
             {/* Rutas Protegidas por Rol  */}
             <Route path="/alquiler" element={ // cambie la ruta de RegistroAlquiler a /alquiler
                 <ProtectedRoute permissionName="RegistroAlquiler">
@@ -73,6 +77,22 @@ function App() {
               </ProtectedRoute>
             } />
 
+            <Route path="/clientes" element={
+              <ProtectedRoute permissionName="RegistroCliente">
+                <RegistroCliente apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/mis-alquileres" element={
+              <ProtectedRoute permissionName="MisAlquileres">
+                <MisAlquileres apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+            <Route path="/mis-multas" element={
+              <ProtectedRoute permissionName="MisMultas">
+                <MisMultas apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
             {/* Manejo de rutas no encontradas y redirigir al login si es necesario */}
             <Route path="*" element={user ? <h1>No tiene permisos para ver esta página.</h1> : <Navigate to="/login" replace />} />
 

@@ -6,20 +6,21 @@ const AuthContext = createContext();
 
 // Permisos: Define qué puede ver cada rol
 const PERMISSIONS = {
-  supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes'],
-  atencion: ['RegistroAlquiler', 'GestionMultas'],
-  cliente: ['MisAlquileres'], // Un componente para que el cliente vea solo lo suyo
+  supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes', 'RegistroCliente'],
+  atencion: ['RegistroAlquiler', 'GestionMultas', 'RegistroCliente'],
+  cliente: ['MisAlquileres', 'MisMultas'], // Un componente para que el cliente vea solo lo suyo
   Anonimo: []
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // { rol: 'Gerente', id_usuario: 1 }
 
-  const login = (userData) => {
-    // Almacenamos rol e id del usuario
-    setUser({ rol: userData.rol, id_usuario: userData.id_usuario });
+  const login = (data) => {
+      // data ahora es: { rol: 'cliente', id_cliente: 4, id_empleado: null, ...}
+      // Asegúrate de guardar todo en el estado 'user'
+      setUser(data); 
+      localStorage.setItem('user', JSON.stringify(data));
   };
-
   const logout = () => {
     setUser(null);
   };

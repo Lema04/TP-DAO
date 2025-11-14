@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Logo from './Logo';
 
 const API_BASE_URL = 'http://127.0.0.1:5000'; 
@@ -51,6 +51,11 @@ const Login = () => {
         <button type="submit">Ingresar</button>
       </form>
       {error && <p className="mensaje error">{error}</p>}
+
+      {/* BOTÓN REGISTRARME */}
+      <div style={{textAlign: 'center', marginTop: '15px'}}>
+        <p>¿No tienes cuenta? <Link to="/registrarme">Registrarme</Link></p>
+      </div>
     </div>
   );
 };
