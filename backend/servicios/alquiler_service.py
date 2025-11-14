@@ -68,6 +68,15 @@ class AlquilerService:
         
         except Exception as e:
             return {"estado": "error", "mensaje": f"Error al buscar alquiler: {e}"}
+    
+    def buscar_alquileres_por_cliente(self, id_cliente):
+        try:
+            alquileres = self.alquiler_dao.buscar_por_cliente(id_cliente)
+            if not alquileres:
+                return {"estado": "error", "mensaje": "No se encontraron alquileres para el cliente dado."}
+            return {"estado": "ok", "data": alquileres}
+        except Exception as e:
+            return {"estado": "error", "mensaje": f"Error al buscar alquileres por cliente: {e}"}
 
     # Listar todos los alquileres
     def listar_alquileres(self):
