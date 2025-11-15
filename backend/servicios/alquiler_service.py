@@ -34,7 +34,7 @@ class AlquilerService:
                 raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
             
             # Lógica de negocio: ¿Está disponible el vehículo?
-            if not vehiculo.disponible:
+            if vehiculo.estado.lower() != 'disponible':
                  raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} no está disponible.")
 
             id_empleado = datos.get('id_empleado')

@@ -173,29 +173,75 @@ def eliminar_empleado(id_empleado):
     return jsonify(servicio_empleado.eliminar_empleado(id_empleado))
 
 
+# --- Archivo: app.py ---
+
 # =============================
-#     VEHÍCULOS CRUD
+#     VEHÍCULOS CRUD (¡ARREGLADO!)
 # =============================
 
 @app.route("/vehiculos", methods=["GET"])
 def listar_vehiculos():
-    return jsonify(servicio_vehiculo.listar_vehiculos())
+    try:
+        vehiculos = servicio_vehiculo.listar_vehiculos()
+        # Usamos .a_dict() que ya existe en la clase Vehiculo
+        return jsonify([v.a_dict() for v in vehiculos]), 200
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/vehiculos/<string:patente>", methods=["GET"])
 def obtener_vehiculo(patente):
-    return jsonify(servicio_vehiculo.buscar_vehiculo(patente))
+    try:
+        vehiculo = servicio_vehiculo.buscar_vehiculo(patente)
+        return jsonify(vehiculo.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/vehiculos", methods=["POST"])
 def crear_vehiculo():
-    return jsonify(servicio_vehiculo.crear_vehiculo(request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+            
+        nuevo_vehiculo = servicio_vehiculo.crear_vehiculo(datos)
+        return jsonify(nuevo_vehiculo.a_dict()), 201
+    
+    except DatosInvalidosError as e:
+        # Error de validación (patente inválida, año no es número)
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        # Error del DAO (patente duplicada)
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/vehiculos/<string:patente>", methods=["PUT"])
 def actualizar_vehiculo(patente):
-    return jsonify(servicio_vehiculo.actualizar_vehiculo(patente, request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+            
+        vehiculo_actualizado = servicio_vehiculo.actualizar_vehiculo(patente, datos)
+        return jsonify(vehiculo_actualizado.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/vehiculos/<string:patente>", methods=["DELETE"])
 def eliminar_vehiculo(patente):
-    return jsonify(servicio_vehiculo.eliminar_vehiculo(patente))
+    try:
+        servicio_vehiculo.eliminar_vehiculo(patente)
+        return jsonify({"mensaje": f"Vehículo {patente} eliminado."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        # Ej: No se puede borrar, está en un alquiler (Error de Foreign Key)
+        return jsonify({"error": str(e)}), 409 # 409 Conflict
 
 
 # =============================
