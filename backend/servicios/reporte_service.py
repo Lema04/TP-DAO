@@ -8,7 +8,7 @@ from datetime import datetime
 from servicios.alquiler_service import AlquilerService
 from servicios.vehiculo_service import VehiculoService
 # Importamos las excepciones que nuestros servicios pueden levantar
-from servicios.excepciones import RecursoNoEncontradoError, ErrorDeAplicacion
+from servicios.excepciones import RecursoNoEncontradoError, ErrorDeAplicacion, DatosInvalidosError
 
 # ... (Tu configuración de rcParams y colores está perfecta) ...
 COLOR_PRINCIPAL = "#e41a1c"

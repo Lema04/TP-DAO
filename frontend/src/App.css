@@ -135,3 +135,53 @@ button:hover {
     text-align: center;
     color: #666;
 }
+
+/* --- Estilos para las tablas de reportes --- */
+
+/* Contenedor principal de la tabla */
+.styled-table {
+  width: 100%;
+  border-collapse: collapse; /* Bordes limpios */
+  margin: 25px 0;
+  font-size: 0.9em;
+  font-family: 'Arial', sans-serif;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  border-radius: 8px; /* Bordes redondeados */
+  overflow: hidden; /* Para que el header se alinee con el borde redondeado */
+}
+
+/* Encabezado de la tabla */
+.styled-table thead tr {
+  background-color: #f4f7f6; /* Un gris claro para el header */
+  color: #333;
+  text-align: left;
+  font-weight: bold;
+}
+
+/* Celdas del encabezado (th) y celdas de datos (td) */
+.styled-table th,
+.styled-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #dddddd; /* Línea sutil entre filas */
+}
+
+/* Filas del cuerpo de la tabla */
+.styled-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* "Zebra striping" - Filas pares con un color de fondo */
+.styled-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+/* Efecto al pasar el mouse por encima */
+.styled-table tbody tr:hover {
+  background-color: #f1f1f1;
+  cursor: default;
+}
+
+/* Clase de utilidad para alinear números (costos) a la derecha */
+.text-right {
+  text-align: right;
+}

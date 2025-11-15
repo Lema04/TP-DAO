@@ -26,7 +26,7 @@ const Login = () => {
 
       const result = await response.json();
 
-      if (response.ok && result.estado === 'ok') {
+      if (response.status === 200) {
         login(result);
         navigate('/home'); 
       } else {

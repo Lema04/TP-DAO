@@ -33,7 +33,7 @@ const RegistroCliente = () => {
 
       const result = await response.json();
 
-      if (result.estado === 'ok') {
+      if (response.status === 200) {
         setMensaje(`Cliente registrado con ID: ${result.mensaje.split('ID ')[1].replace('.', '')}`);
         setDatosCliente({ nombre: '', apellido: '', dni: '', direccion: '', telefono: '', email: '' });
       } else {

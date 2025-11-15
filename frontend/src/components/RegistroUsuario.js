@@ -33,7 +33,7 @@ const RegistroUsuario = () => {
 
       const result = await response.json();
 
-      if (result.estado === 'ok') {
+      if (result.status === 200) {
         setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.');
         setDatosRegistro({ nombre_usuario: '', contraseña: '', rol: 'cliente' });
         // Redirigir al login después de 2 segundos

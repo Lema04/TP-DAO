@@ -29,7 +29,7 @@ const GestionMultas = ({ apiBaseUrl }) => {
 
       const result = await response.json();
 
-      if (result.estado === 'ok') {
+      if (response.status == 200) {
         setMensaje('Multa registrada correctamente.');
       } else {
         setMensaje(`Error: ${result.mensaje}`);
