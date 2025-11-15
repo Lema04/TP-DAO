@@ -53,3 +53,23 @@ class Alquiler:
     # Representación legible
     def __repr__(self):
         return f"Alquiler {self.id_alquiler} - Cliente {self.cliente.nombre} {self.cliente.apellido} - Vehículo {self.vehiculo.patente}"
+    
+
+#     En lugar de que el controlador (app.py) intente adivinar cómo desarmar tu objeto, le pedimos al objeto que lo haga él mismo.
+
+# Esto es un principio clave de Encapsulamiento (Capítulo 8) . El objeto Cliente es el único que debe saber cómo representarse a sí mismo en un formato de diccionario.
+    
+    def a_dict(self):
+        """ Retorna una representación del alquiler en diccionario. """
+        return {
+            "id_alquiler": self.id_alquiler,
+            "fecha_inicio": self.fecha_inicio.isoformat(),
+            "fecha_fin": self.fecha_fin.isoformat(),
+            "costo_total": self.costo_total,
+            "fecha_registro": self.fecha_registro.isoformat(),
+            
+            # Delega la serialización a los objetos que "compone"
+            "cliente": self.cliente.a_dict(),
+            "empleado": self.empleado.a_dict(),
+            "vehiculo": self.vehiculo.a_dict()
+        }

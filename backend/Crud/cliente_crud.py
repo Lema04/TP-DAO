@@ -9,6 +9,33 @@ class ClienteCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
+
+    def _build_cliente(self, tupla):
+        """
+        Método privado para "ensamblar" un objeto Cliente desde una tupla.
+        Esto centraliza la lógica de creación.
+        """
+        if not tupla:
+            return None
+        
+        # Asume que tu ORMBase devuelve la tupla con la clave primaria al inicio
+        # (id_cliente, nombre, apellido, dni, direccion, telefono, email)
+        try:
+            return Cliente(
+                id_cliente=tupla[0],
+                nombre=tupla[1],
+                apellido=tupla[2],
+                dni=tupla[3],
+                direccion=tupla[4],
+                telefono=tupla[5],
+                email=tupla[6]
+            )
+        except IndexError:
+            # Error por si la tupla no es la esperada
+            print(f"Error: La tupla {tupla} no coincide con la estructura de Cliente.")
+            return None
+    
+
     # Verificar si ya existe un cliente con el mismo DNI o email
     def existe_duplicado(self, dni, email):
         sql = f"SELECT COUNT(*) FROM {self.tabla} WHERE dni=? OR email=?"
@@ -33,17 +60,24 @@ class ClienteCRUD(ORMBase):
 
     # Listar todos los clientes existentes
     def listar_clientes(self):
-        return self.obtener_todos()
+        """ Retorna una LISTA DE OBJETOS Cliente. """
+        # 1. Obtenemos la lista de tuplas crudas del ORM
+        tuplas = self.obtener_todos() 
+        
+        # 2. "Ensamblamos" cada tupla en un objeto Cliente
+        return [self._build_cliente(tupla) for tupla in tuplas]
 
-    # Buscar un cliente existente por ID
     def buscar_por_id(self, id_cliente):
-        fila = self.obtener_por_id(id_cliente)
-        if fila:
-            return Cliente(*fila)
-        return None
+        """ Retorna UN OBJETO Cliente o None. """
+        # 1. Obtenemos la tupla cruda
+        tupla = self.obtener_por_id(id_cliente)
+        
+        # 2. "Ensamblamos" el objeto
+        return self._build_cliente(tupla)
 
-    # Buscar clientes existentes por nombre, apellido o DNI
+    # --- ¡ARREGLADO! ---
     def buscar_por_nombre_o_dni(self, valor_busqueda):
+        """ Retorna una LISTA DE OBJETOS Cliente. """
         sql = f"""
             SELECT {self.clave_primaria}, {', '.join(self.campos)}
             FROM {self.tabla}
@@ -53,7 +87,12 @@ class ClienteCRUD(ORMBase):
             cursor = conn.cursor()
             patron = f"%{valor_busqueda}%"
             cursor.execute(sql, (patron, patron, valor_busqueda))
-            return cursor.fetchall()
+            
+            # 1. Obtenemos las tuplas crudas
+            tuplas = cursor.fetchall()
+            
+            # 2. "Ensamblamos" cada tupla en un objeto Cliente
+            return [self._build_cliente(tupla) for tupla in tuplas]
 
     # Actualizar un cliente existente
     def actualizar_cliente(self, cliente: Cliente):

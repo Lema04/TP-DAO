@@ -64,3 +64,15 @@ class Cliente:
     # Representación legible
     def __repr__(self):
         return f"Cliente {self.id_cliente} - {self.nombre} {self.apellido})"
+    
+    def a_dict(self):
+        """ Retorna una representación del cliente en diccionario. """
+        return {
+            "id_cliente": self.id_cliente,
+            "nombre": self.nombre,
+            "apellido": self.apellido,
+            "dni": self.dni,
+            "direccion": self.direccion,
+            "telefono": self.telefono,
+            "email": self.email
+        }

@@ -57,3 +57,16 @@ class Empleado:
     # Representación legible
     def __repr__(self):
         return f"Empleado {self.id_empleado} - {self.nombre} {self.apellido})"
+    
+    def a_dict(self):
+        """ Retorna una representación del empleado en diccionario. """
+        # ¡IMPORTANTE! Decide qué datos son seguros de exponer.
+        # Por ejemplo, NUNCA expongas un password.
+        return {
+            "id_empleado": self.id_empleado,
+            "nombre": self.nombre,
+            "apellido": self.apellido,
+            "rol": self.rol
+            # Nota: Omitimos el DNI a propósito, quizás es información sensible
+            # que no le importa al objeto Alquiler.
+        }
