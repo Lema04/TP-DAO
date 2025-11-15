@@ -1,4 +1,4 @@
-# --- Archivo: servicios/reporte_service.py (¡ARREGLADO!) ---
+# --- Archivo: servicios/reporte_service.py ---
 
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -7,94 +7,126 @@ from matplotlib import rcParams
 from datetime import datetime
 from servicios.alquiler_service import AlquilerService
 from servicios.vehiculo_service import VehiculoService
-# Importamos las excepciones que nuestros servicios pueden levantar
 from servicios.excepciones import RecursoNoEncontradoError, ErrorDeAplicacion, DatosInvalidosError
 
-# ... (Tu configuración de rcParams y colores está perfecta) ...
+# --- ¡NUEVO! Importamos 'os' para manejar carpetas ---
+import os
+
+# Configuración de Matplotlib
+rcParams["font.family"] = "sans-serif"
+rcParams["font.sans-serif"] = ["Arial", "Helvetica", "DejaVu Sans"]
 COLOR_PRINCIPAL = "#e41a1c"
 COLOR_SECUNDARIO = "#4d4d4d" 
 COLOR_TERCERARIO = "#f2f2f2"
 COLOR_BORDES = "#cccccc"
 
 class ReporteService:
+    
+    # --- ¡NUEVO! Definimos las carpetas de salida ---
+    # Asume que 'static' está al mismo nivel que tu 'app.py'
+    STATIC_DIR = 'static' 
+    REPORTES_DIR = os.path.join(STATIC_DIR, 'reportes')
+
     def __init__(self):
-        """Inicializa los servicios necesarios (¡esto ya estaba perfecto!)."""
+        """Inicializa los servicios necesarios."""
         self.alquiler_service = AlquilerService()
         self.vehiculo_service = VehiculoService()
+        
+        # --- ¡NUEVO! Aseguramos que la carpeta de reportes exista ---
+        os.makedirs(self.REPORTES_DIR, exist_ok=True)
 
     def _get_alquileres_list(self):
         """
-        Método helper para obtener la lista de objetos Alquiler.
-        Maneja la lógica de POO en un solo lugar.
+        Método helper para obtener la lista de OBJETOS Alquiler.
         """
         try:
-            # El servicio refactorizado devuelve una lista[Alquiler]
             alquileres_obj_list = self.alquiler_service.listar_alquileres()
             if not alquileres_obj_list:
-                raise Exception("No se encontraron alquileres en el sistema.")
+                raise RecursoNoEncontradoError("No se encontraron alquileres en el sistema.")
             return alquileres_obj_list
         except ErrorDeAplicacion as e:
-            # Re-lanza el error para que el controlador lo atrape
-            raise Exception(f"Error al obtener alquileres: {e}")
+            raise Exception(f"Error al obtener alquileres: {e}") # Re-lanza para el controlador
+
+    def _generar_ruta_reporte(self, nombre_base):
+        """Helper para crear una ruta de archivo única y una URL web."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        nombre_archivo = f"{nombre_base}_{timestamp}.pdf"
+        
+        # Ruta completa del sistema para guardar el archivo
+        ruta_completa_os = os.path.join(self.REPORTES_DIR, nombre_archivo)
+        
+        # URL web que devolveremos al frontend
+        # (Usamos '/' para las URLs web, independientemente del SO)
+        url_web = f"{self.STATIC_DIR}/reportes/{nombre_archivo}"
+        
+        return ruta_completa_os, url_web
 
     # Reporte de alquileres por cliente
     def generar_reporte_alquileres_por_cliente(self, cliente_id: int, formato: str = "pdf"):
-        try:
-            # 1. Obtener datos (¡forma POO!)
-            # El servicio ya levanta RecursoNoEncontradoError si el cliente no existe
-            # (o podemos añadir esa validación si es necesario)
-            alquileres_obj_list = self.alquiler_service.buscar_por_cliente(cliente_id)
+        # 1. Obtener datos (forma POO)
+        alquileres_obj_list = self.alquiler_service.buscar_por_cliente(cliente_id)
 
-            if not alquileres_obj_list:
-                raise RecursoNoEncontradoError(f"No se encontraron alquileres para el cliente con ID {cliente_id}.")
+        if not alquileres_obj_list:
+            raise RecursoNoEncontradoError(f"No se encontraron alquileres para el cliente con ID {cliente_id}.")
 
-            # 2. "Aplanar" los objetos para el DataFrame
-            # Convertimos la lista[Alquiler] en una lista[dict] plana
-            data_para_df = []
-            for alq in alquileres_obj_list:
-                data_para_df.append({
-                    "id_alquiler": alq.id_alquiler,
-                    "fecha_inicio": alq.fecha_inicio,
-                    "fecha_fin": alq.fecha_fin,
-                    "costo_total": alq.costo_total,
-                    "fecha_registro": alq.fecha_registro,
-                    # Accedemos a los atributos de los objetos compuestos
-                    "id_empleado": alq.empleado.id_empleado,
-                    "patente": alq.vehiculo.patente,
-                    "id_cliente": alq.cliente.id_cliente
-                })
-            
-            # 3. Crear DataFrame desde la lista de diccionarios
-            df = pd.DataFrame(data_para_df)
+        # 2. "Aplanar" los objetos para el DataFrame
+        data_para_df = []
+        for alq in alquileres_obj_list:
+            data_para_df.append({
+                "ID Alquiler": alq.id_alquiler,
+                "Fecha Inicio": alq.fecha_inicio.strftime("%d/%m/%Y"),
+                "Fecha Fin": alq.fecha_fin.strftime("%d/%m/%Y"),
+                "Costo Total ($)": alq.costo_total,
+                "Fecha Registro": alq.fecha_registro.strftime("%d/%m/%Y"),
+                "ID Empleado": alq.empleado.id_empleado,
+                "Patente Vehículo": alq.vehiculo.patente,
+                "Vehículo": f"{alq.vehiculo.marca} {alq.vehiculo.modelo}",
+                "ID Cliente": alq.cliente.id_cliente
+            })
+        
+        df = pd.DataFrame(data_para_df)
+        
+        # (Aseguramos el orden de columnas deseado)
+        columnas_ordenadas = [
+            "ID Alquiler", "Fecha Inicio", "Fecha Fin", "Patente Vehículo", 
+            "Vehículo", "Costo Total ($)", "ID Empleado", "Fecha Registro"
+        ]
+        df = df[columnas_ordenadas]
 
-            # 4. Formatear fechas (tu lógica estaba bien, solo ajustamos el `to_datetime`)
-            for col in ["fecha_inicio", "fecha_fin", "fecha_registro"]:
-                df[col] = pd.to_datetime(df[col]).dt.strftime("%d/%m/%Y")
+        # 3. Exportar PDF
+        if formato.lower() == "pdf":
+            ruta_guardar, url_retorno = self._generar_ruta_reporte(f"alquileres_cliente_{cliente_id}")
             
-            # ... (El resto de tu lógica de renombrar columnas y generar PDF/Excel está perfecta) ...
-            
-            df.rename(columns={
-                 "id_alquiler": "ID Alquiler",
-                 # ... (etc) ...
-            }, inplace=True)
-            
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre_base = f"reporte_alquileres_cliente_{cliente_id}_{timestamp}"
+            fig, ax = plt.subplots(figsize=(11.7, 8.3)) # Tamaño A4 horizontal
+            fig.patch.set_facecolor("white")
+            ax.axis("off")
 
-            if formato.lower() == "pdf":
-                # ... (Tu lógica de Matplotlib es correcta) ...
-                archivo_pdf = f"{nombre_base}.pdf"
-                fig, ax = plt.subplots(figsize=(11, 6))
-                # ...
-                with PdfPages(archivo_pdf) as pdf:
-                   pdf.savefig(fig, bbox_inches="tight", facecolor="white")
-                plt.close(fig)
-                return archivo_pdf
-            # ... (Lógica de Excel) ...
+            fig.text(0.5, 0.93, f"REPORTE DE ALQUILERES - CLIENTE {cliente_id}",
+                     ha="center", fontsize=18, color=COLOR_PRINCIPAL, fontweight="bold")
             
-        except (RecursoNoEncontradoError, Exception) as e:
-            # Pasa la excepción al controlador
-            raise e
+            # (Tu lógica de tabla Matplotlib)
+            tabla = ax.table(cellText=df.values, colLabels=df.columns,
+                             cellLoc="center", loc="center")
+            tabla.auto_set_font_size(False)
+            tabla.set_fontsize(9)
+            tabla.scale(1, 1.2)
+            
+            # (Estilos de celda)
+            for (row, _), cell in tabla.get_celld().items():
+                 if row == 0:
+                     cell.set_facecolor(COLOR_PRINCIPAL)
+                     cell.set_text_props(color="white", fontweight="bold")
+                 elif row % 2 == 0:
+                     cell.set_facecolor(COLOR_TERCERARIO)
+                 cell.set_edgecolor(COLOR_BORDES)
+
+            with PdfPages(ruta_guardar) as pdf:
+               pdf.savefig(fig, bbox_inches="tight", facecolor="white")
+            plt.close(fig)
+            
+            return url_retorno # Devolvemos la URL web
+        else:
+            raise DatosInvalidosError("Formato no soportado. Use 'pdf'.")
 
 
     # Reporte alquileres por periodo
@@ -102,32 +134,45 @@ class ReporteService:
         if anio is None:
             anio = datetime.now().year
         elif anio > datetime.now().year:
-            # ¡Mejor POO! Levantar una excepción que el controlador entienda.
             raise DatosInvalidosError("Año inválido. Debe ser igual o anterior al actual.")
         
-        # 1. Obtener datos (¡forma POO!)
         alquileres_obj_list = self._get_alquileres_list()
-
-        # 2. "Aplanar" los datos para el DataFrame (solo lo que necesitamos)
-        data_para_df = [{
-            "id_alquiler": alq.id_alquiler,
-            "fecha_inicio": alq.fecha_inicio # Ya es un objeto 'date'
-        } for alq in alquileres_obj_list]
         
+        data_para_df = [{"fecha_inicio": alq.fecha_inicio, "id_alquiler": alq.id_alquiler} 
+                        for alq in alquileres_obj_list]
         df = pd.DataFrame(data_para_df)
         
-        # 3. Procesar DataFrame (tu lógica es correcta)
         df["fecha_inicio"] = pd.to_datetime(df["fecha_inicio"])
         df = df[df["fecha_inicio"].dt.year == anio]
 
         if df.empty:
             raise RecursoNoEncontradoError(f"No hay alquileres registrados en {anio}.")
 
-        # ... (El resto de tu lógica de groupby y Matplotlib está perfecta) ...
-        # ...
-        archivo_pdf = f"reporte_alquileres_periodo_{frecuencia.lower()}_{anio}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        # ...
-        return archivo_pdf
+        # (Tu lógica de groupby)
+        if frecuencia.upper() == "M":
+             conteo = df.groupby(df["fecha_inicio"].dt.month)["id_alquiler"].count().reindex(range(1, 13), fill_value=0)
+             etiquetas_x = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+             titulo_freq = "Mensual"
+        elif frecuencia.upper() == "Q":
+             df["trimestre"] = df["fecha_inicio"].dt.to_period("Q")
+             conteo = df.groupby(df["trimestre"])["id_alquiler"].count().reindex([f'{anio}Q1', f'{anio}Q2', f'{anio}Q3', f'{anio}Q4'], fill_value=0)
+             etiquetas_x = ["Q1", "Q2", "Q3", "Q4"]
+             titulo_freq = "Trimestral"
+        else:
+             raise DatosInvalidosError("Frecuencia inválida. Use 'M' o 'Q'.")
+
+        # (Tu lógica de Matplotlib)
+        fig, ax = plt.subplots(figsize=(12, 6))
+        ax.plot(etiquetas_x, conteo.values, marker="o", linewidth=3, color=COLOR_PRINCIPAL)
+        ax.set_title(f"ALQUILERES POR PERÍODO ({titulo_freq}) - {anio}", fontsize=18, color=COLOR_PRINCIPAL, pad=20)
+        # ... (más estilos)
+        
+        # Guardar PDF y devolver URL web
+        ruta_guardar, url_retorno = self._generar_ruta_reporte(f"alquileres_periodo_{titulo_freq.lower()}_{anio}")
+        with PdfPages(ruta_guardar) as pdf:
+           pdf.savefig(fig, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return url_retorno
 
 
     # Reporte de facturación mensual
@@ -135,41 +180,40 @@ class ReporteService:
         if anio > datetime.now().year:
             raise DatosInvalidosError("Año inválido. Debe ser igual o anterior al actual.")
 
-        # 1. Obtener datos (¡forma POO!)
         alquileres_obj_list = self._get_alquileres_list()
-
-        # 2. "Aplanar" los datos para el DataFrame
-        data_para_df = [{
-            "fecha_inicio": alq.fecha_inicio, # Ya es 'date'
-            "costo_total": alq.costo_total   # Ya es 'float'
-        } for alq in alquileres_obj_list]
-
-        df = pd.DataFrame(data_para_df)
         
-        # 3. Procesar DataFrame (tu lógica es correcta)
+        data_para_df = [{"fecha_inicio": alq.fecha_inicio, "costo_total": alq.costo_total} 
+                        for alq in alquileres_obj_list]
+        df = pd.DataFrame(data_para_df)
+
         df["fecha_inicio"] = pd.to_datetime(df["fecha_inicio"])
-        df["anio"] = df["fecha_inicio"].dt.year
-        df["mes"] = df["fecha_inicio"].dt.month
-        df = df[df["anio"] == anio]
+        df = df[df["fecha_inicio"].dt.year == anio]
 
         if df.empty:
             raise RecursoNoEncontradoError(f"No se registraron alquileres durante {anio}.")
 
-        # ... (El resto de tu lógica de groupby y Matplotlib está perfecta) ...
+        facturacion = df.groupby(df["fecha_inicio"].dt.month)["costo_total"].sum().reindex(range(1, 13), fill_value=0)
+
+        # (Tu lógica de Matplotlib para gráfico de barras)
+        fig, ax = plt.subplots(figsize=(11, 6))
+        # ... (barras, etiquetas, etc.)
+        ax.set_title(f"FACTURACIÓN MENSUAL DE ALQUILERES - {anio}", fontsize=18, color=COLOR_PRINCIPAL, fontweight="bold")
         # ...
-        archivo_pdf = f"reporte_facturacion_mensual_{anio}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        # ...
-        return archivo_pdf
+        
+        # Guardar PDF y devolver URL web
+        ruta_guardar, url_retorno = self._generar_ruta_reporte(f"facturacion_mensual_{anio}")
+        with PdfPages(ruta_guardar) as pdf:
+           pdf.savefig(fig, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return url_retorno
 
 
     # Reporte de vehículos más alquilados
     def generar_reporte_vehiculos_mas_alquilados(self, limite=None):
         
-        # 1. Obtener datos (¡forma POO!)
         alquileres_obj_list = self._get_alquileres_list()
         
-        # 2. Acceso POO limpio a los datos
-        # Accedemos al objeto 'vehiculo' dentro de 'alquiler'
+        # Acceso POO limpio
         patentes = [alq.vehiculo.patente for alq in alquileres_obj_list]
         conteo = pd.Series(patentes).value_counts().reset_index()
         conteo.columns = ["patente", "cantidad"]
@@ -177,21 +221,37 @@ class ReporteService:
         vehiculos_info = []
         for _, fila in conteo.iterrows():
             patente, cantidad = fila["patente"], fila["cantidad"]
-            
-            # 3. Usar el VehiculoService refactorizado
             try:
-                # El servicio devuelve un objeto Vehiculo
                 vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
-                # Acceso directo a atributos (¡POO!)
-                nombre = f"{vehiculo.marca} {vehiculo.modelo} ({patente})"
+                nombre = f"{vehiculo.marca} {vehiculo.modelo}\n({patente})" # Usamos \n para mejor layout en gráfico
             except RecursoNoEncontradoError:
-                # El vehículo fue alquilado pero ya no existe en la BDD
                 nombre = f"Desconocido ({patente})"
-
             vehiculos_info.append({"Vehículo": nombre, "Cantidad": cantidad})
 
-        # ... (El resto de tu lógica de DataFrame, límite y Matplotlib está perfecta) ...
+        df = pd.DataFrame(vehiculos_info).sort_values(by="Cantidad", ascending=False)
+        
+        if limite:
+            # Agrupar los "Otros"
+            if len(df) > limite:
+                df_top = df.head(limite - 1)
+                df_otros = pd.DataFrame({
+                    "Vehículo": [f"Otros ({len(df) - limite + 1})"],
+                    "Cantidad": [df.iloc[limite-1:]["Cantidad"].sum()]
+                })
+                df = pd.concat([df_top, df_otros], ignore_index=True)
+            else:
+                df = df.head(limite)
+
+        # (Tu lógica de Matplotlib para gráfico de torta)
+        fig, ax = plt.subplots(figsize=(10, 8))
+        # ... (ax.pie, etc.)
+        ax.set_title(f"VEHÍCULOS MÁS ALQUILADOS (Top {limite})" if limite else "VEHÍCULOS MÁS ALQUILADOS", 
+                     fontsize=18, fontweight="bold", color=COLOR_PRINCIPAL, pad=20)
         # ...
-        archivo_pdf = f"reporte_vehiculos_mas_alquilados_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
-        # ...
-        return archivo_pdf
+
+        # Guardar PDF y devolver URL web
+        ruta_guardar, url_retorno = self._generar_ruta_reporte(f"vehiculos_top{limite}" if limite else "vehiculos_todos")
+        with PdfPages(ruta_guardar) as pdf:
+           pdf.savefig(fig, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+        return url_retorno

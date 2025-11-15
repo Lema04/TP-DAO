@@ -1,4 +1,4 @@
-// --- /frontend/src/components/RegistroAlquiler.js (¡ARREGLADO!) ---
+// --- /frontend/src/components/RegistroAlquiler.js (¡CON VALIDACIÓN DE FECHA!) ---
 
 import React, { useState, useEffect } from 'react';
 
@@ -11,26 +11,29 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
     fecha_fin: '',
     costo_total: 0.0,
   });
+  // ... (tus otros estados: vehiculos, clientes, empleados, mensaje, esError)
   const [vehiculos, setVehiculos] = useState([]);
   const [clientes, setClientes] = useState([]);
   const [empleados, setEmpleados] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [esError, setEsError] = useState(false);
 
-  // --- CAMBIO 1: Lógica de Fetch (Dropdowns) ---
+  // --- ¡NUEVO! OBTENER FECHA DE HOY ---
+  // Obtenemos la fecha de "hoy" en formato YYYY-MM-DD,
+  // que es el formato que el atributo 'min' del input[type=date] espera.
+  const hoy = new Date().toISOString().split('T')[0];
+  // ------------------------------------
+
+  // ... (tu useEffect para cargar los dropdowns está perfecto) ...
   useEffect(() => {
     const fetchData = async (endpoint, setter) => {
       try {
         const response = await fetch(`${apiBaseUrl}/${endpoint}`);
-        const data = await response.json(); // Leer JSON (éxito o error)
-
+        const data = await response.json(); 
         if (!response.ok) {
           throw new Error(data.error || `Error cargando ${endpoint}`);
         }
-        
-        // Éxito: 'data' ES el array de objetos [ {obj1}, {obj2}, ... ]
-        setter(data); // Guardamos el array de objetos
-        
+        setter(data);
       } catch (error) {
         console.error(`Error cargando ${endpoint}:`, error);
         setMensaje(`Error cargando ${endpoint}: ${error.message}`);
@@ -43,11 +46,12 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
     fetchData('empleados', setEmpleados);
   }, [apiBaseUrl]);
 
+
   const handleChange = (e) => {
     setDatos({ ...datos, [e.target.name]: e.target.value });
   };
 
-  // --- CAMBIO 3: Lógica de Submit (Crear) ---
+  // ... (tu handleSubmit refactorizado está perfecto) ...
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMensaje('Procesando alquiler...');
@@ -60,16 +64,14 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         body: JSON.stringify(datos),
       });
 
-      const result = await response.json(); // Leer JSON (éxito o error)
-
+      const result = await response.json();
       if (!response.ok) {
-        // El backend envió 4xx o 5xx. 'result' es {"error": "..."}
+        // ¡Esto ahora capturará el "ValueError" de tu backend!
+        // Ej: "Error: Las fechas de inicio y fin no pueden ser anteriores a hoy."
         throw new Error(result.error || `Error ${response.status}`);
       }
       
-      // Éxito (201 Created): 'result' es el objeto Alquiler completo
       setMensaje(`¡Alquiler registrado con ID: ${result.id_alquiler}!`);
-      // Limpiamos el formulario
       setDatos({
         id_cliente: '', patente: '', id_empleado: '',
         fecha_inicio: '', fecha_fin: '', costo_total: 0.0
@@ -82,17 +84,17 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
     }
   };
 
+
   return (
     <div className="form-container">
       <h2>Registro de Nuevo Alquiler</h2>
       <form onSubmit={handleSubmit}>
         
-        {/* --- CAMBIO 2: Renderizado de Dropdowns (Objetos) --- */}
+        {/* ... (Tus <select> para cliente, empleado y vehiculo están perfectos) ... */}
         
         <label>Cliente:</label>
         <select name="id_cliente" onChange={handleChange} required value={datos.id_cliente}>
           <option value="">Seleccione Cliente</option>
-          {/* 'clientes' es un array de OBJETOS */}
           {clientes.map(c => (
             <option key={c.id_cliente} value={c.id_cliente}>
               {c.nombre} {c.apellido} (DNI: {c.dni})
@@ -102,21 +104,19 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
         
         <label>Empleado:</label>
         <select name="id_empleado" onChange={handleChange} required value={datos.id_empleado}>
-          <option value="">Seleccione Empleado</option>
-          {/* 'empleados' es un array de OBJETOS */}
-          {empleados.map(e => (
-            <option key={e.id_empleado} value={e.id_empleado}>
-              {e.nombre} {e.apellido} (Rol: {e.puesto})
-            </option>
-          ))}
+           <option value="">Seleccione Empleado</option>
+           {empleados.map(e => (
+             <option key={e.id_empleado} value={e.id_empleado}>
+               {e.nombre} {e.apellido} (Rol: {e.puesto})
+             </option>
+           ))}
         </select>
 
         <label>Vehículo (Patente):</label>
         <select name="patente" onChange={handleChange} required value={datos.patente}>
           <option value="">Seleccione Vehículo Disponible</option>
-          {/* 'vehiculos' es un array de OBJETOS */}
           {vehiculos
-            .filter(v => v.estado.toLowerCase() === 'disponible') // Acceso por propiedad
+            .filter(v => v.estado.toLowerCase() === 'disponible')
             .map(v => (
               <option key={v.patente} value={v.patente}>
                 {v.marca} {v.modelo} ({v.patente})
@@ -124,18 +124,33 @@ const RegistroAlquiler = ({ apiBaseUrl }) => {
             ))}
         </select>
 
+        {/* --- ¡CAMBIO: VALIDACIÓN DE FECHA EN FRONTEND! --- */}
         <label>Fecha Inicio:</label>
-        <input type="date" name="fecha_inicio" onChange={handleChange} required value={datos.fecha_inicio} />
+        <input 
+          type="date" 
+          name="fecha_inicio" 
+          onChange={handleChange} 
+          required 
+          value={datos.fecha_inicio}
+          min={hoy} 
+        />
 
         <label>Fecha Fin:</label>
-        <input type="date" name="fecha_fin" onChange={handleChange} required value={datos.fecha_fin} />
+        <input 
+          type="date" 
+          name="fecha_fin" 
+          onChange={handleChange} 
+          required 
+          value={datos.fecha_fin}
+          min={datos.fecha_inicio || hoy} 
+        />
+        {/* ------------------------------------- */}
         
         <label>Costo Total:</label>
         <input type="number" name="costo_total" onChange={handleChange} required value={datos.costo_total} min="0" step="0.01" />
 
         <button type="submit">Registrar Alquiler</button>
       </form>
-      {/* Mensaje de éxito o error */}
       {mensaje && <p className={`mensaje ${esError ? 'error' : 'success'}`}>{mensaje}</p>}
     </div>
   );

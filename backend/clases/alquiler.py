@@ -17,6 +17,8 @@ class Alquiler:
             raise ValueError("Un alquiler debe tener cliente, empleado y vehículo asociados.")
         if fecha_fin < fecha_inicio:
             raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
+        if fecha_inicio < date.today() or fecha_fin < date.today():
+            raise ValueError("La fecha debe ser posterior al dia de hoy")
 
         self.id_alquiler = id_alquiler
         self.fecha_inicio = fecha_inicio
