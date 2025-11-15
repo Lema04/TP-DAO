@@ -29,13 +29,16 @@ const Reportes = ({ apiBaseUrl }) => {
         throw new Error(data.error || `Error ${response.status}`);
       }
 
-      // Éxito: 'data' es {"mensaje": "...", "path": "static/reportes/..."}
+      // Éxito: 'data' es {"mensaje": "...", "ruta_archivo": "static/reportes/..."}
       
       setMensaje(data.mensaje || "Reporte generado con éxito.");
       setEsError(false);
       
-      // Construimos la URL completa para el link y para abrir
-      const urlReporte = `${apiBaseUrl}/${data.path}`;
+      // ==========================================
+      // ¡alquileres por vehiculo usaba ruta_archivo, pero vehiculos mas alquilados usaba path entonces habia conflictos
+      // ==========================================
+      const key = data.ruta_archivo ? "ruta_archivo" : "path";
+      const urlReporte = `${apiBaseUrl}/${data[key]}`;
       setLinkReporte(urlReporte); 
 
       // Abrir el PDF en una nueva pestaña
@@ -57,7 +60,7 @@ const Reportes = ({ apiBaseUrl }) => {
           setEsError(true);
           return;
         }
-        fetchReporte(`/reportes/alquileres_por_cliente/${idCliente}`); 
+        fetchReporte(`/reportes/cliente/${idCliente}`); 
         break;
         
       case 'vehiculos_mas_alquilados':

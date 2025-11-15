@@ -94,7 +94,7 @@ const GestionMultas = ({ apiBaseUrl }) => {
           {alquileres.map(alq => (
             <option key={alq.id_alquiler} value={alq.id_alquiler}>
               {/* Mostramos info del vehículo y cliente (gracias a POO) */}
-              Alq. {alq.id_alquiler} (Vehículo: {alq.vehiculo.patente} / Cliente: {alq.cliente.dni})
+              Alq. {alq.id_alquiler} (Vehículo: {alq.vehiculo.patente} / Cliente: {alq.cliente.dni}, {alq.cliente.apellido})
             </option>
           ))}
         </select>
