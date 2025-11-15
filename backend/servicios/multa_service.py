@@ -1,93 +1,125 @@
-from datetime import date
+# --- Archivo: servicios/multa_service.py ---
 
+from datetime import date
 from clases.multa import MultaDano
-from clases.alquiler import Alquiler
 from Crud.multa_crud import MultaCRUD
-from Crud.alquiler_crud import AlquilerCRUD 
-from servicios.alquiler_service import AlquilerService
+from servicios.alquiler_service import AlquilerService # ¡Usamos el servicio!
+from servicios.excepciones import (
+    ErrorDeAplicacion, 
+    RecursoNoEncontradoError, 
+    DatosInvalidosError
+)
 
 class MultaService:
     def __init__(self):
         self.multa_dao = MultaCRUD()
-        self.alquiler_dao = AlquilerCRUD()
+        # El servicio de Multa "usa un" servicio de Alquiler
         self.alquiler_service = AlquilerService() 
 
-    # Crear una nueva multa por daño
     def crear_multa(self, datos):
         """
-        datos: dict con claves
-        { 'id_alquiler', 'descripcion', 'monto', 'fecha_incidente' }
+        Crea una nueva multa por daño.
+        Retorna: El objeto MultaDano recién creado.
         """
         try:
-            # 1. Buscamos la fila simple del alquiler
+            # 1. ¡FORMA CORRECTA! Le pedimos el objeto Alquiler al AlquilerService.
             id_alquiler = datos.get('id_alquiler')
-            fila_alquiler_simple = self.alquiler_dao.buscar_por_id(id_alquiler)
-            if not fila_alquiler_simple:
-                 raise ValueError("Alquiler no encontrado.")
+            if not id_alquiler:
+                raise DatosInvalidosError("El 'id_alquiler' es obligatorio.")
             
-            # 2. Ensamblamos el objeto Alquiler completo
-            cliente = self.alquiler_service.cliente_dao.buscar_por_id(fila_alquiler_simple[7])
-            empleado = self.alquiler_service.empleado_dao.buscar_por_id(fila_alquiler_simple[5])
-            vehiculo = self.alquiler_service.vehiculo_dao.buscar_por_id(fila_alquiler_simple[6])
+            # El AlquilerService ya sabe cómo "ensamblar" un Alquiler
+            # y levanta RecursoNoEncontradoError si no existe.
+            alquiler_obj = self.alquiler_service.buscar_alquiler(id_alquiler)
 
-            alquiler_obj = Alquiler(
-                id_alquiler=fila_alquiler_simple[0],
-                fecha_inicio=fila_alquiler_simple[1],
-                fecha_fin=fila_alquiler_simple[2],
-                costo_total=fila_alquiler_simple[3],
-                fecha_registro=fila_alquiler_simple[4],
-                empleado=empleado,
-                vehiculo=vehiculo,
-                cliente=cliente
-            )
+            # 2. Validamos los datos crudos del JSON
+            monto_raw = datos.get('monto')
+            fecha_str = datos.get('fecha_incidente')
+            if monto_raw is None or not fecha_str:
+                raise DatosInvalidosError("El 'monto' y 'fecha_incidente' son obligatorios.")
 
-            # 3. Ahora sí, creamos la Multa
+            # 3. Creamos el objeto Multa (esto valida la lógica interna)
             multa = MultaDano(
-                id_multa=None,
+                id_multa=None, # Es autoincremental
                 descripcion=datos.get('descripcion', '').strip(),
-                monto=float(datos.get('monto', 0.0)),
-                fecha_incidente=date.fromisoformat(datos.get('fecha_incidente')),
-                alquiler=alquiler_obj
+                monto=float(monto_raw),
+                fecha_incidente=date.fromisoformat(fecha_str),
+                alquiler=alquiler_obj # ¡Pasamos el objeto completo!
             )
             
+            # 4. Guardamos y retornamos el objeto recién creado
             nuevo_id = self.multa_dao.crear_multa(multa)
-            return {"estado": "ok", "mensaje": f"Multa creada con ID {nuevo_id}."}
+            return self.multa_dao.buscar_por_id(nuevo_id)
         
-        except ValueError as e:
-            return {"estado": "error", "mensaje": str(e)}
+        except (ValueError, TypeError) as e:
+            # Captura errores de float(), fromisoformat(), o del __init__
+            raise DatosInvalidosError(f"Datos inválidos: {e}")
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al crear multa: {e}"}
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al crear multa: {e}")
     
-    # Buscar multas por daño existentes por el ID de un cliente
+    def buscar_multa(self, id_multa: int):
+        """
+        Busca una multa por su ID.
+        Retorna: El objeto MultaDano.
+        Levanta: RecursoNoEncontradoError.
+        """
+        multa = self.multa_dao.buscar_por_id(id_multa)
+        if not multa:
+            raise RecursoNoEncontradoError(f"Multa con ID {id_multa} no encontrada.")
+        return multa
+
     def buscar_multas_por_id_cliente(self, id_cliente: int):
+        """ Retorna: Una lista de objetos MultaDano. """
         try:
-            multas = self.multa_dao.buscar_por_id_cliente(id_cliente)
-            return {"estado": "ok", "data": multas}
-        
+            # (Podríamos validar que el cliente exista primero)
+            return self.multa_dao.buscar_por_id_cliente(id_cliente)
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al buscar multas: {e}"}
+            raise ErrorDeAplicacion(f"Error al buscar multas por cliente: {e}")
     
-    # Buscar multas por daño existentes por la patente de un vehículo
     def buscar_multas_por_patente(self, patente: str):
+        """ Retorna: Una lista de objetos MultaDano. """
         try:
-            multas = self.multa_dao.buscar_por_patente(patente)
-            return {"estado": "ok", "data": multas}
-        
+            # (Podríamos validar que el vehículo exista primero)
+            return self.multa_dao.buscar_por_patente(patente)
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al buscar multas: {e}"}
-        
-    # def actualizar_multa(self, id_multa: int, datos):
-    #     try:
-    #         multa = self.multa_dao.obtener_por_id(id_multa)
-    #         if not multa:
-    #             return {"estado": "error", "mensaje": "Multa no encontrada."}
+            raise ErrorDeAplicacion(f"Error al buscar multas por patente: {e}")
             
-    def eliminar_multa(self, id_multa: int):
+    def actualizar_multa(self, id_multa: int, datos):
+        """
+        Actualiza una multa.
+        Retorna: El objeto MultaDano actualizado.
+        """
         try:
-            multa = self.multa_dao.obtener_por_id(id_multa)
-            if not multa:
-                return {"estado": "error", "mensaje": "Multa no encontrada."}
-            self.multa_dao.eliminar(id_multa)
-            return {"estado": "ok", "mensaje": "Multa eliminada correctamente."}
+            # 1. Buscamos el objeto existente
+            multa = self.buscar_multa(id_multa)
+
+            # 2. Actualizamos campos
+            if 'descripcion' in datos:
+                multa.descripcion = datos['descripcion']
+            if 'monto' in datos:
+                monto_raw = datos.get('monto')
+                if monto_raw is None:
+                    raise DatosInvalidosError("El 'monto' no puede ser nulo.")
+                multa.monto = float(monto_raw)
+            if 'fecha_incidente' in datos:
+                multa.fecha_incidente = date.fromisoformat(datos['fecha_incidente'])
+
+            # 3. Guardamos
+            self.multa_dao.actualizar_multa(multa)
+            return multa
+
+        except (ValueError, TypeError) as e:
+            raise DatosInvalidosError(f"Datos de actualización inválidos: {e}")
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al eliminar multa: {e}"}
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al actualizar multa: {e}")
+
+    def eliminar_multa(self, id_multa: int):
+        """ Elimina una multa. Retorna True. """
+        # 1. Aseguramos que existe (levanta 404 si no)
+        self.buscar_multa(id_multa) 
+        try:
+            self.multa_dao.eliminar_multa(id_multa)
+            return True
+        except Exception as e:
+            raise ErrorDeAplicacion(f"Error al eliminar multa: {e}")

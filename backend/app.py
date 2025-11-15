@@ -5,6 +5,7 @@ from servicios.vehiculo_service import VehiculoService
 from servicios.alquiler_service import AlquilerService
 from servicios.reserva_service import ReservaService
 from servicios.multa_service import MultaService
+from servicios.mantenimiento_service import MantenimientoService
 from flask_cors import CORS
 # agg para reportes
 from servicios.reporte_service import ReporteService #
@@ -32,7 +33,7 @@ servicio_reserva = ReservaService()
 servicio_multa = MultaService()
 
 servicio_reporte = ReporteService() #
-
+servicio_mantenimiento = MantenimientoService()
 servicio_usuario = UsuarioService() #
 
 
@@ -42,6 +43,96 @@ def principal():
     return "TP-DAO-2025"
 
 
+
+# --- Archivo: app.py ---
+
+# (Asegúrate de que 'servicio_multa = MultaService()' esté instanciado arriba)
+
+# =============================
+#     MULTAS CRUD (¡ARREGLADO!)
+# =============================
+
+@app.route("/multas", methods=["GET"])
+def listar_multas():
+    """
+    Lista multas, filtrando por 'id_cliente' o 'patente' si se proveen.
+    Ej: GET /multas
+    Ej: GET /multas?id_cliente=1
+    Ej: GET /multas?patente=ABC123
+    """
+    try:
+        id_cliente = request.args.get('id_cliente', type=int)
+        patente = request.args.get('patente', type=str)
+        
+        if id_cliente:
+            multas = servicio_multa.buscar_multas_por_id_cliente(id_cliente)
+        elif patente:
+            multas = servicio_multa.buscar_multas_por_patente(patente)
+        else:
+            # Si no hay filtros, podríamos listar todas (si tuvieras el método)
+            # multas = servicio_multa.listar_multas() 
+            # Por ahora, devolvemos lista vacía si no hay filtro
+            multas = [] 
+        
+        return jsonify([m.a_dict() for m in multas]), 200
+    
+    except RecursoNoEncontradoError as e: # Si la patente o cliente no existen
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/multas/<int:id_multa>", methods=["GET"])
+def obtener_multa(id_multa):
+    try:
+        multa = servicio_multa.buscar_multa(id_multa)
+        return jsonify(multa.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/multas", methods=["POST"])
+def crear_multa():
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+            
+        nueva_multa = servicio_multa.crear_multa(datos)
+        return jsonify(nueva_multa.a_dict()), 201
+    
+    except (DatosInvalidosError, RecursoNoEncontradoError) as e:
+        # Error (fechas mal, monto 0, alquiler no existe)
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/multas/<int:id_multa>", methods=["PUT"])
+def actualizar_multa(id_multa):
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+            
+        multa_actualizada = servicio_multa.actualizar_multa(id_multa, datos)
+        return jsonify(multa_actualizada.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/multas/<int:id_multa>", methods=["DELETE"])
+def eliminar_multa(id_multa):
+    try:
+        servicio_multa.eliminar_multa(id_multa)
+        return jsonify({"mensaje": f"Multa {id_multa} eliminada."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 409
 # =============================
 #     CLIENTES CRUD
 # =============================
@@ -148,31 +239,74 @@ def eliminar_cliente(id_cliente):
         return jsonify({"error": str(e)}), 500
 
 
+# --- Archivo: app.py ---
+
 # =============================
-#     EMPLEADOS CRUD
+#     EMPLEADOS CRUD (¡ARREGLADO!)
 # =============================
 
 @app.route("/empleados", methods=["GET"])
 def listar_empleados():
-    return jsonify(servicio_empleado.listar_empleados())
+    try:
+        empleados = servicio_empleado.listar_empleados()
+        # Usamos .a_dict() que ya existe en la clase Empleado
+        return jsonify([e.a_dict() for e in empleados]), 200
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/empleados/<int:id_empleado>", methods=["GET"])
 def obtener_empleado(id_empleado):
-    return jsonify(servicio_empleado.buscar_empleado(id_empleado))
+    try:
+        empleado = servicio_empleado.buscar_empleado(id_empleado)
+        return jsonify(empleado.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/empleados", methods=["POST"])
 def crear_empleado():
-    return jsonify(servicio_empleado.crear_empleado(request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+            
+        nuevo_empleado = servicio_empleado.crear_empleado(datos)
+        return jsonify(nuevo_empleado.a_dict()), 201
+    
+    except DatosInvalidosError as e:
+        # Error de validación (DNI duplicado, etc.)
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/empleados/<int:id_empleado>", methods=["PUT"])
 def actualizar_empleado(id_empleado):
-    return jsonify(servicio_empleado.actualizar_empleado(id_empleado, request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+            
+        empleado_actualizado = servicio_empleado.actualizar_empleado(id_empleado, datos)
+        return jsonify(empleado_actualizado.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/empleados/<int:id_empleado>", methods=["DELETE"])
 def eliminar_empleado(id_empleado):
-    return jsonify(servicio_empleado.eliminar_empleado(id_empleado))
-
-
+    try:
+        servicio_empleado.eliminar_empleado(id_empleado)
+        return jsonify({"mensaje": f"Empleado {id_empleado} eliminado."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        # Ej: No se puede borrar, está en un alquiler (Error de Foreign Key)
+        return jsonify({"error": str(e)}), 409 # 409 Conflict
 # --- Archivo: app.py ---
 
 # =============================
@@ -358,143 +492,336 @@ def eliminar_alquiler(id_alquiler):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
 
+# --- Archivo: app.py ---
+
+# (Asegúrate de que 'servicio_reserva = ReservaService()' esté instanciado arriba)
+
 # =============================
-#     RESERVAS CRUD
+#     RESERVAS CRUD (¡ARREGLADO!)
 # =============================
 
 @app.route("/reservas", methods=["GET"])
 def listar_reservas():
-    return jsonify(servicio_reserva.listar_reservas())
+    try:
+        reservas = servicio_reserva.listar_reservas()
+        return jsonify([r.a_dict() for r in reservas]), 200
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/reservas/<int:id_reserva>", methods=["GET"])
 def obtener_reserva(id_reserva):
-    return jsonify(servicio_reserva.buscar_reserva(id_reserva))
+    try:
+        reserva = servicio_reserva.buscar_reserva(id_reserva)
+        return jsonify(reserva.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/reservas", methods=["POST"])
 def crear_reserva():
-    return jsonify(servicio_reserva.crear_reserva(request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+            
+        nueva_reserva = servicio_reserva.crear_reserva(datos)
+        return jsonify(nueva_reserva.a_dict()), 201
+    
+    except (DatosInvalidosError, RecursoNoEncontradoError) as e:
+        # Error (fechas mal, cliente o vehiculo no existe)
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/reservas/<int:id_reserva>", methods=["PUT"])
 def actualizar_reserva(id_reserva):
-    return jsonify(servicio_reserva.actualizar_reserva(id_reserva, request.get_json()))
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+            
+        reserva_actualizada = servicio_reserva.actualizar_reserva(id_reserva, datos)
+        return jsonify(reserva_actualizada.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/reservas/<int:id_reserva>", methods=["DELETE"])
 def eliminar_reserva(id_reserva):
-    return jsonify(servicio_reserva.eliminar_reserva(id_reserva))
+    try:
+        servicio_reserva.eliminar_reserva(id_reserva)
+        return jsonify({"mensaje": f"Reserva {id_reserva} eliminada."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 409
 
 
-# =============================
-#     MULTAS CRUD
-# =============================
+# --- Archivo: app.py ---
 
-# @app.route("/multas", methods=["GET"])
-# def listar_multas():
-#     return jsonify(servicio_multa.listar_multas())
-
-@app.route("/multas/<int:id_patente>", methods=["GET"])
-def obtener_multa_por_patente(patente):
-    return jsonify(servicio_multa.buscar_multas_por_patente(patente))
-
-@app.route("/multas/<int:id_cliente>", methods=["GET"])
-def obtener_multa_por_cliente(id_cliente):
-    return jsonify(servicio_multa.buscar_multas_por_id_cliente(id_cliente))
-
-@app.route("/multas", methods=["POST"])
-def crear_multa():
-    return jsonify(servicio_multa.crear_multa(request.get_json()))
-
-@app.route("/multas/<int:id_multa>", methods=["PUT"])
-def actualizar_multa(id_multa):
-    return jsonify(servicio_multa.actualizar_multa(id_multa, request.get_json()))
-
-@app.route("/multas/<int:id_multa>", methods=["DELETE"])
-def eliminar_multa(id_multa):
-    return jsonify(servicio_multa.eliminar_multa(id_multa))
+# (Importaciones...)
+# ...
 
 # =============================
-#          REPORTES 
+#          REPORTES (¡JSON CORREGIDO!)
 # =============================
 
-# Listado detallado de alquileres por cliente 
 @app.route("/reportes/alquileres_por_cliente/<int:cliente_id>", methods=["GET"])
 def reporte_alquileres_por_cliente(cliente_id):
     try:
         archivo_path = servicio_reporte.generar_reporte_alquileres_por_cliente(cliente_id, formato="pdf")
-        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+        
+        # Éxito: Devolvemos un JSON simple con la información
+        return jsonify({
+            "mensaje": f"Reporte PDF generado para el cliente {cliente_id}",
+            "path": archivo_path
+        }), 200
+    
+    except RecursoNoEncontradoError as e:
+        # Error: Devolvemos solo la clave "error"
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"estado": "error", "mensaje": str(e)})
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
-# Vehículos más alquilados 
 @app.route("/reportes/vehiculos_mas_alquilados", methods=["GET"])
 def reporte_vehiculos_mas_alquilados():
     try:
-        # Aquí se podría pasar el límite por query param, pero se usa un límite por defecto para el servicio.
-        archivo_path = servicio_reporte.generar_reporte_vehiculos_mas_alquilados(limite=5) 
-        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+        limite = request.args.get('limite', type=int, default=5)
+        archivo_path = servicio_reporte.generar_reporte_vehiculos_mas_alquilados(limite=limite) 
+        
+        return jsonify({
+            "mensaje": f"Reporte de vehículos más alquilados (Top {limite}) generado.",
+            "path": archivo_path
+        }), 200
+    
+    except RecursoNoEncontradoError as e:
+         return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"estado": "error", "mensaje": str(e)})
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
-# Estadística de facturación mensual en gráfico de barras 
 @app.route("/reportes/facturacion_mensual", methods=["GET"])
 def reporte_facturacion_mensual():
     try:
-        # Recibe el año como parámetro de consulta (query param)
         anio = request.args.get('anio', type=int, default=datetime.now().year)
-        
         archivo_path = servicio_reporte.generar_reporte_facturacion_mensual(anio)
-        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+        
+        return jsonify({
+            "mensaje": f"Reporte de facturación mensual para {anio} generado.",
+            "path": archivo_path
+        }), 200
+    
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"estado": "error", "mensaje": str(e)})
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
-# Alquileres por período (mes, trimestre) 
 @app.route("/reportes/alquileres_por_periodo", methods=["GET"])
 def reporte_alquileres_por_periodo():
     try:
-        # Recibe la frecuencia (M o Q) y el año como parámetros de consulta
-        frecuencia = request.args.get('frecuencia', type=str, default='M') 
+        frecuencia = request.args.get('frecuencia', type=str, default='M').upper()
         anio = request.args.get('anio', type=int, default=datetime.now().year)
         
-        archivo_path = servicio_reporte.generar_reporte_alquileres_por_periodo(frecuencia.upper(), anio)
-        return jsonify({"estado": "ok", "mensaje": f"Reporte PDF generado en: {archivo_path}"})
+        if frecuencia not in ['M', 'Q']:
+             raise DatosInvalidosError("Frecuencia inválida. Use 'M' o 'Q'.")
+             
+        archivo_path = servicio_reporte.generar_reporte_alquileres_por_periodo(frecuencia, anio)
+        
+        return jsonify({
+            "mensaje": f"Reporte de alquileres por período ({frecuencia}) para {anio} generado.",
+            "path": archivo_path
+        }), 200
+    
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
     except Exception as e:
-        return jsonify({"estado": "error", "mensaje": str(e)})
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
+# (Asegúrate de que 'servicio_mantenimiento = MantenimientoService()' esté instanciado arriba)
 
 # =============================
-#     USUARIOS / LOGIN
+#     MANTENIMIENTO CRUD (¡NUEVO Y ARREGLADO!)
 # =============================
+
+@app.route("/mantenimientos", methods=["GET"])
+def listar_mantenimientos():
+    """
+    Lista todos los mantenimientos o filtra por patente.
+    Ej: GET /mantenimientos
+    Ej: GET /mantenimientos?patente=ABC123
+    """
+    try:
+        patente = request.args.get('patente')
+        if patente:
+            mantenimientos = servicio_mantenimiento.buscar_por_vehiculo(patente)
+        else:
+            mantenimientos = servicio_mantenimiento.listar_mantenimientos()
+        
+        return jsonify([m.a_dict() for m in mantenimientos]), 200
+    
+    except RecursoNoEncontradoError as e: # Si la patente no existe
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["GET"])
+def obtener_mantenimiento(id_mantenimiento):
+    try:
+        mantenimiento = servicio_mantenimiento.buscar_mantenimiento(id_mantenimiento)
+        return jsonify(mantenimiento.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/mantenimientos", methods=["POST"])
+def crear_mantenimiento():
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+            
+        nuevo_mantenimiento = servicio_mantenimiento.crear_mantenimiento(datos)
+        return jsonify(nuevo_mantenimiento.a_dict()), 201
+    
+    except (DatosInvalidosError, RecursoNoEncontradoError) as e:
+        # Error de validación (fechas mal, patente no existe)
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["PUT"])
+def actualizar_mantenimiento(id_mantenimiento):
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+            
+        mantenimiento_actualizado = servicio_mantenimiento.actualizar_mantenimiento(id_mantenimiento, datos)
+        return jsonify(mantenimiento_actualizado.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["DELETE"])
+def eliminar_mantenimiento(id_mantenimiento):
+    try:
+        servicio_mantenimiento.eliminar_mantenimiento(id_mantenimiento)
+        return jsonify({"mensaje": f"Mantenimiento {id_mantenimiento} eliminado."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 409
+
+
+# --- Archivo: app.py ---
+
+# (Asegúrate de que 'servicio_usuario = UsuarioService()' esté instanciado arriba)
+
+# =============================
+#     USUARIOS / LOGIN (¡ARREGLADO!)
+# =============================
+
+@app.route("/usuarios", methods=["GET"])
+def listar_usuarios():
+    """ Lista todos los usuarios (solo para admin, probablemente) """
+    try:
+        usuarios = servicio_usuario.listar_usuarios()
+        # .a_dict() oculta todas las contraseñas
+        return jsonify([u.a_dict() for u in usuarios]), 200
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/usuarios/<int:id_usuario>", methods=["GET"])
+def obtener_usuario(id_usuario):
+    """ Obtiene un usuario específico por ID """
+    try:
+        usuario = servicio_usuario.buscar_usuario(id_usuario)
+        return jsonify(usuario.a_dict()), 200 # .a_dict() oculta la contraseña
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/usuarios", methods=["POST"])
 def registrar_usuario():
-    datos = request.get_json()
-    return jsonify(servicio_usuario.crear_usuario(datos))
+    """ Registra un nuevo usuario """
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+        
+        nuevo_usuario = servicio_usuario.crear_usuario(datos)
+        # .a_dict() oculta la contraseña
+        return jsonify(nuevo_usuario.a_dict()), 201
+        
+    except DatosInvalidosError as e:
+        # Ej: "Usuario ya existe", "Contraseña obligatoria"
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/usuarios/<int:id_usuario>", methods=["PUT"])
+def actualizar_usuario(id_usuario):
+    """ Actualiza un usuario """
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+        
+        usuario_actualizado = servicio_usuario.actualizar_usuario(id_usuario, datos)
+        return jsonify(usuario_actualizado.a_dict()), 200 # .a_dict() oculta la contraseña
+        
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/usuarios/<int:id_usuario>", methods=["DELETE"])
+def eliminar_usuario(id_usuario):
+    """ Elimina un usuario """
+    try:
+        servicio_usuario.eliminar_usuario(id_usuario)
+        return jsonify({"mensaje": f"Usuario {id_usuario} eliminado."}), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        # Ej: Error de FK si el usuario está atado a un Empleado
+        return jsonify({"error": str(e)}), 409 # Conflict
 
 @app.route("/usuarios/login", methods=["POST"])
 def login_usuario():
-    datos = request.get_json()
-    return jsonify(servicio_usuario.autenticar_usuario(datos))
-    
-    # Llama al servicio de usuario para autenticar (asumo que tienes un método 'autenticar' o similar)
-    # try:
-        # Nota: Asumo que UsuarioService tiene un método 'autenticar'
-      # VER  resultado = servicio_usuario.autenticar_usuario(nombre_usuario, contraseña)
+    """ Autentica un usuario y devuelve datos de sesión """
+    try:
+        datos = request.get_json()
+        if not datos or not datos.get('nombre_usuario') or not datos.get('contraseña'):
+            raise DatosInvalidosError("Usuario y contraseña son requeridos.")
         
-        # if resultado.get("estado") == "ok":
-        #     # Devolvemos el rol y el ID para el frontend
-        #     usuario_data = resultado.get("data", {})
-        #     return jsonify({
-        #         "estado": "ok",
-        #         "mensaje": "Login exitoso",
-        #         "rol": usuario_data.get("rol"), # Ej: 'Gerente', 'Empleado', 'Cliente'
-        #         "id_usuario": usuario_data.get("id_usuario")
-        #     })
-        # else:
-        #     return jsonify({"estado": "error", "mensaje": resultado.get("mensaje")}), 401
-            
-    # except Exception as e:
-    #     return jsonify({"estado": "error", "mensaje": f"Error de servidor: {e}"}), 500
-      
-# =============================
+        # El servicio ya devuelve un diccionario limpio (no un objeto)
+        sesion_data = servicio_usuario.autenticar_usuario(datos)
+        
+        # Devolvemos el dict de sesión (rol, ids, etc.)
+        return jsonify(sesion_data), 200
+        
+    except DatosInvalidosError as e:
+        # 401 Unauthorized es el código correcto para login fallido
+        return jsonify({"error": str(e)}), 401 
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500# =============================
 #     MAIN
 # =============================
 

@@ -46,3 +46,13 @@ class Mantenimiento:
     # Representación legible
     def __repr__(self):
         return (f"Mantenimiento {self.id_mantenimiento} - Vehículo {self.vehiculo.patente}")
+
+    def a_dict(self):
+        return {
+            "id_mantenimiento": self.id_mantenimiento,
+            "fecha_inicio": self.fecha_inicio.isoformat() if self.fecha_inicio else None,
+            "fecha_fin": self.fecha_fin.isoformat() if self.fecha_fin else None,
+            "tipo_servicio": self.tipo_servicio,
+            "costo": self.costo,
+            "vehiculo": self.vehiculo.a_dict() if hasattr(self.vehiculo, "a_dict") else {"patente": getattr(self.vehiculo, "patente", None)}
+        }

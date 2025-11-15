@@ -45,3 +45,13 @@ class MultaDano:
     # Representación legible
     def __repr__(self):
         return (f"Multa {self.id_multa} - Alquiler {self.alquiler.id_alquiler}")
+
+    def a_dict(self):
+        return {
+            "id_multa": self.id_multa,
+            "descripcion": self.descripcion,
+            "monto": self.monto,
+            "fecha_incidente": self.fecha_incidente.isoformat() if self.fecha_incidente else None,
+            # Evitar recursión profunda: incluir sólo referencia al alquiler
+            "alquiler": {"id_alquiler": getattr(self.alquiler, "id_alquiler", None)}
+        }

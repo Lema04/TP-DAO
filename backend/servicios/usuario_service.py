@@ -1,99 +1,136 @@
+# --- Archivo: servicios/usuario_service.py ---
+
 from clases.usuario import Usuario
 from Crud.usuario_crud import UsuarioCRUD
+# Importamos las excepciones
+from servicios.excepciones import (
+    ErrorDeAplicacion, 
+    RecursoNoEncontradoError, 
+    DatosInvalidosError
+)
 
 class UsuarioService:
     def __init__(self):
         self.dao = UsuarioCRUD()
 
-    # Crear un nuevo usuario
     def crear_usuario(self, datos: dict):
+        """
+        Crea un nuevo usuario.
+        Retorna: El objeto Usuario recién creado.
+        """
         try:
+            # 1. Validar datos crudos
             campos_obligatorios = ['nombre_usuario', 'contraseña', 'rol']
             for campo in campos_obligatorios:
                 if not datos.get(campo):
-                    raise ValueError(f"El campo '{campo}' es obligatorio.")
+                    raise DatosInvalidosError(f"El campo '{campo}' es obligatorio.")
 
+            # 2. El DAO ya levanta ValueError si el usuario existe
+            
+            # 3. Crear el objeto
             usuario = Usuario(
                 id_usuario=None,
-                nombre_usuario=datos.get('nombre_usuario', '').strip(),
-                contraseña=datos.get('contraseña', '').strip(),
-                rol=datos.get('rol', '').strip(),
+                nombre_usuario=datos.get('nombre_usuario').strip(),
+                contraseña=datos.get('contraseña').strip(), # (En una app real, aquí se hashearía)
+                rol=datos.get('rol').strip(),
                 id_cliente=datos.get('id_cliente'),
                 id_empleado=datos.get('id_empleado'),
             )
 
-            existente = self.dao.buscar_por_nombre(usuario.nombre_usuario)
-            if existente:
-                return {"estado": "error", "mensaje": "Ya existe un usuario con ese nombre."}
-
+            # 4. Guardar y retornar el objeto recién creado
             nuevo_id = self.dao.crear_usuario(usuario)
-            return {"estado": "ok", "mensaje": f"Usuario creado con ID {nuevo_id}."}
+            return self.dao.buscar_por_id(nuevo_id)
 
         except ValueError as e:
-            return {"estado": "error", "mensaje": str(e)}
+            # Captura el error de "usuario duplicado" del DAO
+            raise DatosInvalidosError(str(e))
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al crear usuario: {e}"}
+            raise ErrorDeAplicacion(f"Error al crear usuario: {e}")
 
-    # Listar todos los usuarios existentes
     def listar_usuarios(self):
+        """ Retorna: Una lista de objetos Usuario. """
         try:
-            usuarios = self.dao.listar_usuarios()
-            return {"estado": "ok", "data": usuarios}
-        
+            return self.dao.listar_usuarios()
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al listar usuarios: {e}"}
+            raise ErrorDeAplicacion(f"Error al listar usuarios: {e}")
 
-    # Buscar un usuario existente por su ID
     def buscar_usuario(self, id_usuario: int):
-        try:
-            usuario = self.dao.buscar_por_id(id_usuario)
-            if usuario:
-                return {"estado": "ok", "data": usuario}
-            return {"estado": "error", "mensaje": "Usuario no encontrado."}
-        
-        except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al buscar usuario: {e}"}
+        """
+        Busca un usuario por ID.
+        Retorna: El objeto Usuario.
+        Levanta: RecursoNoEncontradoError.
+        """
+        usuario = self.dao.buscar_por_id(id_usuario)
+        if not usuario:
+            raise RecursoNoEncontradoError(f"Usuario con ID {id_usuario} no encontrado.")
+        return usuario
 
-    # Actualizar los datos de un usuario existente
     def actualizar_usuario(self, id_usuario: int, nuevos_datos: dict):
+        """
+        Actualiza un usuario.
+        Retorna: El objeto Usuario actualizado.
+        """
         try:
-            usuario = self.dao.buscar_por_id(id_usuario)
-            if not usuario:
-                return {"estado": "error", "mensaje": "Usuario no encontrado."}
+            # 1. Buscamos el objeto
+            usuario = self.buscar_usuario(id_usuario) # Levanta 404 si no existe
 
-            for clave, valor in nuevos_datos.items():
-                if hasattr(usuario, clave) and valor is not None:
-                    setattr(usuario, clave, valor.strip() if isinstance(valor, str) else valor)
+            # 2. Actualizamos campos (¡Sin setattr!)
+            if 'nombre_usuario' in nuevos_datos:
+                usuario.nombre_usuario = nuevos_datos['nombre_usuario'].strip()
+            if 'contraseña' in nuevos_datos:
+                # (Aquí se hashearía la nueva contraseña)
+                usuario.contraseña = nuevos_datos['contraseña'].strip()
+            if 'rol' in nuevos_datos:
+                usuario.rol = nuevos_datos['rol'].strip()
+            if 'id_cliente' in nuevos_datos:
+                usuario.id_cliente = nuevos_datos.get('id_cliente')
+            if 'id_empleado' in nuevos_datos:
+                usuario.id_empleado = nuevos_datos.get('id_empleado')
 
+            # 3. Guardamos
             self.dao.actualizar_usuario(usuario)
-            return {"estado": "ok", "mensaje": "Usuario actualizado correctamente."}
+            return usuario
 
         except ValueError as e:
-            return {"estado": "error", "mensaje": str(e)}
+            raise DatosInvalidosError(str(e))
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al actualizar usuario: {e}"}
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al actualizar usuario: {e}")
 
-    # Eliminar un usuario existente por su ID
     def eliminar_usuario(self, id_usuario: int):
+        """ Elimina un usuario. Retorna True. """
+        self.buscar_usuario(id_usuario) # Asegura que existe (levanta 404)
         try:
-            usuario = self.dao.buscar_por_id(id_usuario)
-            if not usuario:
-                return {"estado": "error", "mensaje": "Usuario no encontrado."}
             self.dao.eliminar_usuario(id_usuario)
-            return {"estado": "ok", "mensaje": "Usuario eliminado correctamente."}
-        
+            return True
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error al eliminar usuario: {e}"}
+            # Podría fallar por FK (si el usuario es un empleado, etc.)
+            raise ErrorDeAplicacion(f"Error al eliminar usuario: {e}")
 
-    # Autenticar un usuario por nombre y contraseña
     def autenticar_usuario(self, datos: dict):
+        """
+        Autentica un usuario.
+        Retorna: Un diccionario con datos de sesión (¡no el objeto Usuario!).
+        Levanta: DatosInvalidosError.
+        """
         try:
             nombre_usuario = datos.get("nombre_usuario", "").strip()
             contraseña = datos.get("contraseña", "").strip()
+            
             usuario = self.dao.buscar_por_nombre(nombre_usuario)
-            if usuario and usuario.contraseña == contraseña:
-                return {"estado": "ok", "mensaje": "Autenticación exitosa.", "rol": usuario.rol, "id_cliente": usuario.id_cliente, 
-                    "id_empleado": usuario.id_empleado}
-            return {"estado": "error", "mensaje": "Nombre de usuario o contraseña incorrectos."}
+            
+            # Lógica de POO: el objeto se valida a sí mismo
+            if not usuario or not usuario.check_password(contraseña):
+                 raise DatosInvalidosError("Nombre de usuario o contraseña incorrectos.")
+            
+            # ¡Éxito! Devolvemos un diccionario limpio (no un objeto)
+            return {
+                "mensaje": "Autenticación exitosa.",
+                "rol": usuario.rol,
+                "id_cliente": usuario.id_cliente, 
+                "id_empleado": usuario.id_empleado,
+                "id_usuario": usuario.id_usuario
+            }
         except Exception as e:
-            return {"estado": "error", "mensaje": f"Error en la autenticación: {e}"}
+            if isinstance(e, DatosInvalidosError): raise e
+            raise ErrorDeAplicacion(f"Error en la autenticación: {e}")

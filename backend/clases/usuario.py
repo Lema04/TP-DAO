@@ -47,3 +47,19 @@ class Usuario:
     # Representación legible
     def __repr__(self):
         return f"Usuario {self.id_usuario} - {self.nombre_usuario} ({self.rol})"
+    def check_password(self, password_plana: str) -> bool:
+        """
+        Verifica si la contraseña proporcionada coincide con la almacenada.
+        (Esto es POO: el objeto sabe cómo verificarse a sí mismo)
+        """
+        # (En una app real, usarías: return check_password_hash(self.contraseña, password_plana))
+        return self.contraseña == password_plana
+
+    def a_dict(self):
+        return {
+            "id_usuario": self.id_usuario,
+            "nombre_usuario": self.nombre_usuario,
+            "rol": self.rol,
+            "id_cliente": self.id_cliente,
+            "id_empleado": self.id_empleado
+        }

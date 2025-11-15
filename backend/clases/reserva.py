@@ -34,3 +34,13 @@ class Reserva:
         # Representación legible
         def __repr__(self):
             return f"Reserva {self.id_reserva} - Cliente {self.cliente.nombre} {self.cliente.apellido}"
+
+    def a_dict(self):
+        return {
+            "id_reserva": self.id_reserva,
+            "fecha_reserva": self.fecha_reserva.isoformat() if self.fecha_reserva else None,
+            "fecha_inicio_deseada": self.fecha_inicio_deseada.isoformat() if self.fecha_inicio_deseada else None,
+            "fecha_fin_deseada": self.fecha_fin_deseada.isoformat() if self.fecha_fin_deseada else None,
+            "cliente": self.cliente.a_dict() if hasattr(self.cliente, "a_dict") else None,
+            "vehiculo": self.vehiculo.a_dict() if self.vehiculo and hasattr(self.vehiculo, "a_dict") else None
+        }

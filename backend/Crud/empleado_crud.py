@@ -9,6 +9,29 @@ class EmpleadoCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
+    # --- ¡MEJOR PRÁCTICA: El Ensamblador! ---
+    def _build_empleado(self, tupla):
+        """
+        Método privado para "ensamblar" un objeto Empleado desde una tupla.
+        """
+        if not tupla:
+            return None
+        
+        # El ORMBase.obtener_... devuelve (pk, campo1, campo2, ...)
+        # (id_empleado, nombre, apellido, dni, puesto, id_supervisor)
+        try:
+            return Empleado(
+                id_empleado=tupla[0],
+                nombre=tupla[1],
+                apellido=tupla[2],
+                dni=tupla[3],
+                puesto=tupla[4],
+                id_supervisor=tupla[5]
+            )
+        except Exception as e:
+            print(f"Error al ensamblar Empleado desde tupla {tupla}: {e}")
+            return None
+
     # Verificar si existe un empleado con el mismo DNI
     def existe_duplicado(self, dni):
         sql = f"SELECT COUNT(*) FROM {self.tabla} WHERE dni=?"
@@ -30,16 +53,17 @@ class EmpleadoCRUD(ORMBase):
             empleado.id_supervisor
         ])
 
-    # Listar todos los empleados existentes
+# --- ¡ARREGLADO! ---
     def listar_empleados(self):
-        return self.obtener_todos()
+        """ Retorna una LISTA DE OBJETOS Empleado. """
+        tuplas = self.obtener_todos()
+        return [self._build_empleado(t) for t in tuplas if self._build_empleado(t)]
 
-    # Buscar un empleado existente por su ID
+    # --- ¡ARREGLADO! ---
     def buscar_por_id(self, id_empleado):
-        fila = self.obtener_por_id(id_empleado)
-        if fila:
-            return Empleado(*fila) 
-        return None
+        """ Retorna UN OBJETO Empleado o None. """
+        tupla = self.obtener_por_id(id_empleado)
+        return self._build_empleado(tupla) # Usamos el ensamblador
 
     # Actualizar los datos de un empleado existente
     def actualizar_empleado(self, empleado: Empleado):
