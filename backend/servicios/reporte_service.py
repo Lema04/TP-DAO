@@ -315,23 +315,41 @@ class ReporteService:
         df = pd.DataFrame(vehiculos_info).sort_values(by="Cantidad", ascending=False)
         
         titulo_subtitulo = "VEHICULOS MÁS ALQUILADOS"
-        if limite:
+        if limite and len(df) > limite:
             # Agrupar los "Otros"
             titulo_subtitulo += f" (Top {limite})"
-            if len(df) > limite:
-                df_top = df.head(limite - 1)
-                df_otros = pd.DataFrame({
-                    "Vehículo": [f"Otros ({len(df) - limite + 1})"],
-                    "Cantidad": [df.iloc[limite-1:]["Cantidad"].sum()]
-                })
-                df = pd.concat([df_top, df_otros], ignore_index=True)
-            else:
-                df = df.head(limite)
+            df_top = df.head(limite - 1)
+            df_resto = df.iloc[limite-1:]
+            suma_otros = df_resto["Cantidad"].sum()
 
-        fig, ax = plt.subplots(figsize=(7.5, 6)) # figsize está bien
-        ax.pie(df["Cantidad"], labels=df["Vehículo"], autopct="%1.1f%%", 
-               startangle=90, colors=plt.cm.Paired.colors)
-        ax.axis('equal') 
+            df_otros = pd.DataFrame({
+                "Vehículo": [f"Otros ({len(df_resto)})"],
+                "Cantidad": [suma_otros]
+            })
+            df = pd.concat([df_top, df_otros], ignore_index=True)
+        
+        elif limite:
+            titulo_subtitulo += f" (Top {limite})"
+            df = df.head(limite)
+
+        df = df.sort_values(by="Cantidad", ascending=True)
+            
+        fig, ax = plt.subplots(figsize=(7.5, 5))
+        colores = plt.cm.Paired.colors
+        barras = ax.barh(df["Vehículo"], df["Cantidad"], color=colores, edgecolor=COLOR_SECUNDARIO_MPL)
+        ax.set_xlabel("Cantidad de Alquileres")
+
+        ax.grid(axis="x", linestyle="--", alpha=0.7)
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+
+        for barra in barras:
+            ax.text(barra.get_width() + 0.1, 
+                    barra.get_y() + barra.get_height()/2,
+                    f'{barra.get_width()}',
+                    va='center', 
+                    color=COLOR_SECUNDARIO_MPL)
+        
         fig.tight_layout()
 
         buffer = BytesIO()
