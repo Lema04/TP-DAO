@@ -42,11 +42,15 @@ class AlquilerService:
             if not empleado:
                 raise RecursoNoEncontradoError(f"Empleado con ID {id_empleado} no encontrado.")
 
+            fecha_inicio = date.fromisoformat(datos.get('fecha_inicio'))
+            fecha_fin = date.fromisoformat(datos.get('fecha_fin'))
+            if fecha_inicio < date.today() or fecha_fin < date.today():
+                raise ValueError("La fecha debe ser posterior al dia de hoy")
             # 2. Crear el objeto Alquiler (esto valida fechas y costo)
             alquiler = Alquiler(
                 id_alquiler=None,
-                fecha_inicio=date.fromisoformat(datos.get('fecha_inicio')),
-                fecha_fin=date.fromisoformat(datos.get('fecha_fin')),
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
                 costo_total=float(datos.get('costo_total', 0.0)),
                 fecha_registro=date.today(),
                 cliente=cliente,

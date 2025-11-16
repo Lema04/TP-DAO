@@ -100,7 +100,9 @@ class ReservaCRUD(ORMBase):
         # (Tu código está perfecto)
         valores = [
             reserva.vehiculo.patente if reserva.vehiculo else None,
-            # ... (etc) ...
+            reserva.cliente.id_cliente,
+            reserva.fecha_reserva,
+            reserva.fecha_inicio_deseada,
             reserva.fecha_fin_deseada
         ]
         self.actualizar(reserva.id_reserva, valores)

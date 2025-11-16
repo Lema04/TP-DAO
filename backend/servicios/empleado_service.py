@@ -19,8 +19,15 @@ class EmpleadoService:
         Retorna: El objeto Empleado recién creado.
         Levanta: DatosInvalidosError, ErrorDeAplicacion.
         """
+            
         try:
-            id_supervisor = datos.get('id_supervisor')
+            id_supervisor = int(datos.get('id_supervisor')) if datos.get('id_supervisor') else None
+            if id_supervisor is not None:
+                supervisor = self.dao.buscar_por_id(id_supervisor)
+                if not supervisor:
+                    raise DatosInvalidosError(f"El supervisor con ID {id_supervisor} no existe.")
+                elif supervisor._puesto != 'Supervisor':
+                    raise DatosInvalidosError(f"El empleado con ID {id_supervisor} no es un supervisor.")
             empleado = Empleado(
                 id_empleado=None,
                 nombre=datos.get('nombre'),
@@ -28,7 +35,7 @@ class EmpleadoService:
                 dni=datos.get('dni'),
                 puesto=datos.get('puesto'),
                 # Maneja el caso de que id_supervisor sea '' (string vacío) o None
-                id_supervisor=int(id_supervisor) if id_supervisor else None 
+                id_supervisor=id_supervisor
             )
             
             # El DAO (crear_empleado) ya maneja la validación de DNI duplicado

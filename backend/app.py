@@ -42,12 +42,6 @@ servicio_usuario = UsuarioService() #
 def principal():
     return "TP-DAO-2025"
 
-
-
-# --- Archivo: app.py ---
-
-# (Asegúrate de que 'servicio_multa = MultaService()' esté instanciado arriba)
-
 # =============================
 #     MULTAS CRUD (¡ARREGLADO!)
 # =============================
@@ -133,18 +127,10 @@ def eliminar_multa(id_multa):
         return jsonify({"error": str(e)}), 404
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 409
+
 # =============================
 #     CLIENTES CRUD
 # =============================
-# --- Archivo: app.py ---
-
-# (Asegúrate de importar tus excepciones personalizadas al inicio del archivo)
-# from excepciones import ErrorDeCliente, ClienteNoEncontradoError, DatosInvalidosError
-
-# =============================
-#     CLIENTES CRUD (¡ARREGLADO!)
-# =============================
-
 @app.route("/clientes", methods=["GET"])
 def listar_clientes():
     try:
@@ -238,11 +224,8 @@ def eliminar_cliente(id_cliente):
     except ErrorDeCliente as e:
         return jsonify({"error": str(e)}), 500
 
-
-# --- Archivo: app.py ---
-
 # =============================
-#     EMPLEADOS CRUD (¡ARREGLADO!)
+#     EMPLEADOS CRUD
 # =============================
 
 @app.route("/empleados", methods=["GET"])
@@ -307,10 +290,9 @@ def eliminar_empleado(id_empleado):
     except ErrorDeAplicacion as e:
         # Ej: No se puede borrar, está en un alquiler (Error de Foreign Key)
         return jsonify({"error": str(e)}), 409 # 409 Conflict
-# --- Archivo: app.py ---
 
 # =============================
-#     VEHÍCULOS CRUD (¡ARREGLADO!)
+#     VEHÍCULOS CRUD 
 # =============================
 
 @app.route("/vehiculos", methods=["GET"])
@@ -492,12 +474,8 @@ def eliminar_alquiler(id_alquiler):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
 
-# --- Archivo: app.py ---
-
-# (Asegúrate de que 'servicio_reserva = ReservaService()' esté instanciado arriba)
-
 # =============================
-#     RESERVAS CRUD (¡ARREGLADO!)
+#     RESERVAS CRUD
 # =============================
 
 @app.route("/reservas", methods=["GET"])
@@ -560,15 +538,9 @@ def eliminar_reserva(id_reserva):
         return jsonify({"error": str(e)}), 404
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 409
-
-
-# --- Archivo: app.py ---
-
-# (Importaciones...)
-# ...
-
+    
 # =============================
-#          REPORTES (¡JSON CORREGIDO!)
+#          REPORTES 
 # =============================
 
 @app.route("/reportes/alquileres_por_cliente/<int:cliente_id>", methods=["GET"])
@@ -645,7 +617,6 @@ def reporte_alquileres_por_periodo():
     except Exception as e:
         return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
     
-# --- Ruta para Reporte de Cliente (¡!) ---
 @app.route("/reportes/cliente/<int:id_cliente>", methods=["GET"])
 def generar_reporte_cliente_route(id_cliente):
     """
@@ -671,10 +642,8 @@ def generar_reporte_cliente_route(id_cliente):
         print(f"Error al generar reporte de cliente: {e}")
         return jsonify({"error": "Error interno del servidor al generar reporte."}), 500
 
-# (Asegúrate de que 'servicio_mantenimiento = MantenimientoService()' esté instanciado arriba)
-
 # =============================
-#     MANTENIMIENTO CRUD (¡NUEVO Y ARREGLADO!)
+#     MANTENIMIENTO CRUD
 # =============================
 
 @app.route("/mantenimientos", methods=["GET"])
@@ -751,13 +720,8 @@ def eliminar_mantenimiento(id_mantenimiento):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 409
 
-
-# --- Archivo: app.py ---
-
-# (Asegúrate de que 'servicio_usuario = UsuarioService()' esté instanciado arriba)
-
 # =============================
-#     USUARIOS / LOGIN (¡ARREGLADO!)
+#     USUARIOS / LOGIN
 # =============================
 
 @app.route("/usuarios", methods=["GET"])
@@ -847,51 +811,11 @@ def login_usuario():
         # 401 Unauthorized es el código correcto para login fallido
         return jsonify({"error": str(e)}), 401 
     except ErrorDeAplicacion as e:
-        return jsonify({"error": str(e)}), 500# =============================
+        return jsonify({"error": str(e)}), 500
+
+# =============================
 #     MAIN
 # =============================
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-    # # --- PRUEBAS MANUALES ---
-    # print("\n=== PRUEBAS MANUALES DE API ===")
-
-    # with app.test_client() as client:
-    #     # Prueba 1: ruta raíz
-    #     resp = client.get("/")
-    #     print("GET / →", resp.status_code, resp.data.decode())
-
-    #     # Prueba 2: listar clientes
-    #     resp = client.get("/clientes")
-    #     print("GET /clientes →", resp.status_code, resp.json)
-
-    #     #         self.id_cliente = id_cliente
-    #     # self.nombre = nombre
-    #     # self.apellido = apellido
-    #     # self.dni = dni
-    #     # self.direccion = direccion
-    #     # self.telefono = telefono
-    #     # self.email = email
-
-
-    #     # Prueba 3: crear cliente (solo ejemplo)
-    #     nuevo_cliente = {
-    #         "nombre": "Agustín",
-    #         "apellido": "Pérez",
-    #         "dni": "40123456",
-    #         "direccion": "Utn frc",
-    #         "telefono": "12345678",
-    #         "email": "agus@example.com"
-    #     }
-    #     resp = client.post("/clientes", json=nuevo_cliente)
-    #     print("POST /clientes →", resp.status_code, resp.json)
-
-    #     # Prueba 4: listar alquileres
-    #     resp = client.get("/alquileres")
-    #     print("GET /alquileres →", resp.status_code, resp.json)
-
-    #     # Prueba 5: listar vehículos
-    #     resp = client.get("/vehiculos")
-    #     print("GET /vehiculos →", resp.status_code, resp.json)
