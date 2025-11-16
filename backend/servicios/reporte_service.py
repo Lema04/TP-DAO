@@ -1,26 +1,57 @@
-# --- Archivo: servicios/reporte_service.py ---
-
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib import rcParams
+
+import os
 from datetime import datetime
+
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+
 from servicios.alquiler_service import AlquilerService
 from servicios.vehiculo_service import VehiculoService
 from servicios.excepciones import RecursoNoEncontradoError, ErrorDeAplicacion, DatosInvalidosError
 
-# --- ¡NUEVO! Importamos 'os' para manejar carpetas ---
-import os
 
 # Configuración de Matplotlib
 rcParams["font.family"] = "sans-serif"
 rcParams["font.sans-serif"] = ["Arial", "Helvetica", "DejaVu Sans"]
-COLOR_PRINCIPAL = "#e41a1c"
-COLOR_SECUNDARIO = "#4d4d4d" 
-COLOR_TERCERARIO = "#f2f2f2"
-COLOR_BORDES = "#cccccc"
+COLOR_PRINCIPAL_MPL = "#e41a1c"
+COLOR_SECUNDARIO_MPL = "#4d4d4d" 
+COLOR_TERCERARIO_MPL = "#f2f2f2"
+COLOR_BORDES_MPL = "#cccccc"
+
+# Configuracion de ReportLab
+COLOR_PRINCIPAL = colors.HexColor("#e41a1c")
+COLOR_SECUNDARIO = colors.HexColor("#4d4d4d")
+COLOR_TERCIARIO = colors.HexColor("#f2f2f2")
+COLOR_BORDES = colors.HexColor("#cccccc")
+
+def get_estilos_reportlab():
+    estilos = getSampleStyleSheet()
+    estilos.add(ParagraphStyle(
+        name="TituloReporte",
+        fontSize=18,
+        textColor=COLOR_PRINCIPAL,
+        fontName="Helvetica-Bold",
+        alignment=1,
+        spaceAfter=12
+    ))
+    estilos.add(ParagraphStyle(
+        name="SubtituloReporte",
+        fontSize=14,
+        textColor=COLOR_SECUNDARIO,
+        fontName="Helvetica",
+        alignment=1,
+        spaceAfter=20
+    ))
+    return estilos
 
 class ReporteService:
     
@@ -36,6 +67,8 @@ class ReporteService:
         
         # --- ¡NUEVO! Aseguramos que la carpeta de reportes exista ---
         os.makedirs(self.REPORTES_DIR, exist_ok=True)
+
+        self.estilos_rl = get_estilos_reportlab()
 
     def _get_alquileres_list(self):
         """
@@ -56,10 +89,12 @@ class ReporteService:
         
         # Ruta completa del sistema para guardar el archivo
         ruta_completa_os = os.path.join(self.REPORTES_DIR, nombre_archivo)
+        print(f"Guardando reporte en: {ruta_completa_os}")
         
         # URL web que devolveremos al frontend
         # (Usamos '/' para las URLs web, independientemente del SO)
-        url_web = f"{self.STATIC_DIR}/reportes/{nombre_archivo}"
+        url_web = f"/{self.STATIC_DIR}/reportes/{nombre_archivo}"
+        print(f"URL del reporte: {url_web}")
         
         return ruta_completa_os, url_web
 
@@ -73,58 +108,64 @@ class ReporteService:
 
         # 2. "Aplanar" los objetos para el DataFrame
         data_para_df = []
+        nombre_cliente = ""
         for alq in alquileres_obj_list:
             data_para_df.append({
-                "ID Alquiler": alq.id_alquiler,
                 "Fecha Inicio": alq.fecha_inicio.strftime("%d/%m/%Y"),
                 "Fecha Fin": alq.fecha_fin.strftime("%d/%m/%Y"),
                 "Costo Total ($)": alq.costo_total,
                 "Fecha Registro": alq.fecha_registro.strftime("%d/%m/%Y"),
-                "ID Empleado": alq.empleado.id_empleado,
-                "Patente Vehículo": alq.vehiculo.patente,
+                "Empleado": alq.empleado.nombre,
+                "Patente": alq.vehiculo.patente,
                 "Vehículo": f"{alq.vehiculo.marca} {alq.vehiculo.modelo}",
-                "ID Cliente": alq.cliente.id_cliente
             })
+            if not nombre_cliente:
+                nombre_cliente = f"{alq.cliente.nombre} {alq.cliente.apellido}"
         
         df = pd.DataFrame(data_para_df)
         
         # (Aseguramos el orden de columnas deseado)
         columnas_ordenadas = [
-            "ID Alquiler", "Fecha Inicio", "Fecha Fin", "Patente Vehículo", 
-            "Vehículo", "Costo Total ($)", "ID Empleado", "Fecha Registro"
+            "Fecha Inicio", "Fecha Fin", "Patente", 
+            "Vehículo", "Costo Total ($)", "Empleado", "Fecha Registro"
         ]
         df = df[columnas_ordenadas]
 
         # 3. Exportar PDF
         if formato.lower() == "pdf":
             ruta_guardar, url_retorno = self._generar_ruta_reporte(f"alquileres_cliente_{cliente_id}")
-            
-            fig, ax = plt.subplots(figsize=(11.7, 8.3)) # Tamaño A4 horizontal
-            fig.patch.set_facecolor("white")
-            ax.axis("off")
 
-            fig.text(0.5, 0.93, f"REPORTE DE ALQUILERES - CLIENTE {cliente_id}",
-                     ha="center", fontsize=18, color=COLOR_PRINCIPAL, fontweight="bold")
-            
-            # (Tu lógica de tabla Matplotlib)
-            tabla = ax.table(cellText=df.values, colLabels=df.columns,
-                             cellLoc="center", loc="center")
-            tabla.auto_set_font_size(False)
-            tabla.set_fontsize(9)
-            tabla.scale(1, 1.2)
-            
-            # (Estilos de celda)
-            for (row, _), cell in tabla.get_celld().items():
-                 if row == 0:
-                     cell.set_facecolor(COLOR_PRINCIPAL)
-                     cell.set_text_props(color="white", fontweight="bold")
-                 elif row % 2 == 0:
-                     cell.set_facecolor(COLOR_TERCERARIO)
-                 cell.set_edgecolor(COLOR_BORDES)
+            doc = SimpleDocTemplate(ruta_guardar, pagesize=landscape(A4))
+            elementos_pdf = []
 
-            with PdfPages(ruta_guardar) as pdf:
-               pdf.savefig(fig, bbox_inches="tight", facecolor="white")
-            plt.close(fig)
+            titulo = Paragraph(f"REPORTE DE ALQUILERES", self.estilos_rl["TituloReporte"])
+            subtitulo = Paragraph(f"Cliente: {nombre_cliente}", self.estilos_rl["SubtituloReporte"])
+            elementos_pdf.append(titulo)
+            elementos_pdf.append(subtitulo)
+
+            datos_tabla = [df.columns.tolist()] + df.values.tolist()
+
+            tabla_rl = Table(datos_tabla, colWidths=[1*inch, 1*inch, 1*inch, 2*inch, 1.5*inch, 1.5*inch])
+            estilo_tabla = TableStyle([
+                ("BACKGROUND", (0, 0), (-1, 0), COLOR_PRINCIPAL),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), # Header text
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), COLOR_TERCIARIO), # Zebra striping
+                ('GRID', (0, 0), (-1, -1), 1, COLOR_BORDES),
+            ])
+
+            for i, row in enumerate(datos_tabla[1:], start=1):
+                if i%2 == 0:
+                    estilo_tabla.add("BACKGROUND", (0, i), (-1, i), colors.white)
+            
+            tabla_rl.setStyle(estilo_tabla)
+
+            elementos_pdf.append(tabla_rl)
+
+            doc.build(elementos_pdf)
             
             return url_retorno # Devolvemos la URL web
         else:
