@@ -538,6 +538,23 @@ def eliminar_reserva(id_reserva):
         return jsonify({"error": str(e)}), 404
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 409
+
+@app.route("/reservas/<int:id_reserva>/iniciar_alquiler",methods=["POST"])
+def iniciar_alquiler_desde_reserva(id_reserva):
+    try:
+        reserva = servicio_reserva.buscar_reserva(id_reserva)
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para iniciar el alquiler.")
+        alquiler = servicio_reserva.iniciar_alquiler(reserva, datos)
+        return jsonify(alquiler.a_dict()), 201
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
     
 # =============================
 #          REPORTES 

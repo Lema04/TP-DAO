@@ -6,6 +6,7 @@ from Crud.reserva_crud import ReservaCRUD
 # ¡Usamos los SERVICIOS, no los DAOs!
 from servicios.cliente_service import ClienteService
 from servicios.vehiculo_service import VehiculoService
+from servicios.alquiler_service import AlquilerService
 from servicios.excepciones import (
     ErrorDeAplicacion, 
     RecursoNoEncontradoError, 
@@ -18,6 +19,7 @@ class ReservaService:
         # El servicio de Reserva "usa" otros servicios
         self.cliente_service = ClienteService()
         self.vehiculo_service = VehiculoService()
+        self.alquiler_service = AlquilerService()
 
     def crear_reserva(self, datos):
         """
@@ -133,3 +135,28 @@ class ReservaService:
             return True
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al eliminar reserva: {e}")
+        
+    def iniciar_alquiler(self, reserva, datos):
+        """
+        Inicia el alquiler a partir de una reserva.
+        Retorna: El objeto Alquiler creado.
+        """
+
+        try:
+            reserva = reserva
+            if not reserva:
+                raise RecursoNoEncontradoError(f"Reserva con ID {reserva.id_reserva} no encontrada.")
+            empleado_id = datos.get("id_empleado")
+            if not empleado_id:
+                raise DatosInvalidosError("El 'id_empleado' es obligatorio para iniciar un alquiler.")
+            
+            costo_total = float(datos.get("costo_total", 0.0))
+            
+            alquiler = self.alquiler_service.crear_alquiler_desde_reserva(reserva, empleado_id, costo_total)
+
+            return alquiler
+        
+        except Exception as e:
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al iniciar alquiler desde reserva: {e}")
+        

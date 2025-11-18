@@ -161,3 +161,51 @@ class AlquilerService:
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al eliminar alquiler: {e}")
+        
+    
+    def crear_alquiler_desde_reserva(self, reserva, empleado_id, costo_total):
+        """
+        Crea un alquiler a partir de una reserva.
+        Retorna: El objeto Alquiler recién creado.
+        Levanta: DatosInvalidosError, RecursoNoEncontradoError, ErrorDeLogicaDeNegocio.
+        """
+
+        try:
+            empleado = self.empleado_dao.buscar_por_id(empleado_id)
+            if not empleado:
+                raise RecursoNoEncontradoError(f"Empleado con ID {empleado_id} no encontrado.")
+            
+            patente = reserva.vehiculo.patente
+            vehiculo = self.vehiculo_dao.buscar_por_id(patente)
+            if not vehiculo:
+                raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
+            
+            if vehiculo.estado.lower() != 'disponible':
+                raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} no está disponible.")
+            
+            cliente_id = reserva.cliente.id_cliente
+            cliente = self.cliente_dao.buscar_por_id(cliente_id)
+            if not cliente:
+                raise RecursoNoEncontradoError(f"Cliente con ID {cliente_id} no encontrado.")
+
+            alquiler = Alquiler(
+                id_alquiler=None,
+                fecha_fin=reserva.fecha_fin_deseada,
+                fecha_inicio=reserva.fecha_inicio_deseada,
+                costo_total=costo_total,
+                fecha_registro=date.today(),
+                cliente=cliente,
+                empleado=empleado,
+                vehiculo=vehiculo
+            )
+            nuevo_id = self.alquiler_dao.crear_alquiler(alquiler)
+            vehiculo.marcar_no_disponible()
+            self.vehiculo_dao.actualizar_vehiculo(vehiculo)
+            return self.alquiler_dao.buscar_por_id(nuevo_id)
+        
+        except (ValueError, TypeError) as e:
+            raise DatosInvalidosError(f"Datos de entrada inválidos: {e}")
+        except Exception as e:
+            if isinstance(e, ErrorDeAplicacion):
+                raise e
+            raise ErrorDeAplicacion(f"Error al crear alquiler desde reserva: {e}")
