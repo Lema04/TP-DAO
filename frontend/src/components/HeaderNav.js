@@ -5,8 +5,8 @@ import Logo from './Logo';
 
 const HeaderNav = () => {
     const { user, logout } = useAuth();
-    const location = useLocation(); // ✅ Ahora sí está en el contexto del Router
-    const navigate = useNavigate(); // ✅ Ahora sí está en el contexto del Router
+    const location = useLocation(); 
+    const navigate = useNavigate(); 
 
     // Se muestra si la ruta NO es /home Y NO es /login
     const showBackButton = location.pathname !== '/home' && location.pathname !== '/login';
@@ -18,14 +18,16 @@ const HeaderNav = () => {
                 {user ? (
                     <>
                         {showBackButton && (
-                            <button onClick={() => navigate('/home')} className="back-button">
-                                ← Volver al Menú
+                            <button onClick={() => navigate('/home')} className="header-btn">
+                                ← Volver
                             </button>
                         )}
-                        <button onClick={logout} className="logout-button">Salir</button>
+                        <button onClick={logout} className="header-btn">
+                            Salir
+                        </button>
                     </>
                 ) : (
-                    <Link to="/login">Ingresar</Link>
+                    <Link to="/login" style={{color: 'white', textDecoration: 'none', fontWeight: 'bold'}}>Ingresar</Link>
                 )}
             </nav>
         </header>

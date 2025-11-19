@@ -15,8 +15,11 @@ import RegistroCliente from './components/RegistroCliente';
 import MisAlquileres from './components/MisAlquileres';
 import RegistroUsuario from './components/RegistroUsuario';
 import MisMultas from './components/MisMultas';
+import RegistrarVehiculo from './components/RegistrarVehiculo';
+
 // URL BASE de tu API de Flask
 const API_BASE_URL = 'http://127.0.0.1:5000'; 
+
 // Componente para proteger las rutas
 const ProtectedRoute = ({ children, permissionName }) => {
   const { user, hasPermission } = useAuth();
@@ -93,6 +96,13 @@ function App() {
                 <MisMultas apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
+            
+            <Route path="/registrar-vehiculo" element={
+              <ProtectedRoute permissionName="RegistrarVehiculo">
+                <RegistrarVehiculo apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
             {/* Manejo de rutas no encontradas y redirigir al login si es necesario */}
             <Route path="*" element={user ? <h1>No tiene permisos para ver esta página.</h1> : <Navigate to="/login" replace />} />
 

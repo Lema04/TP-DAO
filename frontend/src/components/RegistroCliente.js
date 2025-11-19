@@ -1,11 +1,10 @@
-// --- /frontend/src/components/RegistroCliente.js (¡ARREGLADO!) ---
+// --- /frontend/src/components/RegistroCliente.js ---
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-// URL BASE de tu API de Flask
-const API_BASE_URL = 'http://127.0.0.1:5000'; 
-
-const RegistroCliente = () => {
+const RegistroCliente = ({ apiBaseUrl }) => {
+  const navigate = useNavigate();
   const [datosCliente, setDatosCliente] = useState({
     nombre: '',
     apellido: '',
@@ -15,7 +14,9 @@ const RegistroCliente = () => {
     email: ''
   });
   const [mensaje, setMensaje] = useState('');
-  const [esError, setEsError] = useState(false); // Estado para controlar el estilo del mensaje
+  const [esError, setEsError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [clienteRegistrado, setClienteRegistrado] = useState(null);
 
   const handleChange = (e) => {
     setDatosCliente({ ...datosCliente, [e.target.name]: e.target.value });
@@ -23,75 +24,119 @@ const RegistroCliente = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensaje('Registrando cliente...');
-    setEsError(false); // Resetea el estado de error
+    setMensaje('');
+    setEsError(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/clientes`, {
+      const response = await fetch(`${apiBaseUrl}/clientes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(datosCliente),
       });
 
-      // Leemos el JSON. El backend *siempre* devuelve JSON (éxito o error)
       const result = await response.json();
 
-      // --- ¡LÓGICA DE MANEJO DE ERRORES REFACTORIZADA! ---
       if (!response.ok) {
-        // El backend envió un 4xx o 5xx. 'result' es {"error": "..."}
-        // Lanzamos un error para que lo capture el 'catch'
         throw new Error(result.error || `Error ${response.status}`);
       }
 
-      // --- LÓGICA DE ÉXITO (response.ok fue true, ej: 201 Created) ---
-      // 'result' es el objeto Cliente: {"id_cliente": 123, "nombre": "...", ...}
+      // Éxito
+      setClienteRegistrado(result);
+      setShowModal(true);
       
-      setMensaje(`¡Cliente registrado con ID: ${result.id_cliente}!`);
-      setEsError(false); // Nos aseguramos de que no se muestre como error
       setDatosCliente({ nombre: '', apellido: '', dni: '', direccion: '', telefono: '', email: '' });
     
     } catch (error) {
-      // Captura el 'throw new Error' o un error de red (ej. servidor caído)
       setMensaje(`Error: ${error.message}`);
       setEsError(true);
       console.error('Error al registrar cliente:', error);
     }
   };
 
-  return (
-    <div className="form-container">
-      <h2>Registro de Nuevo Cliente</h2>
-      <form onSubmit={handleSubmit}>
-        
-        <label>Nombre:</label>
-        <input type="text" name="nombre" onChange={handleChange} required value={datosCliente.nombre} />
-        
-        <label>Apellido:</label>
-        <input type="text" name="apellido" onChange={handleChange} required value={datosCliente.apellido} />
-        
-        <label>DNI:</label>
-        <input type="text" name="dni" onChange={handleChange} required value={datosCliente.dni} />
-        
-        <label>Dirección:</label>
-        <input type="text" name="direccion" onChange={handleChange} value={datosCliente.direccion} />
-        
-        <label>Teléfono:</label>
-        <input type="text" name="telefono" onChange={handleChange} value={datosCliente.telefono} />
-        
-        <label>Email:</label>
-        <input type="email" name="email" onChange={handleChange} required value={datosCliente.email} />
+  const closeModal = () => {
+    setShowModal(false);
+    setClienteRegistrado(null);
+  };
 
-        <button type="submit">Registrar Cliente</button>
+  return (
+    <div className="form-card">
+      <h2 className="form-title">Registro de Nuevo Cliente</h2>
+      
+      {mensaje && <div className={esError ? 'error-message' : 'success-message'}>{mensaje}</div>}
+
+      <form onSubmit={handleSubmit} className="form-container-inner">
+        
+        <div className="form-group">
+            <label>Nombre:</label>
+            <input className="form-input" type="text" name="nombre" onChange={handleChange} required value={datosCliente.nombre} />
+        </div>
+        
+        <div className="form-group">
+            <label>Apellido:</label>
+            <input className="form-input" type="text" name="apellido" onChange={handleChange} required value={datosCliente.apellido} />
+        </div>
+        
+        <div className="form-group">
+            <label>DNI:</label>
+            <input className="form-input" type="text" name="dni" onChange={handleChange} required value={datosCliente.dni} />
+        </div>
+        
+        <div className="form-group">
+            <label>Dirección:</label>
+            <input className="form-input" type="text" name="direccion" onChange={handleChange} value={datosCliente.direccion} />
+        </div>
+        
+        <div className="form-group">
+            <label>Teléfono:</label>
+            <input className="form-input" type="text" name="telefono" onChange={handleChange} value={datosCliente.telefono} />
+        </div>
+        
+        <div className="form-group">
+            <label>Email:</label>
+            <input className="form-input" type="email" name="email" onChange={handleChange} required value={datosCliente.email} />
+        </div>
+
+        <button type="submit" className="btn-primary">Registrar Cliente</button>
       </form>
       
-      {/* El mensaje se mostrará con la clase 'error' o 'success' 
-        (Asumiendo que tienes una clase 'success' en tu CSS)
-      */}
-      {mensaje && (
-        <p className={`mensaje ${esError ? 'error' : 'success'}`}>
-          {mensaje}
-        </p>
+      <button className="btn-secondary" onClick={() => navigate('/home')}>
+        Volver al Menú
+      </button>
+
+      {/* MODAL DE ÉXITO */}
+      {showModal && clienteRegistrado && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <span className="modal-icon">👤</span>
+            <h3>¡Cliente Registrado!</h3>
+            <p>El cliente ha sido dado de alta correctamente.</p>
+            
+            <div className="modal-details">
+              <div className="detail-row">
+                <span className="detail-label">ID Cliente:</span>
+                <span className="detail-value">#{clienteRegistrado.id_cliente}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Nombre:</span>
+                <span className="detail-value">{clienteRegistrado.nombre} {clienteRegistrado.apellido}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">DNI:</span>
+                <span className="detail-value">{clienteRegistrado.dni}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Email:</span>
+                <span className="detail-value">{clienteRegistrado.email}</span>
+              </div>
+            </div>
+
+            <button className="modal-close-btn" onClick={closeModal}>
+              Aceptar
+            </button>
+          </div>
+        </div>
       )}
+
     </div>
   );
 };

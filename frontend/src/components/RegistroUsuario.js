@@ -1,3 +1,4 @@
+// --- /frontend/src/components/RegistroUsuario.js ---
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -9,10 +10,11 @@ const RegistroUsuario = () => {
   const [datosRegistro, setDatosRegistro] = useState({
     nombre_usuario: '',
     contraseña: '',
-    rol: 'cliente' // Asumimos rol 'cliente' por defecto para el auto-registro
+    rol: 'cliente' 
   });
   const [mensaje, setMensaje] = useState('');
   const [esError, setEsError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleChange = (e) => {
     setDatosRegistro({ ...datosRegistro, [e.target.name]: e.target.value });
@@ -20,10 +22,9 @@ const RegistroUsuario = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMensaje('Registrando usuario...');
+    setMensaje('');
     setEsError(false);
 
-    // Llama al endpoint POST /usuarios
     try {
       const response = await fetch(`${API_BASE_URL}/usuarios`, {
         method: 'POST',
@@ -34,10 +35,9 @@ const RegistroUsuario = () => {
       const result = await response.json();
 
       if (result.status === 200) {
-        setMensaje('¡Registro exitoso! Ahora puedes iniciar sesión.');
+        // Éxito
+        setShowModal(true);
         setDatosRegistro({ nombre_usuario: '', contraseña: '', rol: 'cliente' });
-        // Redirigir al login después de 2 segundos
-        setTimeout(() => navigate('/login'), 2000); 
       } else {
         setMensaje(`Error: ${result.mensaje}`);
         setEsError(true);
@@ -49,22 +49,54 @@ const RegistroUsuario = () => {
     }
   };
 
-  return (
-    <div className="login-container form-container">
-      <h2>Registrar Nuevo Usuario</h2>
-      <form onSubmit={handleSubmit}>
-        <label>Nombre de Usuario:</label>
-        <input type="text" name="nombre_usuario" onChange={handleChange} required value={datosRegistro.nombre_usuario} />
+  const closeModal = () => {
+    setShowModal(false);
+    navigate('/login'); // Redirigir al login al cerrar el modal
+  };
 
-        <label>Contraseña:</label>
-        <input type="password" name="contraseña" onChange={handleChange} required value={datosRegistro.contraseña} />
+  return (
+    <div className="form-card">
+      <h2 className="form-title">Registrar Nuevo Usuario</h2>
+      
+      {mensaje && <div className={esError ? 'error-message' : 'success-message'}>{mensaje}</div>}
+
+      <form onSubmit={handleSubmit} className="form-container-inner">
+        <div className="form-group">
+            <label>Nombre de Usuario:</label>
+            <input className="form-input" type="text" name="nombre_usuario" onChange={handleChange} required value={datosRegistro.nombre_usuario} />
+        </div>
+
+        <div className="form-group">
+            <label>Contraseña:</label>
+            <input className="form-input" type="password" name="contraseña" onChange={handleChange} required value={datosRegistro.contraseña} />
+        </div>
         
-        {/* Nota: el campo rol se envía oculto o se define en el backend */}
-        
-        <button type="submit">Crear Cuenta</button>
+        <button type="submit" className="btn-primary">Crear Cuenta</button>
       </form>
-      {mensaje && <p className={`mensaje ${esError ? 'error' : ''}`}>{mensaje}</p>}
-      <button type="button" onClick={() => navigate('/login')} style={{marginTop: '20px'}}>Volver al Login</button>
+
+      <button type="button" className="btn-secondary" onClick={() => navigate('/login')}>
+        Volver al Login
+      </button>
+
+      {/* MODAL DE ÉXITO */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <span className="modal-icon">🎉</span>
+            <h3>¡Cuenta Creada!</h3>
+            <p>Tu usuario ha sido registrado exitosamente.</p>
+            
+            <div className="modal-details">
+                <p>Ahora puedes iniciar sesión con tus credenciales.</p>
+            </div>
+
+            <button className="modal-close-btn" onClick={closeModal}>
+              Ir al Login
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -17,6 +17,8 @@ class Reserva:
             raise ValueError("La fecha de fin no puede ser anterior a la fecha de inicio.")
         if fecha_inicio_deseada < fecha_reserva:
              raise ValueError("La fecha de inicio deseada no puede ser anterior a la fecha de reserva.")
+        if fecha_inicio_deseada - date.today() > 3:
+            raise ValueError("La fecha de inicio deseada debe ser al menos 3 dias desde la fecha de reserva.")
 
         self.id_reserva = id_reserva
         self.fecha_reserva = fecha_reserva

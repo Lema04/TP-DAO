@@ -1,187 +1,371 @@
-
+/* --- Global Reset & Body --- */
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   margin: 0;
   padding: 0;
-  background-color: #f4f4f4;
+  background-color: #f7fafc; /* Gris muy suave de fondo */
+  color: #2d3748;
 }
 
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- Header & Nav --- */
 .App-header {
-  background-color: #282c34;
-  padding: 10px 20px;
+  background: linear-gradient(135deg, #cc0000 0%, #990000 100%); /* Rojo RentCar degradado */
+  padding: 1rem 2rem;
   color: white;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .App-nav a {
-  color: white;
-  margin: 0 15px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 1rem;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 600;
+  transition: color 0.2s;
 }
 
 .App-nav a:hover {
-  text-decoration: underline;
+  color: white;
+  text-decoration: none;
 }
 
 .App-main {
-  padding: 20px;
-  max-width: 800px;
-  margin: 20px auto;
-  background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-}
-
-/* --- Formulario General --- */
-.form-container, .reportes-container {
-  padding: 20px;
-}
-
-.form-container h2, .reportes-container h2 {
-    color: #cc0000; /* Rojo RentCar */
-    border-bottom: 2px solid #ccc;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-label, input, select, textarea, button {
-  display: block;
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px; /* Un poco más ancho para tablas */
+  margin: 0 auto;
   width: 100%;
-  margin-bottom: 10px;
-}
-
-input, select, textarea {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
   box-sizing: border-box;
 }
 
-button {
-  background-color: #cc0000; /* Rojo RentCar */
+/* --- Global Form Card Style --- */
+.form-card, .reportes-container, .form-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2.5rem;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+/* Para contenedores más anchos (tablas, reportes) */
+.form-card.wide, .reportes-container {
+  max-width: 1000px;
+}
+
+.form-title, h2 {
+  text-align: center;
+  color: #1a202c;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  border-bottom: none; /* Quitamos el borde antiguo */
+}
+
+/* --- Form Elements --- */
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.form-input, .form-select, input, select, textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: #f8fafc;
+  color: #2d3748;
+  box-sizing: border-box;
+  margin-bottom: 0; /* Controlado por form-group */
+}
+
+.form-input:focus, .form-select:focus, input:focus, select:focus, textarea:focus {
+  border-color: #cc0000; /* Rojo foco */
+  background-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+}
+
+.form-group small {
+  display: block;
+  color: #718096;
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+/* --- Buttons --- */
+.btn-primary, button[type="submit"], .menu-button {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
   color: white;
-  padding: 10px;
   border: none;
-  border-radius: 4px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+  margin-top: 1.5rem;
+  text-align: center;
+  text-decoration: none;
 }
 
-button:hover {
-  background-color: #990000;
+.btn-primary:hover, button[type="submit"]:hover, .menu-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(204, 0, 0, 0.3);
+  background: linear-gradient(135deg, #b30000 0%, #800000 100%);
 }
 
-.mensaje {
-  padding: 10px;
-  margin-top: 15px;
-  border-radius: 4px;
-  font-weight: bold;
-  background-color: #e0ffe0;
-  color: #008000;
+.btn-secondary, .back-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  background: transparent;
+  border: 2px solid #e2e8f0;
+  color: #718096;
+  padding: 0.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+  text-align: center;
 }
 
-.mensaje.error {
-    background-color: #ffe0e0;
-    color: #cc0000;
+.btn-secondary:hover, .back-btn:hover {
+  background-color: #f7fafc;
+  color: #4a5568;
+  border-color: #cbd5e0;
 }
 
-.note {
-    background-color: #fffacd;
-    border-left: 5px solid #ffcc00;
-    padding: 10px;
-    margin-top: 20px;
+/* --- Header Buttons (Unified) --- */
+.header-btn {
+  display: inline-block;
+  width: 160px; /* Ancho fijo para ambos */
+  padding: 0.6rem 1rem;
+  background-color: white;
+  color: #cc0000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  font-size: 0.95rem;
+  margin-left: 1rem; /* Espacio entre botones */
+  text-decoration: none; /* Para cuando es Link */
 }
 
-/* --- Logo --- */
+.header-btn:hover {
+  background-color: #f7fafc;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  color: #990000;
+}
+
+/* --- Messages --- */
+.success-message, .mensaje {
+  background-color: #f0fff4;
+  color: #2f855a;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #48bb78;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.error-message, .mensaje.error {
+  background-color: #fff5f5;
+  color: #c53030;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #c53030;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+/* --- Tables (Reportes, Listados) --- */
+.styled-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 2rem 0;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.styled-table thead tr {
+  background-color: #f7fafc;
+  color: #4a5568;
+  text-align: left;
+}
+
+.styled-table th, .styled-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.styled-table th {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.styled-table tbody tr:last-of-type td {
+  border-bottom: none;
+}
+
+.styled-table tbody tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --- Global Modal Styles --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modal-content {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 450px;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  display: block;
+  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-content h3 {
+  color: #2d3748;
+  margin-bottom: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.modal-content p {
+  color: #718096;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.modal-details {
+  text-align: left;
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 0.5rem;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.modal-close-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); /* Verde éxito */
+  color: white;
+  border: none;
+  padding: 0.9rem 2.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px rgba(72, 187, 120, 0.2);
+  width: 100%;
+}
+
+.modal-close-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(72, 187, 120, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(40px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* Logo */
 .logo-container {
-    height: 60px; /* Altura fija para el logo */
+    height: 50px;
 }
 .logo-img {
     height: 100%;
     width: auto;
-}
-
-/* --- Estilo para botones de menú --- */
-.menu-button {
-  background-color: #cc0000; /* Rojo RentCar */
-  color: white;
-  padding: 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  margin: 10px 0; /* Espacio vertical */
-  text-decoration: none; /* Quita el subrayado */
-  text-align: center;
-  font-weight: bold;
-  font-size: 1.1em;
-  display: block; /* Para que cada uno ocupe su propia línea */
-  transition: background-color 0.3s ease;
-}
-
-.menu-button:hover {
-  background-color: #990000;
-}
-
-/* --- Mejoras para el Aviso (Opcional: puedes eliminar el .note por completo si no lo necesitas) --- */
-.note {
-    background-color: transparent; /* Fondo transparente para quitar el amarillo */
-    border-left: none; /* Quitar la barra amarilla */
-    padding: 0;
-    margin-top: 20px;
-    font-weight: normal;
-    text-align: center;
-    color: #666;
-}
-
-/* --- Estilos para las tablas de reportes --- */
-
-/* Contenedor principal de la tabla */
-.styled-table {
-  width: 100%;
-  border-collapse: collapse; /* Bordes limpios */
-  margin: 25px 0;
-  font-size: 0.9em;
-  font-family: 'Arial', sans-serif;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-  border-radius: 8px; /* Bordes redondeados */
-  overflow: hidden; /* Para que el header se alinee con el borde redondeado */
-}
-
-/* Encabezado de la tabla */
-.styled-table thead tr {
-  background-color: #f4f7f6; /* Un gris claro para el header */
-  color: #333;
-  text-align: left;
-  font-weight: bold;
-}
-
-/* Celdas del encabezado (th) y celdas de datos (td) */
-.styled-table th,
-.styled-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #dddddd; /* Línea sutil entre filas */
-}
-
-/* Filas del cuerpo de la tabla */
-.styled-table tbody tr {
-  border-bottom: 1px solid #f0f0f0;
-}
-
-/* "Zebra striping" - Filas pares con un color de fondo */
-.styled-table tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-/* Efecto al pasar el mouse por encima */
-.styled-table tbody tr:hover {
-  background-color: #f1f1f1;
-  cursor: default;
-}
-
-/* Clase de utilidad para alinear números (costos) a la derecha */
-.text-right {
-  text-align: right;
 }

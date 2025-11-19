@@ -1,3 +1,4 @@
+// --- /frontend/src/components/Login.js ---
 
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -38,23 +39,28 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container form-container">
+    <div className="form-card">
       <Logo />
-      <h2>Iniciar Sesión</h2>
-      <form onSubmit={handleSubmit}>
-        <label>Usuario:</label>
-        <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+      <h2 className="form-title">Iniciar Sesión</h2>
+      <form onSubmit={handleSubmit} className="form-container-inner">
+        <div className="form-group">
+            <label>Usuario:</label>
+            <input className="form-input" type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
+        </div>
 
-        <label>Contraseña:</label>
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <div className="form-group">
+            <label>Contraseña:</label>
+            <input className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        </div>
 
-        <button type="submit">Ingresar</button>
+        <button type="submit" className="btn-primary">Ingresar</button>
       </form>
-      {error && <p className="mensaje error">{error}</p>}
+      
+      {error && <div className="error-message">{error}</div>}
 
       {/* BOTÓN REGISTRARME */}
-      <div style={{textAlign: 'center', marginTop: '15px'}}>
-        <p>¿No tienes cuenta? <Link to="/registrarme">Registrarme</Link></p>
+      <div style={{textAlign: 'center', marginTop: '1.5rem'}}>
+        <p style={{color: '#718096'}}>¿No tienes cuenta? <Link to="/registrarme" style={{color: '#cc0000', fontWeight: 'bold'}}>Registrarme</Link></p>
       </div>
     </div>
   );
