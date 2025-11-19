@@ -8,7 +8,6 @@ const HomeMenu = () => {
   return (
     <div className="form-card">
       <h2 className="form-title">Panel de Operaciones</h2>
-      {/* Usamos /alquiler, /gestion, y /reportes */}
       {hasPermission('RegistroCliente') && (
         <Link to="/clientes" className="menu-button">Registrar Nuevo Cliente</Link>
       )}
@@ -30,7 +29,12 @@ const HomeMenu = () => {
       {hasPermission('Reportes') && (
         <Link to="/reportes" className="menu-button">Ver Reportes Estratégicos</Link>
       )}
-      
+      {hasPermission('CrearReserva') && (
+        <Link to="/crear-reserva" className="menu-button">Crear Reserva</Link>
+      )}
+      {hasPermission('GestionReservas') && (
+        <Link to="/gestion-reservas" className="menu-button">Gestionar Reservas</Link>
+      )}
     </div>
   );
 };

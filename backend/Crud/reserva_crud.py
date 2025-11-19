@@ -10,7 +10,7 @@ from datetime import date
 class ReservaCRUD(ORMBase):
     tabla = "RESERVA"
     campos = ["patente", "id_cliente", "fecha_reserva", 
-              "fecha_inicio_deseada", "fecha_fin_deseada"]
+              "fecha_inicio_deseada", "fecha_fin_deseada", "estado"]
     clave_primaria = "id_reserva"
 
     def __init__(self):
@@ -29,7 +29,7 @@ class ReservaCRUD(ORMBase):
         
         try:
             # 1. El ORMBase devuelve (pk, campo1, campo2, ...)
-            # (id_reserva, patente, id_cliente, fecha_reserva_str, fecha_inicio_str, fecha_fin_str)
+            # (id_reserva, patente, id_cliente, fecha_reserva_str, fecha_inicio_str, fecha_fin_str, estado)
             id_reserva = tupla[0]
             patente = tupla[1]      # Puede ser None
             id_cliente = tupla[2]
@@ -59,7 +59,7 @@ class ReservaCRUD(ORMBase):
                 fecha_inicio_deseada=fecha_inicio,
                 fecha_fin_deseada=fecha_fin,
                 cliente=cliente,  # Pasamos el objeto Cliente
-                vehiculo=vehiculo # Pasamos el objeto Vehiculo (o None)
+                vehiculo=vehiculo, # Pasamos el objeto Vehiculo (o None)
             )
         except Exception as e:
             print(f"Error ensamblando Reserva {tupla[0]}: {e}")
@@ -67,13 +67,13 @@ class ReservaCRUD(ORMBase):
     # -----------------------------------------------
 
     def crear_reserva(self, reserva: Reserva):
-        # (Tu código está perfecto)
         valores = [
             reserva.vehiculo.patente if reserva.vehiculo else None,
             reserva.cliente.id_cliente,
             reserva.fecha_reserva,
             reserva.fecha_inicio_deseada,
-            reserva.fecha_fin_deseada
+            reserva.fecha_fin_deseada,
+            reserva.estado
         ]
         return self.insertar(valores)
     
@@ -97,16 +97,28 @@ class ReservaCRUD(ORMBase):
         return [self._build_reserva(t) for t in tuplas if self._build_reserva(t)]
     
     def actualizar_reserva(self, reserva: Reserva):
-        # (Tu código está perfecto)
         valores = [
             reserva.vehiculo.patente if reserva.vehiculo else None,
             reserva.cliente.id_cliente,
             reserva.fecha_reserva,
             reserva.fecha_inicio_deseada,
-            reserva.fecha_fin_deseada
+            reserva.fecha_fin_deseada,
+            reserva.estado
         ]
         self.actualizar(reserva.id_reserva, valores)
 
     def eliminar_reserva(self, id_reserva):
-        # (Tu código está perfecto)
         self.eliminar(id_reserva)
+    
+    def buscar_por_vehiculo(self, patente):
+        """ Retorna una LISTA DE OBJETOS Reserva para un vehículo. """
+        condicion = f"patente = '{patente}'"
+        tuplas = self.obtener_por_condicion(condicion)
+        return [self._build_reserva(t) for t in tuplas if self._build_reserva(t)]
+    
+    def buscar_pendientes_para_conversion(self):
+        """ Retorna reservas pendientes donde fecha_inicio <= hoy. """
+        hoy = date.today().isoformat()
+        condicion = f"estado = 'Pendiente' AND fecha_inicio_deseada <= '{hoy}'"
+        tuplas = self.obtener_por_condicion(condicion)
+        return [self._build_reserva(t) for t in tuplas if self._build_reserva(t)]

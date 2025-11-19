@@ -10,7 +10,8 @@ from servicios.alquiler_service import AlquilerService
 from servicios.excepciones import (
     ErrorDeAplicacion, 
     RecursoNoEncontradoError, 
-    DatosInvalidosError
+    DatosInvalidosError,
+    ErrorDeLogicaDeNegocio
 )
 
 class ReservaService:
@@ -31,17 +32,19 @@ class ReservaService:
             id_cliente = datos.get('id_cliente')
             if not id_cliente:
                 raise DatosInvalidosError("El 'id_cliente' es obligatorio.")
-            # El servicio ya levanta RecursoNoEncontradoError
             cliente = self.cliente_service.buscar_cliente(id_cliente)
             
             # 2. Validar Vehiculo (opcional)
             vehiculo = None
             patente = datos.get('patente')
             if patente:
-                # El servicio ya levanta RecursoNoEncontradoError
                 vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
-                # (Aquí iría la LÓGICA DE NEGOCIO:
-                # Ej: chequear si 'vehiculo' está disponible en esas fechas)
+                
+                # VALIDACIÓN: El vehículo no debe estar Reservado o Alquilado
+                if vehiculo.estado in ["Reservado", "Alquilado"]:
+                    raise ErrorDeLogicaDeNegocio(
+                        f"El vehículo {patente} no está disponible. Estado actual: {vehiculo.estado}"
+                    )
 
             # 3. Validar y convertir datos crudos
             fecha_inicio_str = datos.get('fecha_inicio_deseada')
@@ -51,12 +54,12 @@ class ReservaService:
 
             # 4. Crear el objeto Reserva (esto valida la lógica de fechas)
             reserva = Reserva(
-                id_reserva=None, # Autoincremental
+                id_reserva=None,
                 fecha_reserva=date.today(),
                 fecha_inicio_deseada=date.fromisoformat(fecha_inicio_str),
                 fecha_fin_deseada=date.fromisoformat(fecha_fin_str),
-                cliente=cliente,  # Pasamos el objeto Cliente
-                vehiculo=vehiculo # Pasamos el objeto Vehiculo (o None)
+                cliente=cliente,
+                vehiculo=vehiculo
             )
             
             # 5. Guardar y retornar el objeto recién creado
@@ -64,7 +67,6 @@ class ReservaService:
             return self.reserva_dao.buscar_por_id(nuevo_id)
 
         except (ValueError, TypeError) as e: 
-            # Captura errores de fromisoformat(), o del __init__
             raise DatosInvalidosError(f"Datos inválidos: {e}")
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
@@ -94,29 +96,23 @@ class ReservaService:
         Retorna: El objeto Reserva actualizado.
         """
         try:
-            # 1. Buscamos el objeto existente
             reserva = self.buscar_reserva(id_reserva)
 
-            # 2. Actualizamos campos
             if 'fecha_inicio_deseada' in datos:
                 reserva.fecha_inicio_deseada = date.fromisoformat(datos['fecha_inicio_deseada'])
             if 'fecha_fin_deseada' in datos:
                 reserva.fecha_fin_deseada = date.fromisoformat(datos['fecha_fin_deseada'])
             
-            # 3. Lógica para cambiar/asignar vehículo
             if 'patente' in datos:
                 patente = datos.get('patente')
                 if patente:
-                    # El servicio ya levanta RecursoNoEncontradoError
                     reserva.vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
                 else:
-                    reserva.vehiculo = None # Permite des-asignar un vehículo
+                    reserva.vehiculo = None
 
-            # 4. Re-validamos la lógica de fechas
             if reserva.fecha_inicio_deseada > reserva.fecha_fin_deseada:
                 raise DatosInvalidosError("La fecha de inicio no puede ser posterior a la de fin.")
 
-            # 5. Guardamos
             self.reserva_dao.actualizar_reserva(reserva)
             return reserva
 
@@ -128,7 +124,6 @@ class ReservaService:
 
     def eliminar_reserva(self, id_reserva):
         """ Elimina una reserva. Retorna True. """
-        # 1. Aseguramos que existe
         self.buscar_reserva(id_reserva) 
         try:
             self.reserva_dao.eliminar_reserva(id_reserva)
@@ -136,27 +131,37 @@ class ReservaService:
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al eliminar reserva: {e}")
         
-    def iniciar_alquiler(self, reserva, datos):
+    def iniciar_alquiler(self, id_reserva, datos):
         """
-        Inicia el alquiler a partir de una reserva.
+        Inicia el alquiler a partir de una reserva (supervisor confirms reservation).
         Retorna: El objeto Alquiler creado.
         """
-
         try:
-            reserva = reserva
-            if not reserva:
-                raise RecursoNoEncontradoError(f"Reserva con ID {reserva.id_reserva} no encontrada.")
+            # 1. Buscar la reserva
+            reserva = self.buscar_reserva(id_reserva)
+            
+            # 2. Validar que la reserva esté pendiente
+            if reserva.estado != "Pendiente":
+                raise DatosInvalidosError(f"La reserva ya ha sido {reserva.estado.lower()}.")
+            
+            # 3. Obtener empleado
             empleado_id = datos.get("id_empleado")
             if not empleado_id:
                 raise DatosInvalidosError("El 'id_empleado' es obligatorio para iniciar un alquiler.")
             
             costo_total = float(datos.get("costo_total", 0.0))
             
-            alquiler = self.alquiler_service.crear_alquiler_desde_reserva(reserva, empleado_id, costo_total)
-
+            # 4. Crear alquiler desde reserva
+            alquiler = self.alquiler_service.crear_alquiler_desde_reserva(
+                reserva, empleado_id, costo_total
+            )
+            
+            # 5. Marcar reserva como convertida
+            reserva.estado = "Convertida"
+            self.reserva_dao.actualizar_reserva(reserva)
+            
             return alquiler
         
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al iniciar alquiler desde reserva: {e}")
-        

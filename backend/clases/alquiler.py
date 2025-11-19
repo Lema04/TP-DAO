@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 from datetime import date
 
 if TYPE_CHECKING:
@@ -10,7 +10,8 @@ if TYPE_CHECKING:
 class Alquiler:
     def __init__(self, id_alquiler: int, fecha_inicio: date, fecha_fin: date,
                  costo_total: float, fecha_registro: date,
-                 cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo"):
+                 cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo",
+                 id_reserva: Optional[int] = None, estado: str = "Activo"):
 
         # Validaciones iniciales
         if cliente is None or empleado is None or vehiculo is None:
@@ -30,13 +31,15 @@ class Alquiler:
         self.cliente = cliente
         self.empleado = empleado
         self.vehiculo = vehiculo
+        self.id_reserva = id_reserva  # Link back to reservation if created from one
+        self.estado = estado  # "Activo", "Finalizado", "Cancelado"
 
         # Relaciones
         self.multas: List["MultaDano"] = []
         cliente.agregar_alquiler(self)
         empleado.agregar_alquiler(self)
         vehiculo.agregar_alquiler(self)
-        vehiculo.marcar_no_disponible()
+        vehiculo.estado = "Alquilado"  # Mark vehicle as rented
     
     # Propiedades con validación
     @property
@@ -54,9 +57,17 @@ class Alquiler:
         if multa not in self.multas:
             self.multas.append(multa)
     
+    # Método para finalizar alquiler
+    def finalizar(self):
+        """Marca el alquiler como finalizado"""
+        if self.estado == "Finalizado":
+            raise ValueError("El alquiler ya está finalizado.")
+        self.estado = "Finalizado"
+        # Note: Vehicle state change should be handled by the service layer
+    
     # Representación legible
     def __repr__(self):
-        return f"Alquiler {self.id_alquiler} - Cliente {self.cliente.nombre} {self.cliente.apellido} - Vehículo {self.vehiculo.patente}"
+        return f"Alquiler {self.id_alquiler} - Cliente {self.cliente.nombre} {self.cliente.apellido} - Vehículo {self.vehiculo.patente} - Estado: {self.estado}"
     
 
 #     En lugar de que el controlador (app.py) intente adivinar cómo desarmar tu objeto, le pedimos al objeto que lo haga él mismo.
@@ -71,6 +82,8 @@ class Alquiler:
             "fecha_fin": self.fecha_fin.isoformat(),
             "costo_total": self.costo_total,
             "fecha_registro": self.fecha_registro.isoformat(),
+            "estado": self.estado,
+            "id_reserva": self.id_reserva,
             
             # Delega la serialización a los objetos que "compone"
             "cliente": self.cliente.a_dict(),

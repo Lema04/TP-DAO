@@ -470,13 +470,19 @@ def eliminar_alquiler(id_alquiler):
     
     except RecursoNoEncontradoError as e:
         return jsonify({"error": str(e)}), 404
-    
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
 
+
 # =============================
-#     RESERVAS CRUD
+#     RESERVAS CRUD
 # =============================
+
+
+# =============================
+#     RESERVAS CRUD
+# =============================
+
 
 @app.route("/reservas", methods=["GET"])
 def listar_reservas():
@@ -504,10 +510,11 @@ def crear_reserva():
             raise DatosInvalidosError("No se proporcionaron datos.")
             
         nueva_reserva = servicio_reserva.crear_reserva(datos)
+        if nueva_reserva is None:
+            raise ErrorDeAplicacion("Error al crear la reserva")
         return jsonify(nueva_reserva.a_dict()), 201
     
     except (DatosInvalidosError, RecursoNoEncontradoError) as e:
-        # Error (fechas mal, cliente o vehiculo no existe)
         return jsonify({"error": str(e)}), 400
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
@@ -539,14 +546,13 @@ def eliminar_reserva(id_reserva):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 409
 
-@app.route("/reservas/<int:id_reserva>/iniciar_alquiler",methods=["POST"])
+@app.route("/reservas/<int:id_reserva>/iniciar_alquiler", methods=["POST"])
 def iniciar_alquiler_desde_reserva(id_reserva):
     try:
-        reserva = servicio_reserva.buscar_reserva(id_reserva)
         datos = request.get_json()
         if not datos:
             raise DatosInvalidosError("No se proporcionaron datos para iniciar el alquiler.")
-        alquiler = servicio_reserva.iniciar_alquiler(reserva, datos)
+        alquiler = servicio_reserva.iniciar_alquiler(id_reserva, datos)
         return jsonify(alquiler.a_dict()), 201
     except RecursoNoEncontradoError as e:
         return jsonify({"error": str(e)}), 404
@@ -554,11 +560,6 @@ def iniciar_alquiler_desde_reserva(id_reserva):
         return jsonify({"error": str(e)}), 400
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
-    
-    
-# =============================
-#          REPORTES 
-# =============================
 
 @app.route("/reportes/alquileres_por_cliente/<int:cliente_id>", methods=["GET"])
 def reporte_alquileres_por_cliente(cliente_id):
@@ -836,3 +837,4 @@ def login_usuario():
 
 if __name__ == "__main__":
     app.run(debug=True)
+

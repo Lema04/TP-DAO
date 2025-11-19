@@ -17,7 +17,8 @@ class Vehiculo:
         self.modelo = modelo
         self.anio = anio
         self.precio_diario = precio_diario
-        self.estado = estado
+        self._estado = None # Inicializamos variable privada
+        self.estado = estado # Esto llama al setter con validación
 
         # Relaciones (Composición)
         self.reservas: List["Reserva"] = []
@@ -38,10 +39,24 @@ class Vehiculo:
             raise ValueError("Patente inválida. Debe contener 6 o 7 caracteres alfanuméricos.")
         self._patente = valor
     
+    # --- Propiedad 'estado' con validación ---
+    @property
+    def estado(self):
+        return self._estado
+
+    @estado.setter
+    def estado(self, valor):
+        estados_validos = ["Disponible", "Mantenimiento", "Reservado", "Alquilado"]
+        if valor not in estados_validos:
+            # Si viene de la base de datos tal vez venga en minusculas o algo, podriamos normalizar
+            # Pero por ahora estricto según pedido
+            raise ValueError(f"Estado inválido. Debe ser uno de: {', '.join(estados_validos)}")
+        self._estado = valor
+    
     # --- Métodos de estado ---
     
     def marcar_no_disponible(self):
-        self.estado = "No disponible"
+        self.estado = "Alquilado"  # Updated to use valid estado
 
     def marcar_disponible(self):
         self.estado = "Disponible"
