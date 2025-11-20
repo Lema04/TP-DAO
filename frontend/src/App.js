@@ -76,7 +76,7 @@ function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="/ clientes" element={
+            <Route path="/clientes" element={
               <ProtectedRoute permissionName="RegistroCliente">
                 <RegistroCliente apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>

@@ -1,5 +1,4 @@
 
-
 import React, { createContext, useState, useContext } from 'react';
 
 const AuthContext = createContext();
@@ -8,26 +7,37 @@ const AuthContext = createContext();
 const PERMISSIONS = {
   supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes', 'RegistroCliente', 'RegistrarVehiculo', 'GestionReservas', 'CrearReserva'],
   atencion: ['RegistroAlquiler', 'GestionMultas', 'RegistroCliente', 'RegistrarVehiculo'],
-  cliente: ['MisAlquileres', 'MisMultas'], // Un componente para que el cliente vea solo lo suyo
-  Anonimo: []
+  cliente: ['MisAlquileres', 'MisMultas'], 
+  anonimo: []
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // { rol: 'Gerente', id_usuario: 1 }
+  const [user, setUser] = useState(() => {
+    const storedUser = localStorage.getItem('user');
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   const login = (data) => {
-      // data ahora es: { rol: 'cliente', id_cliente: 4, id_empleado: null, ...}
-      // Asegúrate de guardar todo en el estado 'user'
       setUser(data); 
       localStorage.setItem('user', JSON.stringify(data));
   };
+  
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('user');
   };
 
   const hasPermission = (componentName) => {
-    const rol = user ? user.rol : 'Anonimo';
-    return PERMISSIONS[rol].includes(componentName);
+    if (!user || !user.rol) return false;
+    
+    // Normalizamos el rol a minúsculas para evitar errores de mayúsculas/minúsculas
+    const rol = user.rol.toLowerCase();
+    
+    // DEBUG: Ver qué rol tiene el usuario y qué permiso se pide
+    console.log(`[AuthContext] Rol: '${rol}' (Original: '${user.rol}'), Permiso pedido: '${componentName}', Tiene permiso: ${PERMISSIONS[rol]?.includes(componentName)}`);
+    
+    const userPermissions = PERMISSIONS[rol] || [];
+    return userPermissions.includes(componentName);
   };
 
   return (

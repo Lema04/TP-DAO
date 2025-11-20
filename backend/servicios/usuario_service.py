@@ -127,6 +127,7 @@ class UsuarioService:
             return {
                 "mensaje": "Autenticación exitosa.",
                 "rol": usuario.rol,
+                "nombre_usuario": usuario.nombre_usuario,
                 "id_cliente": usuario.id_cliente, 
                 "id_empleado": usuario.id_empleado,
                 "id_usuario": usuario.id_usuario
