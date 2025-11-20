@@ -7,17 +7,20 @@ const API_BASE_URL = 'http://127.0.0.1:5000';
 
 const RegistroUsuario = () => {
   const navigate = useNavigate();
-  const [datosRegistro, setDatosRegistro] = useState({
+  
+  const [formData, setFormData] = useState({
+    dni: '',
     nombre_usuario: '',
-    contraseña: '',
-    rol: 'cliente' 
+    contraseña: ''
   });
+
   const [mensaje, setMensaje] = useState('');
   const [esError, setEsError] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [clienteEncontrado, setClienteEncontrado] = useState(null);
 
   const handleChange = (e) => {
-    setDatosRegistro({ ...datosRegistro, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -26,52 +29,91 @@ const RegistroUsuario = () => {
     setEsError(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/usuarios`, {
+      // PASO 1: Buscar si el cliente existe por DNI
+      const resBusqueda = await fetch(`${API_BASE_URL}/clientes?buscar=${formData.dni}`);
+      const clientesEncontrados = await resBusqueda.json();
+
+      if (!resBusqueda.ok) {
+        throw new Error('Error al verificar el DNI.');
+      }
+
+      // Filtramos para asegurar coincidencia exacta de DNI (la búsqueda puede ser parcial)
+      const cliente = clientesEncontrados.find(c => c.dni === formData.dni);
+
+      if (!cliente) {
+        throw new Error('No se encontró un cliente registrado con este DNI. Por favor, acérquese a una sucursal para darse de alta como cliente antes de crear su usuario web.');
+      }
+
+      setClienteEncontrado(cliente);
+
+      // PASO 2: Crear el Usuario vinculado al Cliente encontrado
+      const resUsuario = await fetch(`${API_BASE_URL}/usuarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datosRegistro),
+        body: JSON.stringify({
+            nombre_usuario: formData.nombre_usuario,
+            contraseña: formData.contraseña,
+            rol: 'cliente',
+            id_cliente: cliente.id_cliente // ¡Vinculación con el cliente existente!
+        }),
       });
 
-      const result = await response.json();
+      const dataUsuario = await resUsuario.json();
 
-      if (result.status === 200) {
-        // Éxito
-        setShowModal(true);
-        setDatosRegistro({ nombre_usuario: '', contraseña: '', rol: 'cliente' });
-      } else {
-        setMensaje(`Error: ${result.mensaje}`);
-        setEsError(true);
+      if (!resUsuario.ok) {
+        throw new Error(dataUsuario.error || 'Error al crear el usuario. Es posible que el nombre de usuario ya esté en uso.');
       }
+
+      // Éxito total
+      setShowModal(true);
+      
     } catch (error) {
-      setMensaje('Error de conexión con el servidor.');
+      setMensaje(error.message);
       setEsError(true);
-      console.error('Error al registrar usuario:', error);
+      // console.error('Error en el registro:', error);
     }
   };
 
   const closeModal = () => {
     setShowModal(false);
-    navigate('/login'); // Redirigir al login al cerrar el modal
+    navigate('/login');
   };
 
   return (
-    <div className="form-card">
-      <h2 className="form-title">Registrar Nuevo Usuario</h2>
+    <div className="form-card" style={{ maxWidth: '500px' }}>
+      <h2 className="form-title">Crear Usuario Web</h2>
+      <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#666', fontSize: '0.9rem' }}>
+        Si ya eres cliente de nuestra agencia, ingresa tu DNI para crear tu cuenta de acceso.
+      </p>
       
       {mensaje && <div className={esError ? 'error-message' : 'success-message'}>{mensaje}</div>}
 
       <form onSubmit={handleSubmit} className="form-container-inner">
+        
         <div className="form-group">
-            <label>Nombre de Usuario:</label>
-            <input className="form-input" type="text" name="nombre_usuario" onChange={handleChange} required value={datosRegistro.nombre_usuario} />
+            <label>DNI (Cliente Registrado):</label>
+            <input 
+                className="form-input" 
+                type="text" 
+                name="dni" 
+                onChange={handleChange} 
+                required 
+                value={formData.dni} 
+                placeholder="Ingrese su DNI sin puntos"
+            />
+        </div>
+
+        <div className="form-group">
+            <label>Nombre de Usuario Deseado:</label>
+            <input className="form-input" type="text" name="nombre_usuario" onChange={handleChange} required value={formData.nombre_usuario} />
         </div>
 
         <div className="form-group">
             <label>Contraseña:</label>
-            <input className="form-input" type="password" name="contraseña" onChange={handleChange} required value={datosRegistro.contraseña} />
+            <input className="form-input" type="password" name="contraseña" onChange={handleChange} required value={formData.contraseña} />
         </div>
-        
-        <button type="submit" className="btn-primary">Crear Cuenta</button>
+
+        <button type="submit" className="btn-primary" style={{ marginTop: '1rem' }}>Crear Cuenta</button>
       </form>
 
       <button type="button" className="btn-secondary" onClick={() => navigate('/login')}>
@@ -84,12 +126,8 @@ const RegistroUsuario = () => {
           <div className="modal-content">
             <span className="modal-icon">🎉</span>
             <h3>¡Cuenta Creada!</h3>
-            <p>Tu usuario ha sido registrado exitosamente.</p>
-            
-            <div className="modal-details">
-                <p>Ahora puedes iniciar sesión con tus credenciales.</p>
-            </div>
-
+            <p>Hola <strong>{clienteEncontrado?.nombre}</strong>, tu usuario ha sido vinculado exitosamente.</p>
+            <p>Ya puedes iniciar sesión.</p>
             <button className="modal-close-btn" onClick={closeModal}>
               Ir al Login
             </button>

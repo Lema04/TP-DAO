@@ -36,6 +36,7 @@ class ReservaCRUD(ORMBase):
             fecha_reserva = date.fromisoformat(tupla[3])
             fecha_inicio = date.fromisoformat(tupla[4])
             fecha_fin = date.fromisoformat(tupla[5])
+            estado = tupla[6] # Recuperamos el estado
             
             # 2. Ensamblamos el Cliente (obligatorio)
             cliente = self.cliente_dao.buscar_por_id(id_cliente)
@@ -60,6 +61,7 @@ class ReservaCRUD(ORMBase):
                 fecha_fin_deseada=fecha_fin,
                 cliente=cliente,  # Pasamos el objeto Cliente
                 vehiculo=vehiculo, # Pasamos el objeto Vehiculo (o None)
+                estado=estado # Pasamos el estado recuperado de la BD
             )
         except Exception as e:
             print(f"Error ensamblando Reserva {tupla[0]}: {e}")

@@ -134,8 +134,13 @@ def eliminar_multa(id_multa):
 @app.route("/clientes", methods=["GET"])
 def listar_clientes():
     try:
-        # 1. El servicio retorna una LISTA DE OBJETOS [Cliente, Cliente, ...]
-        clientes = servicio_cliente.listar_clientes()
+        buscar = request.args.get('buscar')
+        if buscar:
+            # Si hay parámetro de búsqueda, usamos el método de búsqueda
+            clientes = servicio_cliente.buscar_clientes(buscar)
+        else:
+            # 1. El servicio retorna una LISTA DE OBJETOS [Cliente, Cliente, ...]
+            clientes = servicio_cliente.listar_clientes()
         
         # 2. "Traducimos" cada objeto de la lista a un diccionario
         clientes_json = [cliente.a_dict() for cliente in clientes]
