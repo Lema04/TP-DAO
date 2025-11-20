@@ -17,6 +17,7 @@ import MisMultas from './components/MisMultas';
 import RegistrarVehiculo from './components/RegistrarVehiculo';
 import GestionReservas from './components/GestionReservas';
 import CrearReserva from './components/CrearReserva';
+import RegistrarEmpleado from './components/RegistrarEmpleado';
 
 // URL BASE de tu API de Flask
 const API_BASE_URL = 'http://127.0.0.1:5000'; 
@@ -109,6 +110,12 @@ function App() {
             <Route path="/crear-reserva" element={
               <ProtectedRoute permissionName="CrearReserva">
                 <CrearReserva apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/registrar-empleado" element={
+              <ProtectedRoute permissionName="RegistrarEmpleado">
+                <RegistrarEmpleado apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
 

@@ -15,6 +15,13 @@ const HomeMenu = () => {
       ]
     },
     {
+      title: '🏢 Administración',
+      color: '#4a148c',
+      items: [
+        { permission: 'RegistrarEmpleado', to: '/registrar-empleado', label: 'Registrar Empleado', icon: '👔' },
+      ]
+    },
+    {
       title: '🔑 Reservas y Alquileres',
       color: '#d32f2f',
       items: [
