@@ -57,35 +57,38 @@ const ListadoVehiculos = () => {
             {error && <div className="error-message">{error}</div>}
 
             <div style={{ overflowX: 'auto' }}>
-                <table style={{ 
+                <table className='styled-table'
+                style={{ 
                     width: '100%', 
                     borderCollapse: 'collapse',
-                    fontSize: '0.95rem'
+                    fontSize: '0.95rem',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                 }}>
                     <thead>
                         <tr style={{ 
                             backgroundColor: '#cc0000', 
                             color: 'white',
-                            textAlign: 'left'
+                            textAlign: 'center'
                         }}>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Patente</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Marca</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Modelo</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Año</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Estado</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Patente</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Marca</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Modelo</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Año</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Estado</th>
                         </tr>
                     </thead>
                     <tbody>
                         {vehiculos.map((v, idx) => (
                             <tr key={v.patente} style={{ 
                                 backgroundColor: idx % 2 === 0 ? '#fff' : '#f9f9f9',
-                                borderBottom: '1px solid #e0e0e0'
+                                borderBottom: '1px solid #e0e0e0',
+                                textAlign: 'center'
                             }}>
-                                <td style={{ padding: '0.75rem' }}>{v.patente}</td>
-                                <td style={{ padding: '0.75rem' }}>{v.marca}</td>
-                                <td style={{ padding: '0.75rem' }}>{v.modelo}</td>
-                                <td style={{ padding: '0.75rem' }}>{v.anio}</td>
-                                <td style={{ padding: '0.75rem' }}>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{v.patente}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{v.marca}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{v.modelo}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{v.anio}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                                     <span style={getEstadoBadgeStyle(v.estado)}>
                                         {v.estado}
                                     </span>

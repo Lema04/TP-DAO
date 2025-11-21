@@ -113,10 +113,6 @@ const RegistroCliente = ({ apiBaseUrl }) => {
             
             <div className="modal-details">
               <div className="detail-row">
-                <span className="detail-label">ID Cliente:</span>
-                <span className="detail-value">#{clienteRegistrado.id_cliente}</span>
-              </div>
-              <div className="detail-row">
                 <span className="detail-label">Nombre:</span>
                 <span className="detail-value">{clienteRegistrado.nombre} {clienteRegistrado.apellido}</span>
               </div>

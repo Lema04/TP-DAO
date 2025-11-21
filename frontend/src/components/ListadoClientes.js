@@ -86,37 +86,40 @@ const ListadoClientes = () => {
             }}>{error}</div>}
 
             <div style={{ overflowX: 'auto' }}>
-                <table style={{ 
+                <table className='styled-table'
+                style={{ 
                     width: '100%', 
                     borderCollapse: 'collapse',
-                    fontSize: '0.95rem'
+                    fontSize: '0.95rem',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                 }}>
                     <thead>
                         <tr style={{ 
                             backgroundColor: '#cc0000', 
                             color: 'white',
-                            textAlign: 'left'
+                            textAlign: 'center'
                         }}>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>ID</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Nombre</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Apellido</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>DNI</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Email</th>
-                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Teléfono</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>ID</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Nombre</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Apellido</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>DNI</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Email</th>
+                            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Teléfono</th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientes.map((c, idx) => (
                             <tr key={c.id_cliente} style={{ 
                                 backgroundColor: idx % 2 === 0 ? '#fff' : '#f9f9f9',
-                                borderBottom: '1px solid #e0e0e0'
+                                borderBottom: '1px solid #e0e0e0',
+                                textAlign: 'center'
                             }}>
-                                <td style={{ padding: '0.75rem' }}>{c.id_cliente}</td>
-                                <td style={{ padding: '0.75rem' }}>{c.nombre}</td>
-                                <td style={{ padding: '0.75rem' }}>{c.apellido}</td>
-                                <td style={{ padding: '0.75rem' }}>{c.dni}</td>
-                                <td style={{ padding: '0.75rem' }}>{c.email}</td>
-                                <td style={{ padding: '0.75rem' }}>{c.telefono}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.id_cliente}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.nombre}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.apellido}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.dni}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.email}</td>
+                                <td style={{ padding: '0.75rem', textAlign: 'center' }}>{c.telefono}</td>
                             </tr>
                         ))}
                         {clientes.length === 0 && (

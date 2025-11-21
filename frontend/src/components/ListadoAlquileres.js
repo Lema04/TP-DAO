@@ -88,45 +88,47 @@ const ListadoAlquileres = () => {
                 {mensaje && <div className="success-message">{mensaje}</div>}
 
                 <div style={{ overflowX: 'auto' }}>
-                    <table style={{ 
+                    <table className="styled-table" style={{ 
                         width: '100%', 
                         borderCollapse: 'collapse',
-                        fontSize: '0.95rem'
+                        fontSize: '0.95rem',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                     }}>
                         <thead>
                             <tr style={{ 
                                 backgroundColor: '#cc0000', 
                                 color: 'white',
-                                textAlign: 'left'
+                                textAlign: 'center'
                             }}>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>ID</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Vehículo</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Cliente</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Desde</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Hasta</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Estado</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Costo</th>
-                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000' }}>Acciones</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Nro</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Vehículo</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Cliente</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Desde</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Hasta</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Estado</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Costo</th>
+                                <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {alquileres.map((alquiler, idx) => (
                                 <tr key={alquiler.id_alquiler} style={{ 
                                     backgroundColor: idx % 2 === 0 ? '#fff' : '#f9f9f9',
-                                    borderBottom: '1px solid #e0e0e0'
+                                    borderBottom: '1px solid #e0e0e0',
+                                    textAlign: 'center'
                                 }}>
-                                    <td style={{ padding: '0.75rem' }}>{alquiler.id_alquiler}</td>
-                                    <td style={{ padding: '0.75rem' }}>{alquiler.vehiculo ? alquiler.vehiculo.patente : 'N/A'}</td>
-                                    <td style={{ padding: '0.75rem' }}>{alquiler.cliente ? `${alquiler.cliente.nombre} ${alquiler.cliente.apellido}` : 'N/A'}</td>
-                                    <td style={{ padding: '0.75rem' }}>{alquiler.fecha_inicio}</td>
-                                    <td style={{ padding: '0.75rem' }}>{alquiler.fecha_fin}</td>
-                                    <td style={{ padding: '0.75rem' }}>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.id_alquiler}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.vehiculo ? alquiler.vehiculo.patente : 'N/A'}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.cliente ? `${alquiler.cliente.nombre} ${alquiler.cliente.apellido}` : 'N/A'}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>{new Date(alquiler.fecha_inicio).toLocaleDateString()}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>{new Date(alquiler.fecha_fin).toLocaleDateString()}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                                         <span style={getEstadoBadgeStyle(alquiler.estado)}>
                                             {alquiler.estado}
                                         </span>
                                     </td>
-                                    <td style={{ padding: '0.75rem' }}>${alquiler.costo_total}</td>
-                                    <td style={{ padding: '0.75rem' }}>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>${parseFloat(alquiler.costo_total).toFixed(2)}</td>
+                                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
                                         {alquiler.estado === 'Activo' && (
                                             <button 
                                                 className="btn-primary"

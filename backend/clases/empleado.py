@@ -66,7 +66,8 @@ class Empleado:
             "id_empleado": self.id_empleado,
             "nombre": self.nombre,
             "apellido": self.apellido,
-            "puesto": self.puesto
+            "puesto": self.puesto,
+            "dni": self.dni
             # Nota: Omitimos el DNI a propósito, quizás es información sensible
             # que no le importa al objeto Alquiler.
         }

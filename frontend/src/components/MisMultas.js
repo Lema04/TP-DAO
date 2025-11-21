@@ -53,29 +53,35 @@ const MisMultas = ({ apiBaseUrl }) => {
     if (multas.length === 0) return null;
 
     return (
-      <table className="styled-table">
+      <table className="styled-table" 
+        style={{ width: '100%', 
+        borderCollapse: 'collapse', 
+        fontSize: '0.95rem',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        }}>
         <thead>
-          <tr>
-            <th>ID Multa</th>
-            <th>ID Alquiler</th>
-            <th>Vehículo</th>
-            <th>Descripción</th>
-            <th>Monto</th>
-            <th>Fecha Incidente</th>
+          <tr style={{ backgroundColor: '#cc0000', color: 'white', textAlign: 'center'}}>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>ID Alquiler</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Vehículo</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Descripción</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Monto</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Fecha Incidente</th>
           </tr>
         </thead>
         <tbody>
-          {multas.map((multa) => (
+          {multas.map((multa, idx) => (
             // Usamos la propiedad .id_multa como key
-            <tr key={multa.id_multa}>
-              {/* Accedemos a las propiedades del OBJETO */}
-              <td>{multa.id_multa}</td>
+            <tr key={multa.id_multa} 
+            style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9f9f9', 
+            borderBottom: '1px solid #e0e0e0', 
+            textAlign: 'center' 
+            }}>
               {/* Accedemos al objeto ANIDADO 'alquiler' */}
-              <td>{multa.alquiler.id_alquiler}</td>
-              <td>{multa.alquiler.vehiculo.patente}</td>
-              <td>{multa.descripcion}</td>
-              <td>${parseFloat(multa.monto).toFixed(2)}</td>
-              <td>{new Date(multa.fecha_incidente).toLocaleDateString()}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{multa.alquiler.id_alquiler}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{multa.alquiler.vehiculo.patente}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{multa.descripcion}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>${parseFloat(multa.monto).toFixed(2)}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{new Date(multa.fecha_incidente).toLocaleDateString()}</td>
             </tr>
           ))}
         </tbody>

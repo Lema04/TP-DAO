@@ -60,27 +60,58 @@ const MisAlquileres = ({ apiBaseUrl }) => {
     // nunca 'undefined', por lo que .length es seguro.
     if (alquileres.length === 0) return null;
 
+  const getEstadoBadgeStyle = (estado) => {
+        const baseStyle = {
+            padding: '0.4rem 0.8rem',
+            borderRadius: '6px',
+            fontWeight: '600',
+            fontSize: '0.85rem',
+            display: 'inline-block'
+        };
+
+        if (estado === 'Activo') {
+            return { ...baseStyle, backgroundColor: '#48bb78', color: 'white' };
+        } else {
+            return { ...baseStyle, backgroundColor: '#718096', color: 'white' };
+        }
+    };
+
 return (
-      <table className="styled-table"> {/* 👈 AÑADIMOS LA CLASE PRINCIPAL */}
+        <table className="styled-table" 
+        style={{ width: '100%', 
+        borderCollapse: 'collapse', 
+        fontSize: '0.95rem',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+        }}>
         <thead>
-          <tr>
-            <th>ID Alquiler</th>
-            <th>Fecha Inicio</th>
-            <th>Fecha Fin</th>
-            <th>Vehículo</th>
-            <th>Patente</th>
-            <th className="text-right">Costo Total</th> {/* 👈 ALINEAMOS NÚMEROS */}
+          <tr style={{ backgroundColor: '#cc0000', color: 'white', textAlign: 'center'}}>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Nro Alquiler</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Fecha Inicio</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Fecha Fin</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Vehículo</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Patente</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }} className="text-right">Costo Total</th>
+            <th style={{ padding: '0.75rem', borderBottom: '2px solid #990000', textAlign: 'center' }}>Estado</th>
           </tr>
         </thead>
         <tbody>
-          {alquileres.map((alquiler) => (
-            <tr key={alquiler.id_alquiler}>
-              <td>{alquiler.id_alquiler}</td>
-              <td>{new Date(alquiler.fecha_inicio).toLocaleDateString()}</td>
-              <td>{new Date(alquiler.fecha_fin).toLocaleDateString()}</td>
-              <td>{alquiler.vehiculo.marca} {alquiler.vehiculo.modelo}</td>
-              <td>{alquiler.vehiculo.patente}</td>
-              <td className="text-right">${parseFloat(alquiler.costo_total).toFixed(2)}</td> {/* 👈 ALINEAMOS NÚMEROS */}
+          {alquileres.map((alquiler, idx) => (
+            <tr key={alquiler.id_alquiler}
+             style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f9f9f9', 
+             borderBottom: '1px solid #e0e0e0', 
+             textAlign: 'center' 
+             }}>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.id_alquiler}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{new Date(alquiler.fecha_inicio).toLocaleDateString()}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{new Date(alquiler.fecha_fin).toLocaleDateString()}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.vehiculo.marca} {alquiler.vehiculo.modelo}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>{alquiler.vehiculo.patente}</td>
+              <td style={{ padding: '0.75rem', textAlign: 'center' }} className="text-right">${parseFloat(alquiler.costo_total).toFixed(2)}</td> {/* 👈 ALINEAMOS NÚMEROS */}
+              <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                  <span style={getEstadoBadgeStyle(alquiler.estado)}>
+                      {alquiler.estado}
+                  </span>
+              </td>
             </tr>
           ))}
         </tbody>

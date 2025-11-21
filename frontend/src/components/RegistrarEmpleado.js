@@ -178,7 +178,7 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
               <option value="">Seleccione un supervisor</option>
               {supervisores.map(sup => (
                 <option key={sup.id_empleado} value={sup.id_empleado}>
-                  {sup.nombre} {sup.apellido} (ID: {sup.id_empleado})
+                  {sup.nombre} {sup.apellido}
                 </option>
               ))}
             </select>
@@ -206,10 +206,6 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
             <p>El empleado ha sido dado de alta correctamente.</p>
             
             <div className="modal-details">
-              <div className="detail-row">
-                <span className="detail-label">ID Empleado:</span>
-                <span className="detail-value">#{empleadoRegistrado.id_empleado}</span>
-              </div>
               <div className="detail-row">
                 <span className="detail-label">Nombre:</span>
                 <span className="detail-value">{empleadoRegistrado.nombre} {empleadoRegistrado.apellido}</span>
