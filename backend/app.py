@@ -541,36 +541,111 @@ def iniciar_alquiler_desde_reserva(id_reserva):
         return jsonify({"error": str(e)}), 500
 
 # =============================
-#     REPORTES
+#          REPORTES 
 # =============================
 
-@app.route("/reportes/ingresos-mensuales", methods=["GET"])
-def reporte_ingresos_mensuales():
+@app.route("/reportes/alquileres_por_cliente/<int:cliente_id>", methods=["GET"])
+def reporte_alquileres_por_cliente(cliente_id):
     try:
-        año = request.args.get('año', default=datetime.now().year, type=int)
-        ingresos = servicio_reporte.calcular_ingresos_mensuales(año)
-        return jsonify(ingresos), 200
-    except ErrorDeAplicacion as e:
-        return jsonify({"error": str(e)}), 500
+        archivo_path = servicio_reporte.generar_reporte_alquileres_por_cliente(cliente_id, formato="pdf")
+        
+        # Éxito: Devolvemos un JSON simple con la información
+        return jsonify({
+            "mensaje": f"Reporte PDF generado para el cliente {cliente_id}",
+            "path": archivo_path
+        }), 200
+    
+    except RecursoNoEncontradoError as e:
+        # Error: Devolvemos solo la clave "error"
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
-@app.route("/reportes/vehiculos-mas-alquilados", methods=["GET"])
+@app.route("/reportes/vehiculos_mas_alquilados", methods=["GET"])
 def reporte_vehiculos_mas_alquilados():
     try:
-        top_n = request.args.get('top', default=5, type=int)
-        vehiculos = servicio_reporte.obtener_vehiculos_mas_alquilados(top_n)
-        # El servicio devuelve una lista de tuplas o diccionarios, lo pasamos directo
-        return jsonify(vehiculos), 200
-    except ErrorDeAplicacion as e:
-        return jsonify({"error": str(e)}), 500
+        limite = request.args.get('limite', type=int, default=5)
+        archivo_path = servicio_reporte.generar_reporte_vehiculos_mas_alquilados(limite=limite) 
+        
+        return jsonify({
+            "mensaje": f"Reporte de vehículos más alquilados (Top {limite}) generado.",
+            "path": archivo_path
+        }), 200
+    
+    except RecursoNoEncontradoError as e:
+         return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
 
-@app.route("/reportes/clientes-frecuentes", methods=["GET"])
-def reporte_clientes_frecuentes():
+@app.route("/reportes/facturacion_mensual", methods=["GET"])
+def reporte_facturacion_mensual():
     try:
-        top_n = request.args.get('top', default=5, type=int)
-        clientes = servicio_reporte.obtener_clientes_frecuentes(top_n)
-        return jsonify(clientes), 200
+        anio = request.args.get('anio', type=int, default=datetime.now().year)
+        archivo_path = servicio_reporte.generar_reporte_facturacion_mensual(anio)
+        
+        return jsonify({
+            "mensaje": f"Reporte de facturación mensual para {anio} generado.",
+            "path": archivo_path
+        }), 200
+    
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
+
+@app.route("/reportes/alquileres_por_periodo", methods=["GET"])
+def reporte_alquileres_por_periodo():
+    try:
+        frecuencia = request.args.get('frecuencia', type=str, default='M').upper()
+        anio = request.args.get('anio', type=int, default=datetime.now().year)
+        
+        if frecuencia not in ['M', 'Q']:
+             raise DatosInvalidosError("Frecuencia inválida. Use 'M' o 'Q'.")
+             
+        archivo_path = servicio_reporte.generar_reporte_alquileres_por_periodo(frecuencia, anio)
+        
+        return jsonify({
+            "mensaje": f"Reporte de alquileres por período ({frecuencia}) para {anio} generado.",
+            "path": archivo_path
+        }), 200
+    
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except Exception as e:
+        return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
+    
+@app.route("/reportes/cliente/<int:id_cliente>", methods=["GET"])
+def generar_reporte_cliente_route(id_cliente):
+    """
+    Genera el reporte de historial de alquileres para un cliente específico.
+    """
+    try:
+        # 1. Llama al servicio para generar el reporte.
+        # Se asume que el servicio devuelve la ruta al archivo PDF guardado.
+        ruta_archivo = servicio_reporte.generar_reporte_alquileres_por_cliente(id_cliente)       
+        return jsonify({
+            "mensaje": f"Reporte del cliente {id_cliente} generado con éxito.", 
+            "ruta_archivo": ruta_archivo 
+        }), 200
+        
+    except RecursoNoEncontradoError as e:
+        # El cliente con ese ID no existe.
+        return jsonify({"error": str(e)}), 404
     except ErrorDeAplicacion as e:
+        # Error genérico del servicio.
         return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        # Otros errores inesperados.
+        print(f"Error al generar reporte de cliente: {e}")
+        return jsonify({"error": "Error interno del servidor al generar reporte."}), 500
+    
+# =============================
+#      USUARIOS
+# =============================
 
 @app.route("/usuarios/login", methods=["POST"])
 def login_usuario():
