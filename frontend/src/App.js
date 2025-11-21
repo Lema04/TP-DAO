@@ -22,6 +22,7 @@ import RegistrarEmpleado from './components/RegistrarEmpleado';
 import ListadoAlquileres from './components/ListadoAlquileres';
 import ListadoVehiculos from './components/ListadoVehiculos';
 import ListadoClientes from './components/ListadoClientes';
+import RegistroUsuarioEmpleado from './components/RegistroUsuarioEmpleado';
 
 // URL BASE de tu API de Flask
 const API_BASE_URL = 'http://127.0.0.1:5000'; 
@@ -120,6 +121,12 @@ function App() {
             <Route path="/registrar-empleado" element={
               <ProtectedRoute permissionName="RegistrarEmpleado">
                 <RegistrarEmpleado apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path="/registrar-usuario-empleado" element={
+              <ProtectedRoute permissionName="RegistrarEmpleado">
+                <RegistroUsuarioEmpleado />
               </ProtectedRoute>
             } />
 

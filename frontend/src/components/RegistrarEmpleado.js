@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const RegistrarEmpleado = ({ apiBaseUrl }) => {
@@ -7,17 +7,42 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
     nombre: '',
     apellido: '',
     dni: '',
-    telefono: '',
-    email: '',
-    puesto: 'Atencion' // Valor por defecto
+    puesto: 'Atencion', // Valor por defecto
+    id_supervisor: '' // Solo si no es supervisor
   });
+  const [supervisores, setSupervisores] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [esError, setEsError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [empleadoRegistrado, setEmpleadoRegistrado] = useState(null);
 
+  useEffect(() => {
+    cargarSupervisores();
+  }, []);
+
+  const cargarSupervisores = async () => {
+    try {
+      const response = await fetch(`${apiBaseUrl}/empleados`);
+      if (response.ok) {
+        const empleados = await response.json();
+        // Filtrar solo supervisores
+        const soloSupervisores = empleados.filter(emp => emp.puesto === 'Supervisor');
+        setSupervisores(soloSupervisores);
+      }
+    } catch (error) {
+      console.error('Error al cargar supervisores:', error);
+    }
+  };
+
   const handleChange = (e) => {
-    setDatosEmpleado({ ...datosEmpleado, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Si cambia el puesto a Supervisor, limpiar id_supervisor
+    if (name === 'puesto' && value === 'Supervisor') {
+      setDatosEmpleado({ ...datosEmpleado, puesto: value, id_supervisor: '' });
+    } else {
+      setDatosEmpleado({ ...datosEmpleado, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -26,10 +51,23 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
     setEsError(false);
 
     try {
+      // Preparar datos para enviar
+      const datosParaEnviar = {
+        nombre: datosEmpleado.nombre,
+        apellido: datosEmpleado.apellido,
+        dni: datosEmpleado.dni,
+        puesto: datosEmpleado.puesto
+      };
+
+      // Solo agregar id_supervisor si no es Supervisor
+      if (datosEmpleado.puesto !== 'Supervisor' && datosEmpleado.id_supervisor) {
+        datosParaEnviar.id_supervisor = parseInt(datosEmpleado.id_supervisor);
+      }
+
       const response = await fetch(`${apiBaseUrl}/empleados`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datosEmpleado),
+        body: JSON.stringify(datosParaEnviar),
       });
 
       const result = await response.json();
@@ -46,9 +84,8 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
         nombre: '', 
         apellido: '', 
         dni: '', 
-        telefono: '', 
-        email: '', 
-        puesto: 'Atencion' 
+        puesto: 'Atencion',
+        id_supervisor: ''
       });
     
     } catch (error) {
@@ -61,7 +98,10 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
   const closeModal = () => {
     setShowModal(false);
     setEmpleadoRegistrado(null);
+    navigate('/home');
   };
+
+  const esSupervisor = datosEmpleado.puesto === 'Supervisor';
 
   return (
     <div className="form-card">
@@ -73,38 +113,82 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
         
         <div className="form-group">
             <label>Nombre:</label>
-            <input className="form-input" type="text" name="nombre" onChange={handleChange} required value={datosEmpleado.nombre} />
+            <input 
+              className="form-input" 
+              type="text" 
+              name="nombre" 
+              onChange={handleChange} 
+              required 
+              value={datosEmpleado.nombre} 
+            />
         </div>
         
         <div className="form-group">
             <label>Apellido:</label>
-            <input className="form-input" type="text" name="apellido" onChange={handleChange} required value={datosEmpleado.apellido} />
+            <input 
+              className="form-input" 
+              type="text" 
+              name="apellido" 
+              onChange={handleChange} 
+              required 
+              value={datosEmpleado.apellido} 
+            />
         </div>
         
         <div className="form-group">
             <label>DNI:</label>
-            <input className="form-input" type="text" name="dni" onChange={handleChange} required value={datosEmpleado.dni} />
-        </div>
-        
-        <div className="form-group">
-            <label>Teléfono:</label>
-            <input className="form-input" type="text" name="telefono" onChange={handleChange} value={datosEmpleado.telefono} />
-        </div>
-        
-        <div className="form-group">
-            <label>Email:</label>
-            <input className="form-input" type="email" name="email" onChange={handleChange} required value={datosEmpleado.email} />
+            <input 
+              className="form-input" 
+              type="text" 
+              name="dni" 
+              onChange={handleChange} 
+              required 
+              value={datosEmpleado.dni}
+              pattern="\d{7,8}"
+              title="Debe contener 7 u 8 dígitos"
+            />
+            <small>Ingrese 7 u 8 dígitos sin puntos</small>
         </div>
 
         <div className="form-group">
             <label>Puesto:</label>
-            <select className="form-select" name="puesto" onChange={handleChange} required value={datosEmpleado.puesto}>
+            <select 
+              className="form-select" 
+              name="puesto" 
+              onChange={handleChange} 
+              required 
+              value={datosEmpleado.puesto}
+            >
                 <option value="Atencion">Atención al Cliente</option>
                 <option value="Supervisor">Supervisor</option>
-                <option value="Mecanico">Mecánico</option>
-                <option value="Gerente">Gerente</option>
             </select>
         </div>
+
+        {/* Campo de Supervisor - solo visible si NO es Supervisor */}
+        {!esSupervisor && (
+          <div className="form-group">
+            <label>Supervisor Asignado:</label>
+            <select 
+              className="form-select" 
+              name="id_supervisor" 
+              onChange={handleChange} 
+              required={!esSupervisor}
+              value={datosEmpleado.id_supervisor}
+            >
+              <option value="">Seleccione un supervisor</option>
+              {supervisores.map(sup => (
+                <option key={sup.id_empleado} value={sup.id_empleado}>
+                  {sup.nombre} {sup.apellido} (ID: {sup.id_empleado})
+                </option>
+              ))}
+            </select>
+            {supervisores.length === 0 && (
+              <small style={{ color: '#c53030' }}>
+                No hay supervisores registrados. Debe registrar un supervisor primero.
+              </small>
+            )}
+          </div>
+        )}
 
         <button type="submit" className="btn-primary">Registrar Empleado</button>
       </form>
@@ -134,15 +218,27 @@ const RegistrarEmpleado = ({ apiBaseUrl }) => {
                 <span className="detail-label">Puesto:</span>
                 <span className="detail-value">{empleadoRegistrado.puesto}</span>
               </div>
-              <div className="detail-row">
-                <span className="detail-label">Email:</span>
-                <span className="detail-value">{empleadoRegistrado.email}</span>
-              </div>
             </div>
 
-            <button className="modal-close-btn" onClick={closeModal}>
-              Aceptar
-            </button>
+            <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1.5rem' }}>
+              ¿Deseas crear un usuario de acceso para este empleado ahora?
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={closeModal}
+                style={{ marginTop: 0 }}
+              >
+                Omitir
+              </button>
+              <button 
+                className="modal-close-btn"
+                onClick={() => navigate('/registrar-usuario-empleado', { state: { empleado: empleadoRegistrado } })}
+              >
+                Crear Usuario
+              </button>
+            </div>
           </div>
         </div>
       )}
