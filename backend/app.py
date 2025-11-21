@@ -618,31 +618,6 @@ def reporte_alquileres_por_periodo():
     except Exception as e:
         return jsonify({"error": f"Error del servidor al generar reporte: {e}"}), 500
     
-@app.route("/reportes/cliente/<int:id_cliente>", methods=["GET"])
-def generar_reporte_cliente_route(id_cliente):
-    """
-    Genera el reporte de historial de alquileres para un cliente específico.
-    """
-    try:
-        # 1. Llama al servicio para generar el reporte.
-        # Se asume que el servicio devuelve la ruta al archivo PDF guardado.
-        ruta_archivo = servicio_reporte.generar_reporte_alquileres_por_cliente(id_cliente)       
-        return jsonify({
-            "mensaje": f"Reporte del cliente {id_cliente} generado con éxito.", 
-            "ruta_archivo": ruta_archivo 
-        }), 200
-        
-    except RecursoNoEncontradoError as e:
-        # El cliente con ese ID no existe.
-        return jsonify({"error": str(e)}), 404
-    except ErrorDeAplicacion as e:
-        # Error genérico del servicio.
-        return jsonify({"error": str(e)}), 500
-    except Exception as e:
-        # Otros errores inesperados.
-        print(f"Error al generar reporte de cliente: {e}")
-        return jsonify({"error": "Error interno del servidor al generar reporte."}), 500
-    
 # =============================
 #      USUARIOS
 # =============================
