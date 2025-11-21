@@ -32,9 +32,9 @@ servicio_alquiler = AlquilerService()
 servicio_reserva = ReservaService()
 servicio_multa = MultaService()
 
-servicio_reporte = ReporteService() #
+servicio_reporte = ReporteService() 
 servicio_mantenimiento = MantenimientoService()
-servicio_usuario = UsuarioService() #
+servicio_usuario = UsuarioService() 
 
 
 # --- Ruta raíz ---
@@ -43,7 +43,7 @@ def principal():
     return "TP-DAO-2025"
 
 # =============================
-#     MULTAS CRUD (¡ARREGLADO!)
+#     MULTAS CRUD 
 # =============================
 
 @app.route("/multas", methods=["GET"])
@@ -129,6 +129,84 @@ def eliminar_multa(id_multa):
         return jsonify({"error": str(e)}), 409
 
 # =============================
+#     MANTENIMIENTOS CRUD
+# =============================
+@app.route("/mantenimientos", methods=["GET"])
+def listar_mantenimientos():
+    """
+    Lista mantenimientos, filtrando por 'patente' si se provee.
+    Ej: GET /mantenimientos
+    Ej: GET /mantenimientos?patente=ABC123
+    """
+    try:
+        patente = request.args.get('patente', type=str)
+
+        if patente:
+            mantenimientos = servicio_mantenimiento.buscar_por_vehiculo(patente)
+        else:
+            mantenimientos = servicio_mantenimiento.listar_mantenimientos()
+        
+        return jsonify([m.a_dict() for m in mantenimientos]), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["GET"])
+def obtener_mantenimiento(id_mantenimiento):
+    try:
+        mantenimiento = servicio_mantenimiento.buscar_mantenimiento(id_mantenimiento)
+        return jsonify(mantenimiento.a_dict()), 200
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/mantenimientos", methods=["POST"])
+def crear_mantenimiento():
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos.")
+        
+        nuevo_mantenimiento = servicio_mantenimiento.crear_mantenimiento(datos)
+        return jsonify(nuevo_mantenimiento.a_dict()), 201
+    
+    except (DatosInvalidosError, RecursoNoEncontradoError) as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["PUT"])
+def actualizar_mantenimiento(id_mantenimiento):
+    try:
+        datos = request.get_json()
+        if not datos:
+            raise DatosInvalidosError("No se proporcionaron datos para actualizar.")
+        
+        mantenimiento_actualizado = servicio_mantenimiento.actualizar_mantenimiento(id_mantenimiento, datos)
+        return jsonify(mantenimiento_actualizado.a_dict()), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
+@app.route("/mantenimientos/<int:id_mantenimiento>", methods=["DELETE"])
+def eliminar_mantenimiento(id_mantenimiento):
+    try:
+        servicio_mantenimiento.eliminar_mantenimiento(id_mantenimiento)
+        return jsonify({"mensaje": f"Mantenimiento {id_mantenimiento} eliminado"}), 200
+    
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+    
+# =============================
 #     CLIENTES CRUD
 # =============================
 @app.route("/clientes", methods=["GET"])
@@ -190,7 +268,6 @@ def crear_cliente():
     except ErrorDeCliente as e:
         return jsonify({"error": str(e)}), 500
 
-
 @app.route("/clientes/<int:id_cliente>", methods=["PUT"])
 def actualizar_cliente(id_cliente):
     try:
@@ -212,7 +289,6 @@ def actualizar_cliente(id_cliente):
     
     except ErrorDeCliente as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route("/clientes/<int:id_cliente>", methods=["DELETE"])
 def eliminar_cliente(id_cliente):

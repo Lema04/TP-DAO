@@ -28,7 +28,10 @@ class MantenimientoService:
                 raise DatosInvalidosError("La 'patente' del vehículo es obligatoria.")
             # Usamos el servicio para buscarlo (este ya levanta RecursoNoEncontradoError)
             vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
-            
+
+            if vehiculo.estado == "Alquilado":
+                raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo esté alquilado.")
+                        
             # 2. Validar y convertir datos crudos
             fecha_inicio_str = datos.get("fecha_inicio")
             fecha_fin_str = datos.get("fecha_fin")
@@ -41,6 +44,11 @@ class MantenimientoService:
             fecha_fin = date.fromisoformat(fecha_fin_str)
             costo = float(costo_raw)
 
+            if vehiculo.estado == "Reservado":
+                reserva = vehiculo.reservas[-1]
+                if reserva.fecha_inicio_deseada <= fecha_fin or reserva.fecha_fin_deseada >= fecha_inicio:
+                    raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo está alquilado")
+
             # 3. Crear el objeto Mantenimiento (aquí se valida la lógica de fechas)
             mantenimiento = Mantenimiento(
                 id_mantenimiento=None, # El ID es autoincremental
@@ -51,8 +59,12 @@ class MantenimientoService:
                 vehiculo=vehiculo # Pasamos el objeto completo
             )
 
+            vehiculo.estado = "Mantenimiento"
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, vehiculo)
+
             # 4. Guardar y retornar el objeto recién creado
             nuevo_id = self.dao.crear_mantenimiento(mantenimiento)
+            vehiculo.agregar_mantenimiento(mantenimiento)
             return self.dao.buscar_por_id(nuevo_id)
 
         except (ValueError, TypeError) as e: 
