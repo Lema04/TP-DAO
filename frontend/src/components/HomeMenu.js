@@ -11,7 +11,9 @@ const HomeMenu = () => {
       color: '#cc0000',
       items: [
         { permission: 'RegistroCliente', to: '/clientes', label: 'Registrar Cliente', icon: '👤' },
+        { permission: 'RegistroCliente', to: '/listado-clientes', label: 'Listado de Clientes', icon: '👥' },
         { permission: 'RegistrarVehiculo', to: '/registrar-vehiculo', label: 'Registrar Vehículo', icon: '🚗' },
+        { permission: 'RegistrarVehiculo', to: '/listado-vehiculos', label: 'Listado de Vehículos', icon: '🚙' },
       ]
     },
     {
@@ -28,6 +30,7 @@ const HomeMenu = () => {
         { permission: 'CrearReserva', to: '/crear-reserva', label: 'Crear Reserva', icon: '📅' },
         { permission: 'GestionReservas', to: '/gestion-reservas', label: 'Gestionar Reservas', icon: '📊' },
         { permission: 'RegistroAlquiler', to: '/alquiler', label: 'Registrar Alquiler', icon: '🔑' },
+        { permission: 'RegistroAlquiler', to: '/listado-alquileres', label: 'Listado de Alquileres', icon: '📋' },
       ]
     },
     {

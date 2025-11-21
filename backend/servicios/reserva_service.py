@@ -34,23 +34,33 @@ class ReservaService:
                 raise DatosInvalidosError("El 'id_cliente' es obligatorio.")
             cliente = self.cliente_service.buscar_cliente(id_cliente)
             
+            # 3. Validar y convertir datos crudos (MOVIDO ARRIBA PARA USAR EN VALIDACIÓN)
+            fecha_inicio_str = datos.get('fecha_inicio_deseada')
+            fecha_fin_str = datos.get('fecha_fin_deseada')
+            if not fecha_inicio_str or not fecha_fin_str:
+                raise DatosInvalidosError("Las 'fecha_inicio_deseada' y 'fecha_fin_deseada' son obligatorias.")
+
             # 2. Validar Vehiculo (opcional)
             vehiculo = None
             patente = datos.get('patente')
             if patente:
                 vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
                 
-                # VALIDACIÓN: El vehículo no debe estar Reservado o Alquilado
-                if vehiculo.estado in ["Reservado", "Alquilado"]:
-                    raise ErrorDeLogicaDeNegocio(
-                        f"El vehículo {patente} no está disponible. Estado actual: {vehiculo.estado}"
-                    )
+                # VALIDACIÓN: El vehículo no debe estar en MANTENIMIENTO
+                if vehiculo.estado == "Mantenimiento":
+                    raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} está en mantenimiento.")
+                
+                # VALIDACIÓN DE FECHAS (Conflictos)
+                conflictos_reserva = self.reserva_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+                if conflictos_reserva:
+                    # Formatear mensaje con detalles
+                    fechas = [f"{r.fecha_inicio_deseada} a {r.fecha_fin_deseada}" for r in conflictos_reserva]
+                    raise ErrorDeLogicaDeNegocio(f"El vehículo ya está reservado en las fechas: {', '.join(fechas)}")
 
-            # 3. Validar y convertir datos crudos
-            fecha_inicio_str = datos.get('fecha_inicio_deseada')
-            fecha_fin_str = datos.get('fecha_fin_deseada')
-            if not fecha_inicio_str or not fecha_fin_str:
-                raise DatosInvalidosError("Las 'fecha_inicio_deseada' y 'fecha_fin_deseada' son obligatorias.")
+                conflictos_alquiler = self.alquiler_service.alquiler_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+                if conflictos_alquiler:
+                    fechas = [f"{a.fecha_inicio} a {a.fecha_fin}" for a in conflictos_alquiler]
+                    raise ErrorDeLogicaDeNegocio(f"El vehículo está alquilado en las fechas: {', '.join(fechas)}")
 
             # 4. Crear el objeto Reserva (esto valida la lógica de fechas)
             reserva = Reserva(

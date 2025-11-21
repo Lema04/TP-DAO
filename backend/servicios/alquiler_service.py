@@ -4,6 +4,7 @@ from Crud.alquiler_crud import AlquilerCRUD
 from Crud.cliente_crud import ClienteCRUD
 from Crud.empleado_crud import EmpleadoCRUD
 from Crud.vehiculo_crud import VehiculoCRUD
+from Crud.reserva_crud import ReservaCRUD # Importar ReservaCRUD
 from .excepciones import RecursoNoEncontradoError, DatosInvalidosError, ErrorDeLogicaDeNegocio, ErrorDeAplicacion
 
 class AlquilerService:
@@ -12,6 +13,7 @@ class AlquilerService:
         self.cliente_dao = ClienteCRUD()
         self.empleado_dao = EmpleadoCRUD()
         self.vehiculo_dao = VehiculoCRUD()
+        self.reserva_dao = ReservaCRUD() # Instanciar ReservaCRUD
 
     def crear_alquiler(self, datos):
         """
@@ -30,19 +32,36 @@ class AlquilerService:
             if not vehiculo:
                 raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
             
-            # VALIDACIÓN: El vehículo no debe estar Reservado o Alquilado
-            if vehiculo.estado not in ['Disponible', 'Mantenimiento']:
+            # VALIDACIÓN: El vehículo no debe estar en Mantenimiento
+            if vehiculo.estado == 'Mantenimiento':
                  raise ErrorDeLogicaDeNegocio(
-                     f"El vehículo {patente} no está disponible para alquiler. Estado actual: {vehiculo.estado}"
+                     f"El vehículo {patente} está en mantenimiento."
                  )
+
+            # VALIDACIÓN DE FECHAS (Conflictos)
+            fecha_inicio_str = datos.get('fecha_inicio')
+            fecha_fin_str = datos.get('fecha_fin')
+            
+            if not fecha_inicio_str or not fecha_fin_str:
+                 raise DatosInvalidosError("Las fechas de inicio y fin son obligatorias.")
+
+            conflictos_alquiler = self.alquiler_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+            if conflictos_alquiler:
+                fechas = [f"{a.fecha_inicio} a {a.fecha_fin}" for a in conflictos_alquiler]
+                raise ErrorDeLogicaDeNegocio(f"El vehículo ya está alquilado en las fechas: {', '.join(fechas)}")
+
+            conflictos_reserva = self.reserva_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+            if conflictos_reserva:
+                fechas = [f"{r.fecha_inicio_deseada} a {r.fecha_fin_deseada}" for r in conflictos_reserva]
+                raise ErrorDeLogicaDeNegocio(f"El vehículo está reservado en las fechas: {', '.join(fechas)}")
 
             id_empleado = datos.get('id_empleado')
             empleado = self.empleado_dao.buscar_por_id(id_empleado)
             if not empleado:
                 raise RecursoNoEncontradoError(f"Empleado con ID {id_empleado} no encontrado.")
 
-            fecha_inicio = date.fromisoformat(datos.get('fecha_inicio'))
-            fecha_fin = date.fromisoformat(datos.get('fecha_fin'))
+            fecha_inicio = date.fromisoformat(fecha_inicio_str)
+            fecha_fin = date.fromisoformat(fecha_fin_str)
             if fecha_inicio < date.today() or fecha_fin < date.today():
                 raise ValueError("La fecha debe ser posterior al dia de hoy")
                 
@@ -124,6 +143,33 @@ class AlquilerService:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al actualizar alquiler: {e}")
 
+    def finalizar_alquiler(self, id_alquiler):
+        """
+        Finaliza un alquiler y libera el vehículo.
+        Retorna: El objeto Alquiler finalizado.
+        """
+        try:
+            alquiler = self.buscar_alquiler(id_alquiler)
+            
+            # 1. Cambiar estado del alquiler
+            alquiler.finalizar() # Esto pone estado="Finalizado"
+            
+            # 2. Liberar vehículo
+            vehiculo = alquiler.vehiculo
+            vehiculo.marcar_disponible()
+            
+            # 3. Guardar cambios
+            self.vehiculo_dao.actualizar_vehiculo(vehiculo)
+            self.alquiler_dao.actualizar_alquiler(alquiler)
+            
+            return alquiler
+            
+        except ValueError as e:
+             raise DatosInvalidosError(f"Error al finalizar alquiler: {e}")
+        except Exception as e:
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al finalizar alquiler: {e}")
+
     def eliminar_alquiler(self, id_alquiler):
         """
         Elimina un alquiler.
@@ -165,8 +211,10 @@ class AlquilerService:
                 raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
             
             # 3. Validar que el vehículo esté reservado (debería estarlo si viene de una reserva)
-            if vehiculo.estado not in ["Reservado", "Disponible"]:
-                raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} no está disponible (estado: {vehiculo.estado}).")
+            # NOTA: Aquí relajamos la validación porque la reserva ya "bloqueó" el vehículo.
+            # Solo verificamos que no esté en Mantenimiento o Alquilado por otro.
+            if vehiculo.estado == "Mantenimiento":
+                raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} está en mantenimiento.")
             
             cliente_id = reserva.cliente.id_cliente
             cliente = self.cliente_dao.buscar_por_id(cliente_id)

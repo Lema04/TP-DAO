@@ -133,3 +133,20 @@ class AlquilerCRUD(ORMBase):
 
     def eliminar_alquiler(self, id_alquiler):
         self.eliminar(id_alquiler)
+
+    def buscar_conflictos(self, patente, fecha_inicio, fecha_fin):
+        """
+        Busca alquileres activos que se solapen con el rango dado.
+        Retorna una lista de alquileres conflictivos.
+        """
+        # Solapamiento: (StartA <= EndB) and (EndA >= StartB)
+        # Estado debe ser Activo (Finalizado y Cancelado no bloquean)
+        
+        condicion = f"""
+            patente = '{patente}' AND
+            estado = 'Activo' AND
+            fecha_inicio <= '{fecha_fin}' AND
+            fecha_fin >= '{fecha_inicio}'
+        """
+        tuplas = self.obtener_por_condicion(condicion)
+        return [self._build_alquiler(t) for t in tuplas if self._build_alquiler(t)]

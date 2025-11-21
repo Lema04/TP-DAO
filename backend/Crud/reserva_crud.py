@@ -124,3 +124,21 @@ class ReservaCRUD(ORMBase):
         condicion = f"estado = 'Pendiente' AND fecha_inicio_deseada <= '{hoy}'"
         tuplas = self.obtener_por_condicion(condicion)
         return [self._build_reserva(t) for t in tuplas if self._build_reserva(t)]
+
+    def buscar_conflictos(self, patente, fecha_inicio, fecha_fin):
+        """
+        Busca reservas activas (Pendiente, Confirmada) que se solapen con el rango dado.
+        Retorna una lista de reservas conflictivas.
+        """
+        # Solapamiento: (StartA <= EndB) and (EndA >= StartB)
+        # Aquí A es la reserva existente, B es el rango solicitado.
+        # Estado debe ser Pendiente o Confirmada (Convertida y Cancelada no bloquean)
+        
+        condicion = f"""
+            patente = '{patente}' AND
+            estado IN ('Pendiente', 'Confirmada') AND
+            fecha_inicio_deseada <= '{fecha_fin}' AND
+            fecha_fin_deseada >= '{fecha_inicio}'
+        """
+        tuplas = self.obtener_por_condicion(condicion)
+        return [self._build_reserva(t) for t in tuplas if self._build_reserva(t)]
