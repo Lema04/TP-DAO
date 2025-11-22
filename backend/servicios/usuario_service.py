@@ -64,7 +64,7 @@ class UsuarioService:
         if not usuario:
             raise RecursoNoEncontradoError(f"Usuario con ID {id_usuario} no encontrado.")
         return usuario
-
+    
     def actualizar_usuario(self, id_usuario: int, nuevos_datos: dict):
         """
         Actualiza un usuario.

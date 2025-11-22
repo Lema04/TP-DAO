@@ -1,6 +1,9 @@
 # Importamos las clases y excepciones necesarias
 from clases.cliente import Cliente
 from Crud.cliente_crud import ClienteCRUD
+from servicios.usuario_service import UsuarioService
+from Crud.usuario_crud import UsuarioCRUD
+
 # (Asegúrate de importar tus excepciones personalizadas)
 from .excepciones import ErrorDeCliente, ClienteNoEncontradoError, DatosInvalidosError
 
@@ -8,13 +11,13 @@ class ClienteService:
     def __init__(self):
         # Correcto: El servicio "tiene un" DAO. Esto es Composición (Capítulo 9).
         self.dao = ClienteCRUD()
+        self.usuario_dao = UsuarioCRUD()
+        self.servicio_usuario = UsuarioService()
 
     def crear_cliente(self, datos):
         """
-        Crea un nuevo cliente.
+        Crea un nuevo cliente y su usuario automáticamente.
         Retorna: El objeto Cliente recién creado.
-        Levanta: DatosInvalidosError si los datos son incorrectos.
-                 ErrorDeCliente si ocurre un error en la BDD.
         """
         try:
             # Validar que los datos mínimos estén presentes
@@ -30,19 +33,37 @@ class ClienteService:
                 telefono=datos.get('telefono', '').strip(),
                 email=datos.get('email', '').strip()
             )
-            
-            # Asumimos que el DAO levanta un ValueError o similar si hay un
-            # problema de validación (como un DNI duplicado).
+        
+            # Crear cliente en la base de datos
             nuevo_id = self.dao.crear_cliente(cliente)
-            
-            # Es mejor retornar el objeto completo recién creado.
-            return self.dao.buscar_por_id(nuevo_id)
+            cliente_creado = self.dao.buscar_por_id(nuevo_id)
+
+            # --- CREACIÓN AUTOMÁTICA DEL USUARIO ---
+            nombre_usuario_base = f"{cliente_creado.nombre.lower()}.{cliente_creado.apellido.lower()}.{cliente_creado.id_cliente}"
+            nombre_usuario = nombre_usuario_base
+            contador = 1
+
+            # Evitar nombres duplicados
+            while True:
+                try:
+                    usuario_datos = {
+                        "nombre_usuario": nombre_usuario,
+                        "contraseña": "123456",  # contraseña inicial por defecto
+                        "rol": "cliente",
+                        "id_cliente": cliente_creado.id_cliente
+                    }
+                    self.servicio_usuario.crear_usuario(usuario_datos)
+                    break
+                except DatosInvalidosError:
+                    # Si ya existe, agregamos un número al final
+                    contador += 1
+                    nombre_usuario = f"{nombre_usuario_base}{contador}"
+
+            return cliente_creado
 
         except ValueError as e:
-            # Re-levantamos el error de validación como una excepción de servicio
             raise DatosInvalidosError(f"Datos inválidos: {e}")
         except Exception as e:
-            # Capturamos un error genérico del DAO
             raise ErrorDeCliente(f"Error al crear cliente: {e}")
 
     def listar_clientes(self):
@@ -132,19 +153,24 @@ class ClienteService:
 
     def eliminar_cliente(self, id_cliente):
         """
-        Elimina un cliente.
+        Elimina un cliente y su usuario asociado.
         Retorna: True si fue exitoso.
         Levanta: ClienteNoEncontradoError si no existe.
-                 ErrorDeCliente si ocurre un error en la BDD.
+                ErrorDeCliente si ocurre un error en la BDD.
         """
         try:
             # Verificamos que exista primero
-            self.buscar_cliente(id_cliente) 
-            
-            # (Alternativa: el DAO podría levantar un error si no lo encuentra)
+            cliente = self.buscar_cliente(id_cliente) 
+
+            # Eliminamos al usuario asociado (si existe)
+            usuario = self.usuario_dao.buscar_por_cliente_id(id_cliente)
+            if usuario:
+                self.usuario_dao.eliminar_usuario(usuario.id_usuario)
+
+            # Eliminamos al cliente
             self.dao.eliminar_cliente(id_cliente)
-            return True # Opcional, podemos no retornar nada (None) en éxito.
-        
+            return True
+
         except Exception as e:
             if isinstance(e, ErrorDeCliente):
                 raise e

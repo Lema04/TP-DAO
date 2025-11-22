@@ -57,6 +57,31 @@ class UsuarioCRUD(ORMBase):
             tupla = cursor.fetchone()
             return self._build_usuario(tupla) # Usamos el ensamblador
 
+    def buscar_por_cliente_id(self, id_cliente):
+        condicion = f"id_cliente = {id_cliente}"
+        resultado = self.obtener_por_condicion(condicion)
+
+        if not resultado:
+            return None
+
+        tupla = resultado[0]
+        return self._build_usuario(tupla)
+
+
+    def buscar_por_empleado_id(self, id_empleado):
+        """
+        Retorna un objeto Usuario o None buscando por la FK id_empleado.
+        Usa el método del ORMBase para mantener consistencia.
+        """
+        condicion = f"id_empleado = {id_empleado}"
+        resultado = self.obtener_por_condicion(condicion)
+
+        if not resultado:
+            return None
+
+        tupla = resultado[0]
+        return self._build_usuario(tupla)
+
     def crear_usuario(self, usuario: Usuario):
         # (Tu código está perfecto)
         if self.existe_usuario(usuario.nombre_usuario):

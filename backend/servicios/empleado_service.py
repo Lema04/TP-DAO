@@ -2,83 +2,100 @@
 
 from Crud.empleado_crud import EmpleadoCRUD
 from clases.empleado import Empleado
-# Importamos las excepciones genéricas que ya definimos
+from servicios.usuario_service import UsuarioService
+from Crud.usuario_crud import UsuarioCRUD
 from servicios.excepciones import (
-    ErrorDeAplicacion, 
-    RecursoNoEncontradoError, 
+    ErrorDeAplicacion,
+    RecursoNoEncontradoError,
     DatosInvalidosError
 )
 
 class EmpleadoService:
     def __init__(self):
         self.dao = EmpleadoCRUD()
+        self.usuario_dao = UsuarioCRUD()
+        self.servicio_usuario = UsuarioService()
 
+    # -------------------------------------------------------------------
+    # CREAR EMPLEADO + USUARIO AUTOMÁTICO
+    # -------------------------------------------------------------------
     def crear_empleado(self, datos):
-        """
-        Crea un nuevo empleado.
-        Retorna: El objeto Empleado recién creado.
-        Levanta: DatosInvalidosError, ErrorDeAplicacion.
-        """
-            
         try:
             id_supervisor = int(datos.get('id_supervisor')) if datos.get('id_supervisor') else None
             if id_supervisor is not None:
                 supervisor = self.dao.buscar_por_id(id_supervisor)
                 if not supervisor:
                     raise DatosInvalidosError(f"El supervisor con ID {id_supervisor} no existe.")
-                elif supervisor._puesto != 'Supervisor':
+                elif supervisor.puesto.lower() != 'supervisor':
                     raise DatosInvalidosError(f"El empleado con ID {id_supervisor} no es un supervisor.")
+
             empleado = Empleado(
                 id_empleado=None,
                 nombre=datos.get('nombre'),
                 apellido=datos.get('apellido'),
                 dni=datos.get('dni'),
                 puesto=datos.get('puesto'),
-                # Maneja el caso de que id_supervisor sea '' (string vacío) o None
                 id_supervisor=id_supervisor
             )
-            
-            # El DAO (crear_empleado) ya maneja la validación de DNI duplicado
+
             nuevo_id = self.dao.crear_empleado(empleado)
-            
-            # Retornamos el objeto completo
-            return self.dao.buscar_por_id(nuevo_id)
-        
-        except (ValueError, TypeError) as e: 
-            # Captura errores de int(), o del DAO (DNI duplicado)
-            raise DatosInvalidosError(f"Datos inválidos: {e}")
+            empleado_creado = self.dao.buscar_por_id(nuevo_id)
+
+            # --- CREAR USUARIO AUTOMÁTICO ---
+            puesto_lower = empleado_creado.puesto.lower().replace("ó", "o").replace("á", "a")
+            rol_usuario = "atencion" if puesto_lower == "atencion" else "supervisor"
+
+            nombre_usuario_base = (
+                f"{empleado_creado.nombre.lower()}.{empleado_creado.apellido.lower()}.{empleado_creado.id_empleado}"
+            )
+            nombre_usuario = nombre_usuario_base
+            contador = 1
+
+            while True:
+                try:
+                    usuario_datos = {
+                        "nombre_usuario": nombre_usuario,
+                        "contraseña": "123456",
+                        "rol": rol_usuario,
+                        "id_empleado": empleado_creado.id_empleado
+                    }
+
+                    self.servicio_usuario.crear_usuario(usuario_datos)
+                    break
+
+                except DatosInvalidosError:
+                    contador += 1
+                    nombre_usuario = f"{nombre_usuario_base}{contador}"
+
+            return empleado_creado
+
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al crear empleado: {e}")
 
     def listar_empleados(self):
-        """ Retorna: Una lista de objetos Empleado. """
         try:
             return self.dao.listar_empleados()
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al listar empleados: {e}")
-
+    
     def buscar_empleado(self, id_empleado):
-        """
-        Busca un empleado por ID.
-        Retorna: El objeto Empleado.
-        Levanta: RecursoNoEncontradoError.
-        """
         empleado = self.dao.buscar_por_id(id_empleado)
         if not empleado:
             raise RecursoNoEncontradoError(f"Empleado con ID {id_empleado} no encontrado.")
         return empleado
 
+    # -------------------------------------------------------------------
+    # ACTUALIZAR EMPLEADO + ACTUALIZAR USUARIO AUTOMÁTICAMENTE
+    # -------------------------------------------------------------------
     def actualizar_empleado(self, id_empleado, nuevos_datos):
-        """
-        Actualiza un empleado.
-        Retorna: El objeto Empleado actualizado.
-        Levanta: RecursoNoEncontradoError, DatosInvalidosError.
-        """
         try:
-            # 1. Usamos nuestro propio método para buscar (y validar existencia)
             empleado = self.buscar_empleado(id_empleado)
 
-            # 2. ¡NO USAR setattr! Actualizamos campos controlados.
+            nombre_viejo = empleado.nombre
+            apellido_viejo = empleado.apellido
+            puesto_viejo = empleado.puesto
+
+            # --- Actualizar empleado ---
             if 'nombre' in nuevos_datos:
                 empleado.nombre = nuevos_datos['nombre'].strip()
             if 'apellido' in nuevos_datos:
@@ -91,31 +108,50 @@ class EmpleadoService:
                 id_sup = nuevos_datos.get('id_supervisor')
                 empleado.id_supervisor = int(id_sup) if id_sup else None
 
-            # 3. Guardamos el objeto modificado
-            # (El DAO podría levantar un error de DNI duplicado aquí)
             self.dao.actualizar_empleado(empleado)
-            return empleado # Retornamos el objeto actualizado
-        
-        except (ValueError, TypeError) as e:
-            raise DatosInvalidosError(f"Datos de actualización inválidos: {e}")
+
+            # ------------------------------------------------------------
+            # ACTUALIZAR USUARIO SI EXISTE
+            # ------------------------------------------------------------
+            usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
+
+            if usuario:
+                cambios = False
+
+                # -------- actualizar nombre_usuario si cambia nombre o apellido --------
+                if (empleado.nombre != nombre_viejo) or (empleado.apellido != apellido_viejo):
+                    usuario.nombre_usuario = (
+                        f"{empleado.nombre.lower()}.{empleado.apellido.lower()}.{empleado.id_empleado}"
+                    )
+                    cambios = True
+
+                # -------- actualizar rol si cambia el puesto --------
+                if empleado.puesto != puesto_viejo:
+                    puesto_lower = empleado.puesto.lower()
+                    usuario.rol = "atencion" if puesto_lower == "atencion" else "supervisor"
+                    cambios = True
+
+                if cambios:
+                    self.usuario_dao.actualizar_usuario(usuario)
+
+            return empleado
+
         except Exception as e:
-            if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al actualizar empleado: {e}")
 
+    # -------------------------------------------------------------------
+    # ELIMINAR EMPLEADO + USUARIO VINCULADO
+    # -------------------------------------------------------------------
     def eliminar_empleado(self, id_empleado):
-        """
-        Elimina un empleado.
-        Retorna: True si fue exitoso.
-        Levanta: RecursoNoEncontradoError.
-        """
         try:
-            # 1. Verificamos que exista
-            self.buscar_empleado(id_empleado) 
-            
-            # 2. Eliminamos
+            empleado = self.buscar_empleado(id_empleado)
+
+            usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
+            if usuario:
+                self.usuario_dao.eliminar_usuario(usuario.id_usuario)
+
             self.dao.eliminar_empleado(id_empleado)
             return True
+
         except Exception as e:
-            # (El DAO podría levantar un error de FK si el empleado es supervisor o está en un alquiler)
-            if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al eliminar empleado: {e}")
