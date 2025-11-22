@@ -11,7 +11,7 @@ import Logo from './components/Logo';
 import './App.css'; // Importa estilos base
 import HomeMenu from './components/HomeMenu';
 import HeaderNav from './components/HeaderNav';
-import RegistroCliente from './components/RegistroCliente';
+import GestionClientes from "./components/GestionClientes";
 import MisAlquileres from './components/MisAlquileres';
 import RegistroUsuario from './components/RegistroUsuario';
 import MisMultas from './components/MisMultas';
@@ -80,11 +80,12 @@ function App() {
               </ProtectedRoute>
             } />
 
+            {/* Pantalla principal: Listado + buscador + botones */}
             <Route path="/clientes" element={
-              <ProtectedRoute permissionName="RegistroCliente">
-                <RegistroCliente apiBaseUrl={API_BASE_URL} />
+              <ProtectedRoute permissionName="GestionClientes">
+                <GestionClientes apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
-            } />
+            }/>
 
             <Route path="/mis-alquileres" element={
               <ProtectedRoute permissionName="MisAlquileres">

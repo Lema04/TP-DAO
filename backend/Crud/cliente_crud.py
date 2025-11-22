@@ -28,7 +28,8 @@ class ClienteCRUD(ORMBase):
                 dni=tupla[3],
                 direccion=tupla[4],
                 telefono=tupla[5],
-                email=tupla[6]
+                email=tupla[6],
+                validar=False   # << IMPORTANTE
             )
         except IndexError:
             # Error por si la tupla no es la esperada

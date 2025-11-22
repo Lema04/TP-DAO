@@ -187,6 +187,7 @@ body {
 
 /* --- Messages --- */
 .success-message, .mensaje {
+  /* Usando estilos base */
   background-color: #f0fff4;
   color: #2f855a;
   padding: 1rem;
@@ -197,6 +198,7 @@ body {
 }
 
 .error-message, .mensaje.error {
+  /* Usando estilos base */
   background-color: #fff5f5;
   color: #c53030;
   padding: 1rem;
@@ -368,4 +370,381 @@ body {
 .logo-img {
     height: 100%;
     width: auto;
+}
+
+/* CSS GESTIÓN CLIENTE - ALINEADO CON ESTILOS BASE */
+
+/* ====================================
+   1. CONTENEDOR PRINCIPAL
+   ==================================== */
+
+   .client-manager-container {
+    /* Usamos el patrón de .form-card.wide pero adaptado al listado */
+    width: 90%;
+    max-width: 1000px; /* Igual que .form-card.wide */
+    margin: 2rem auto; /* Espacio superior/inferior consistente */
+    padding: 2.5rem; /* Padding consistente */
+    background-color: #ffffff;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); /* Sombra consistente */
+    border-radius: 16px; /* Borde redondeado consistente */
+}
+
+/* Título Principal */
+.main-title {
+    /* Usamos el estilo .form-title general */
+    text-align: center;
+    color: #1a202c;
+    margin-bottom: 1.5rem; /* Ajustado para dar espacio al separador */
+    font-size: 2.5em; /* Mantener tamaño grande */
+    font-weight: 700;
+    letter-spacing: -0.5px;
+}
+
+/* Separador Negro debajo del Título */
+.header-separator {
+    border: none;
+    border-top: 2px solid #000; /* Separador más fino */
+    width: 100%; /* Ancho completo dentro del contenedor */
+    margin: 0 auto 20px auto;
+}
+
+/* Mensajes de Estado (Ya alineados con .success-message / .error-message) */
+
+/* ====================================
+   2. ESTILOS DE LISTADO (FILTRO Y CABECERA ROJA)
+   ==================================== */
+
+/* --- Contenedor del Filtro y Botón de Registro (se mantiene igual) --- */
+.filter-and-button-row {
+  display: flex;
+  gap: 1rem; 
+  align-items: center;
+  margin-bottom: 0.5rem; 
+}
+@media (max-width: 768px) {
+  .filter-and-button-row {
+      flex-direction: column;
+      gap: 1.5rem;
+  }
+}
+/* ----------------------------------------------------- */
+
+
+/* GRUPO DE FILTRO UNIFICADO (COMPACTO) */
+.filter-group-compact {
+  display: flex;
+  flex-grow: 1; 
+  width: auto; 
+  
+  border: 2px solid #e2e8f0; 
+  border-radius: 10px; /* 💡 Mantenemos 10px (no redondeado tipo pastilla) */
+  overflow: hidden;
+  height: 50px; 
+  margin-bottom: 0; 
+}
+
+.filter-input-compact {
+  flex-grow: 3; 
+  flex-shrink: 1; 
+  flex-basis: 0; 
+  
+  width: auto; 
+
+  padding: 0.8rem 1rem;
+  border: none;
+  font-size: 1rem;
+  background-color: #f8fafc; /* Fondo suave para el input */
+  outline: none;
+  box-sizing: border-box; 
+}
+
+.filter-input-compact:focus {
+  box-shadow: none; 
+}
+
+/* --- Ajuste del botón Filtrar (select) --- */
+.filter-select-compact {
+  flex-grow: 0; 
+  flex-shrink: 0;
+  width: 220px;                 /* un poco más ancho para que se vea centrado */
+  font-weight: 700;
+  padding: 0.8rem 2rem 0.8rem 1rem;
+
+  background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+  color: white;
+  border-left: 2px solid #e2e8f0;
+
+  appearance: none;
+  cursor: pointer;
+
+  text-align: center;           /* centra el texto */
+  position: relative;           /* necesario para mostrar el pico */
+}
+
+/* --- NUEVO: Botón de Registro (se mantiene igual, ya usa el color) --- */
+.btn-register-list-standalone {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    height: 50px; /* Asegura que la altura sea consistente */
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px; /* Consistente */
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    width: auto;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+/* Fila del Título Rojo (Ahora solo para el título) */
+.list-header-row {
+    display: flex;
+    justify-content: flex-start; /* Solo alinea el texto a la izquierda */
+    align-items: center;
+    
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%); 
+    margin: 0; 
+    padding: 0; 
+    border-radius: 8px 8px 0 0; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+}
+
+/* Encabezado Rojo de la Lista (Texto) */
+.list-header-red {
+    background-color: transparent; 
+    color: white;
+    padding: 1rem 1.5rem; 
+    font-size: 1.1rem; 
+    font-weight: 600;
+    margin: 0; 
+    border-radius: 0; 
+}
+
+/* --- ELIMINAR O OCULTAR CLASES ANTIGUAS NO DESEADAS --- */
+.filter-bar-container {
+    /* Esta clase ya no se usa, pero la mantenemos inofensiva si persiste */
+    margin-bottom: 0;
+}
+.btn-register-client-aligned {
+    display: none; 
+}
+/* ----------------------------------------------------- */
+
+
+/* Tabla de Datos */
+.table-responsive {
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.client-data-table {
+  /* Usamos los estilos de .styled-table */
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.95em;
+  border: 1px solid #e2e8f0;
+}
+
+.client-data-table th, .client-data-table td {
+  padding: 1rem 1.5rem; /* Aumentado para alinearse con .styled-table */
+  text-align: left;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.client-data-table th {
+  background-color: #f7fafc; /* Color de fondo consistente */
+  color: #4a5568; /* Color de texto consistente */
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.client-data-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.text-center-message {
+  text-align: center;
+  padding: 20px;
+  color: #718096; /* Color de texto consistente */
+}
+
+/* Botones de Acción de la Tabla (Rojos) - Alineados con btn-primary pero más pequeños */
+.action-buttons-cell {
+  text-align: center;
+  min-width: 160px; 
+}
+
+.btn-edit-red, .btn-delete-red {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    color: white;
+    border: none;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.8rem; /* Tamaño más pequeño */
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px; /* Bordes ligeramente más redondeados */
+    margin: 0 4px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-edit-red:hover, .btn-delete-red:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+
+/* ====================================
+   3. ESTILOS DE FORMULARIO (CREAR/EDITAR)
+   ==================================== */
+
+.form-container-inner-shadow {
+    /* Usar el estilo de tarjeta del formulario base */
+    max-width: 900px; /* Permitir ser más ancho para 2 columnas */
+    margin: 2rem auto;
+    padding: 2.5rem;
+    background-color: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: none; /* Quitamos el borde redundante */
+}
+
+/* Fila de Título */
+.form-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-subtitle-black {
+    /* Alineado con h3 de la cabecera, pero en negro */
+    font-size: 1.5rem; 
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+/* Botón Volver (Se debe usar la clase .btn-secondary o .back-btn para alineación base) */
+.btn-back-link {
+    /* Alineado con .header-btn o .back-btn en apariencia */
+    background: transparent;
+    border: none;
+    color: #cc0000;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.btn-back-link:hover {
+    color: #990000;
+}
+
+
+.form-separator {
+    border: none;
+    border-top: 1px solid #e2e8f0; /* Borde separador consistente */
+    margin: 1.5rem 0;
+}
+
+/* Contenedor de campos del formulario (simulando 2 columnas) */
+.form-fields-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Forzar 2 columnas */
+    gap: 2rem 3rem; /* Espacio entre filas y columnas consistente */
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .form-fields-grid {
+        grid-template-columns: 1fr; /* Una columna en móvil */
+        gap: 1.5rem;
+    }
+}
+
+/* Grupo de campo (Similar a .form-group) */
+.form-group-client {
+    margin-bottom: 0; /* El espaciado lo maneja el grid gap */
+    text-align: left;
+}
+
+/* Etiqueta de campo (Alineado con .form-group label, añadiendo negrita si se usa <strong>) */
+.form-label-client {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+/* Asegura que el strong esté en negrita */
+.form-label-client strong {
+    font-weight: 700;
+}
+
+/* ESTILO DEL CAMPO DE ENTRADA (Input) - Alineado con .form-input */
+.form-input-client {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background-color: #f8fafc;
+    color: #2d3748;
+    box-sizing: border-box;
+    margin-bottom: 0;
+}
+
+.form-input-client:focus {
+    border-color: #cc0000;
+    background-color: #fff;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+}
+
+.form-input-client.disabled-input {
+    background-color: #e9ecef; /* Un gris más oscuro para deshabilitado */
+    color: #718096;
+    cursor: not-allowed;
+}
+
+/* Botón de Acción Principal de Ancho Completo - Alineado con .btn-primary */
+.form-actions-client-full-width {
+    width: 100%;
+    margin-top: 1.5rem; /* Consistente con el margen superior de btn-primary */
+}
+
+.btn-submit-client-full-width {
+    /* Usar el estilo de .btn-primary */
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+    text-align: center;
+    
+    /* Resetear el margin-top para que lo controle .form-actions-client-full-width */
+    margin-top: 0; 
+}
+
+.btn-submit-client-full-width:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(204, 0, 0, 0.3);
+    background: linear-gradient(135deg, #b30000 0%, #800000 100%);
 }

@@ -9,8 +9,8 @@ const HomeMenu = () => {
     <div className="form-card">
       <h2 className="form-title">Panel de Operaciones</h2>
       {/* Usamos /alquiler, /gestion, y /reportes */}
-      {hasPermission('RegistroCliente') && (
-        <Link to="/clientes" className="menu-button">Registrar Nuevo Cliente</Link>
+      {hasPermission('GestionClientes') && (
+        <Link to="/clientes" className="menu-button">Gestión de Clientes</Link>
       )}
       {hasPermission('RegistrarVehiculo') && (
         <Link to="/registrar-vehiculo" className="menu-button">Registrar Nuevo Vehículo</Link>
