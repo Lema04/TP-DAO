@@ -748,3 +748,77 @@ body {
     box-shadow: 0 6px 12px rgba(204, 0, 0, 0.3);
     background: linear-gradient(135deg, #b30000 0%, #800000 100%);
 }
+
+/* --- Ícono de ojo dentro del input de contraseña --- */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 2.5rem; /* espacio para el icono */
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: #f8fafc;
+  color: #2d3748;
+  box-sizing: border-box;
+}
+
+.password-input-wrapper input:focus {
+  border-color: #cc0000;
+  background-color: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+}
+
+.password-toggle-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #718096;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition: color 0.2s;
+}
+
+.password-toggle-btn:hover {
+  color: #cc0000; /* cambia a rojo al pasar el mouse */
+}
+
+/* --- Botón Guardar Cambios (ancho completo) --- */
+.form-actions-client-full-width {
+  width: 100%;
+  margin-top: 1.5rem; /* margen consistente */
+}
+
+.btn-submit-client-full-width {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 6px rgba(204, 0, 0, 0.2);
+  text-align: center;
+  margin-top: 0; /* controlado por el contenedor */
+}
+
+.btn-submit-client-full-width:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(204, 0, 0, 0.3);
+  background: linear-gradient(135deg, #b30000 0%, #800000 100%);
+}
