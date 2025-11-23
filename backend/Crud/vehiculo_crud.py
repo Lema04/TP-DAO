@@ -1,7 +1,5 @@
-# --- Archivo: Crud/vehiculo_crud.py ---
-
 from orm_base import ORMBase
-from clases.vehiculo import Vehiculo # ¡Importamos la clase!
+from clases.vehiculo import Vehiculo
 
 class VehiculoCRUD(ORMBase):
     tabla = "VEHICULO"
@@ -11,7 +9,6 @@ class VehiculoCRUD(ORMBase):
     def __init__(self):
         super().__init__()
 
-    # --- ¡MEJOR PRÁCTICA: El Ensamblador! ---
     def _build_vehiculo(self, tupla):
         """
         Método privado para "ensamblar" un objeto Vehiculo desde una tupla.
@@ -19,27 +16,20 @@ class VehiculoCRUD(ORMBase):
         if not tupla:
             return None
         
-        # El ORMBase.obtener_... devuelve (pk, campo1, campo2, ...)
-        # (patente, marca, modelo, anio, precio_diario, estado)
         try:
             return Vehiculo(
                 patente=tupla[0],
                 marca=tupla[1],
                 modelo=tupla[2],
-                anio=int(tupla[3]), # Aseguramos el tipo
-                precio_diario=float(tupla[4]), # Aseguramos el tipo
+                anio=int(tupla[3]),
+                precio_diario=float(tupla[4]),
                 estado=tupla[5]
             )
         except Exception as e:
             print(f"Error al ensamblar Vehiculo desde tupla {tupla}: {e}")
             return None
 
-    # --- ¡Polimorfismo / Sobreescritura! ---
-    # Sobreescribimos 'crear_vehiculo' porque 'patente' no es autoincremental
     def crear_vehiculo(self, vehiculo: Vehiculo):
-        
-        # El ORMBase.insertar() es para claves autoincrementales.
-        # Hacemos una inserción manual.
         try:
             with self.conexion.conectar() as conn:
                 cursor = conn.cursor()
@@ -48,7 +38,7 @@ class VehiculoCRUD(ORMBase):
                     VALUES (?, ?, ?, ?, ?, ?)
                 """
                 valores = (
-                    vehiculo.patente, # Usamos el getter
+                    vehiculo.patente,
                     vehiculo.marca,
                     vehiculo.modelo,
                     vehiculo.anio,
@@ -57,18 +47,15 @@ class VehiculoCRUD(ORMBase):
                 )
                 cursor.execute(sql, valores)
                 conn.commit()
-                return vehiculo.patente # Retornamos la patente como confirmación
+                return vehiculo.patente
         except Exception as e:
-            # Podría fallar si la patente (PK) ya existe
             raise ValueError(f"Error al insertar vehículo (patente duplicada?): {e}")
 
-    # --- ¡ARREGLADO! ---
     def listar_vehiculos(self):
         """ Retorna una LISTA DE OBJETOS Vehiculo. """
         tuplas = self.obtener_todos() 
         return [self._build_vehiculo(t) for t in tuplas if self._build_vehiculo(t)]
 
-    # --- ¡ARREGLADO! ---
     def buscar_por_id(self, patente: str):
         """ Retorna UN OBJETO Vehiculo o None. """
         tupla = self.obtener_por_id(patente)

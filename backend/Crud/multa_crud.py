@@ -1,8 +1,6 @@
-# --- Archivo: Crud/multa_crud.py ---
-
 from orm_base import ORMBase
 from clases.multa import MultaDano
-from Crud.alquiler_crud import AlquilerCRUD # ¡Necesitamos la fábrica de Alquileres!
+from Crud.alquiler_crud import AlquilerCRUD
 from datetime import date
 
 class MultaCRUD(ORMBase):
@@ -12,10 +10,8 @@ class MultaCRUD(ORMBase):
 
     def __init__(self):
         super().__init__()
-        # El DAO de Multa necesita el DAO de Alquiler para "ensamblar"
-        self.alquiler_dao = AlquilerCRUD() # Asumimos que AlquilerCRUD ya fue refactorizado
+        self.alquiler_dao = AlquilerCRUD()
 
-    # --- ¡MEJOR PRÁCTICA: El Ensamblador! ---
     def _build_multa(self, tupla):
         """
         Método privado para "ensamblar" un objeto MultaDano COMPLETO.
@@ -24,37 +20,30 @@ class MultaCRUD(ORMBase):
             return None
         
         try:
-            # 1. El ORMBase devuelve (pk, campo1, campo2, ...)
-            # (id_multa, id_alquiler, descripcion, monto, fecha_incidente_str)
             id_multa = tupla[0]
             id_alquiler = tupla[1]
             descripcion = tupla[2]
-            monto = float(tupla[3]) # Convertimos
-            fecha_incidente = date.fromisoformat(tupla[4]) # Convertimos str a date
+            monto = float(tupla[3])
+            fecha_incidente = date.fromisoformat(tupla[4])
             
-            # 2. Ensamblamos la parte "Alquiler"
-            # ¡Usamos el DAO de Alquiler, que ya sabe cómo construir un objeto Alquiler!
             alquiler_obj = self.alquiler_dao.buscar_por_id(id_alquiler)
             
             if not alquiler_obj:
                 print(f"Error de integridad: No se encontró Alquiler {id_alquiler} para Multa {id_multa}")
                 return None
 
-            # 3. Ensamblamos la Multa
             return MultaDano(
                 id_multa=id_multa,
                 descripcion=descripcion,
                 monto=monto,
                 fecha_incidente=fecha_incidente,
-                alquiler=alquiler_obj # Pasamos el objeto completo
+                alquiler=alquiler_obj
             )
         except Exception as e:
             print(f"Error ensamblando Multa {tupla[0]}: {e}")
             return None
-    # -----------------------------------------------
 
     def crear_multa(self, multa: MultaDano):
-        # (Tu código está perfecto)
         valores = [
             multa.alquiler.id_alquiler,
             multa.descripcion,
@@ -63,7 +52,6 @@ class MultaCRUD(ORMBase):
         ]
         return self.insertar(valores)
     
-    # --- ¡ARREGLADO! ---
     def buscar_por_id_cliente(self, id_cliente: int):
         """ Retorna una LISTA DE OBJETOS MultaDano. """
         sql = f"""
@@ -76,10 +64,8 @@ class MultaCRUD(ORMBase):
             cursor = conn.cursor()
             cursor.execute(sql, (id_cliente,))
             tuplas = cursor.fetchall()
-            # Usamos el ensamblador
             return [self._build_multa(t) for t in tuplas if self._build_multa(t)]
     
-    # --- ¡ARREGLADO! ---
     def buscar_por_patente(self, patente: str):
         """ Retorna una LISTA DE OBJETOS MultaDano. """
         sql = f"""
@@ -92,17 +78,14 @@ class MultaCRUD(ORMBase):
             cursor = conn.cursor()
             cursor.execute(sql, (patente,))
             tuplas = cursor.fetchall()
-            # Usamos el ensamblador
             return [self._build_multa(t) for t in tuplas if self._build_multa(t)]
     
-    # --- ¡ARREGLADO! ---
     def buscar_por_id(self, id_multa: int):
         """ Retorna UN OBJETO MultaDano o None. """
         tupla = self.obtener_por_id(id_multa)
         return self._build_multa(tupla)
     
     def actualizar_multa(self, multa: MultaDano):
-        # (Tu código está perfecto)
         valores = [
             multa.alquiler.id_alquiler,
             multa.descripcion,
@@ -112,5 +95,4 @@ class MultaCRUD(ORMBase):
         self.actualizar(multa.id_multa, valores)
 
     def eliminar_multa(self, id_multa: int):
-        # (Tu código está perfecto)
         self.eliminar(id_multa)
