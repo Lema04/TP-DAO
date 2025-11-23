@@ -1,9 +1,8 @@
-# --- Archivo: servicios/empleado_service.py ---
-
 from Crud.empleado_crud import EmpleadoCRUD
 from clases.empleado import Empleado
 from servicios.usuario_service import UsuarioService
 from Crud.usuario_crud import UsuarioCRUD
+
 from servicios.excepciones import (
     ErrorDeAplicacion,
     RecursoNoEncontradoError,
@@ -55,30 +54,30 @@ class EmpleadoService:
             empleado_creado = self.dao.buscar_por_id(nuevo_id)
 
             # --- CREAR USUARIO AUTOMÁTICO ---
-            puesto_lower = empleado_creado.puesto.lower().replace("ó", "o").replace("á", "a")
-            rol_usuario = "atencion" if puesto_lower == "atencion" else "supervisor"
+            # puesto_lower = empleado_creado.puesto.lower().replace("ó", "o").replace("á", "a")
+            # rol_usuario = "atencion" if puesto_lower == "atencion" else "supervisor"
 
-            nombre_usuario_base = (
-                f"{empleado_creado.nombre.lower()}.{empleado_creado.apellido.lower()}.{empleado_creado.id_empleado}"
-            )
-            nombre_usuario = nombre_usuario_base
-            contador = 1
+            # nombre_usuario_base = (
+            #     f"{empleado_creado.nombre.lower()}.{empleado_creado.apellido.lower()}.{empleado_creado.id_empleado}"
+            # )
+            # nombre_usuario = nombre_usuario_base
+            # contador = 1
 
-            while True:
-                try:
-                    usuario_datos = {
-                        "nombre_usuario": nombre_usuario,
-                        "contraseña": "123456",
-                        "rol": rol_usuario,
-                        "id_empleado": empleado_creado.id_empleado
-                    }
+            # while True:
+            #     try:
+            #         usuario_datos = {
+            #             "nombre_usuario": nombre_usuario,
+            #             "contraseña": "123456",
+            #             "rol": rol_usuario,
+            #             "id_empleado": empleado_creado.id_empleado
+            #         }
 
-                    self.servicio_usuario.crear_usuario(usuario_datos)
-                    break
+            #         self.servicio_usuario.crear_usuario(usuario_datos)
+            #         break
 
-                except DatosInvalidosError:
-                    contador += 1
-                    nombre_usuario = f"{nombre_usuario_base}{contador}"
+            #     except DatosInvalidosError:
+            #         contador += 1
+            #         nombre_usuario = f"{nombre_usuario_base}{contador}"
 
             return empleado_creado
 
@@ -107,13 +106,9 @@ class EmpleadoService:
         la gestión de empleados.
         """
         try:
-            # 1️⃣ Buscar empleado existente
             empleado = self.buscar_empleado(id_empleado)
-
-            # Guardar puesto antiguo para detectar cambios
             puesto_viejo = empleado.puesto
 
-            # 2️⃣ Actualizar campos del empleado
             if 'nombre' in nuevos_datos:
                 empleado.nombre = nuevos_datos['nombre'].strip()
             if 'apellido' in nuevos_datos:
@@ -126,10 +121,8 @@ class EmpleadoService:
                 id_sup = nuevos_datos.get('id_supervisor')
                 empleado.id_supervisor = int(id_sup) if id_sup else None
 
-            # 3️⃣ Guardar cambios en el empleado
             self.dao.actualizar_empleado(empleado)
 
-            # 4️⃣ Actualizar solo el rol del usuario asociado si cambió el puesto
             if empleado.puesto != puesto_viejo:
                 usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
                 if usuario:
@@ -139,7 +132,10 @@ class EmpleadoService:
 
             return empleado
 
+        except (ValueError, TypeError) as e:
+            raise DatosInvalidosError(f"Datos de actualización inválidos: {e}")
         except Exception as e:
+            if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al actualizar empleado: {e}")
 
     # -------------------------------------------------------------------
@@ -148,6 +144,8 @@ class EmpleadoService:
     def eliminar_empleado(self, id_empleado):
         try:
             empleado = self.buscar_empleado(id_empleado)
+            if not empleado:
+                raise RecursoNoEncontradoError(f"Empleado con ID {id_empleado} no encontrado.")
 
             usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
             if usuario:
@@ -157,4 +155,5 @@ class EmpleadoService:
             return True
 
         except Exception as e:
+            if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al eliminar empleado: {e}")

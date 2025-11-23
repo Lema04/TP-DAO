@@ -4,16 +4,17 @@ from Crud.alquiler_crud import AlquilerCRUD
 from Crud.cliente_crud import ClienteCRUD
 from Crud.empleado_crud import EmpleadoCRUD
 from Crud.vehiculo_crud import VehiculoCRUD
-# Importamos las excepciones
+from Crud.reserva_crud import ReservaCRUD
+
 from .excepciones import RecursoNoEncontradoError, DatosInvalidosError, ErrorDeLogicaDeNegocio, ErrorDeAplicacion
 
 class AlquilerService:
     def __init__(self):
-        # Correcto. El servicio se "compone" de varios DAOs[cite: 365, 367].
         self.alquiler_dao = AlquilerCRUD()
         self.cliente_dao = ClienteCRUD()
         self.empleado_dao = EmpleadoCRUD()
         self.vehiculo_dao = VehiculoCRUD()
+        self.reserva_dao = ReservaCRUD()
 
     def crear_alquiler(self, datos):
         """
@@ -22,7 +23,6 @@ class AlquilerService:
         Levanta: DatosInvalidosError, RecursoNoEncontradoError, ErrorDeLogicaDeNegocio.
         """
         try:
-            # 1. Validar y buscar los objetos completos
             id_cliente = datos.get('id_cliente')
             cliente = self.cliente_dao.buscar_por_id(id_cliente)
             if not cliente:
@@ -33,9 +33,24 @@ class AlquilerService:
             if not vehiculo:
                 raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
             
-            # Lógica de negocio: ¿Está disponible el vehículo?
-            if vehiculo.estado.lower() != 'disponible':
-                 raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} no está disponible.")
+            if vehiculo.estado == 'Mantenimiento':
+                 raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} está en mantenimiento.")
+            
+            fecha_inicio_str = datos.get('fecha_inicio')
+            fecha_fin_str = datos.get('fecha_fin')
+            
+            if not fecha_inicio_str or not fecha_fin_str:
+                 raise DatosInvalidosError("Las fechas de inicio y fin son obligatorias.")
+
+            conflictos_alquiler = self.alquiler_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+            if conflictos_alquiler:
+                fechas = [f"{a.fecha_inicio} a {a.fecha_fin}" for a in conflictos_alquiler]
+                raise ErrorDeLogicaDeNegocio(f"El vehículo ya está alquilado en las fechas: {', '.join(fechas)}")
+
+            conflictos_reserva = self.reserva_dao.buscar_conflictos(patente, fecha_inicio_str, fecha_fin_str)
+            if conflictos_reserva:
+                fechas = [f"{r.fecha_inicio_deseada} a {r.fecha_fin_deseada}" for r in conflictos_reserva]
+                raise ErrorDeLogicaDeNegocio(f"El vehículo está reservado en las fechas: {', '.join(fechas)}")
 
             id_empleado = datos.get('id_empleado')
             empleado = self.empleado_dao.buscar_por_id(id_empleado)
@@ -46,7 +61,7 @@ class AlquilerService:
             fecha_fin = date.fromisoformat(datos.get('fecha_fin'))
             if fecha_inicio < date.today() or fecha_fin < date.today():
                 raise ValueError("La fecha debe ser posterior al dia de hoy")
-            # 2. Crear el objeto Alquiler (esto valida fechas y costo)
+            
             alquiler = Alquiler(
                 id_alquiler=None,
                 fecha_inicio=fecha_inicio,
@@ -58,23 +73,17 @@ class AlquilerService:
                 vehiculo=vehiculo
             )
             
-            # 3. Guardar el alquiler
             nuevo_id = self.alquiler_dao.crear_alquiler(alquiler)
-            
-            # 4. Lógica de negocio: Actualizar el estado del vehículo
-            vehiculo.marcar_no_disponible() # (Asumo que tienes un método así)
+            vehiculo.marcar_no_disponible()
             self.vehiculo_dao.actualizar_vehiculo(vehiculo)
             
-            # 5. Retornar el objeto completo recién creado
             return self.alquiler_dao.buscar_por_id(nuevo_id)
         
         except (ValueError, TypeError, KeyError) as e:
-            # Atrapa errores de formato de fecha, float, o datos faltantes
             raise DatosInvalidosError(f"Datos de entrada inválidos: {e}")
         except Exception as e:
-            if isinstance(e, ErrorDeAplicacion): # Dejar pasar nuestras excepciones
+            if isinstance(e, ErrorDeAplicacion):
                 raise e
-            # Envolver excepciones inesperadas
             raise ErrorDeAplicacion(f"Error al crear alquiler: {e}")
 
     def buscar_alquiler(self, id_alquiler):
@@ -102,7 +111,6 @@ class AlquilerService:
     def buscar_por_cliente(self, id_cliente):
         """ Retorna: Una lista de alquileres para un cliente. """
         try:
-            # Un cliente puede no tener alquileres, una lista vacía es un resultado válido.
             return self.alquiler_dao.buscar_por_cliente(id_cliente)
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al buscar alquileres por cliente: {e}")
@@ -114,11 +122,8 @@ class AlquilerService:
         Levanta: RecursoNoEncontradoError, DatosInvalidosError.
         """
         try:
-            # 1. Usamos nuestro propio método para asegurar que existe
             alquiler = self.buscar_alquiler(id_alquiler) 
 
-            # 2. Actualizamos los campos permitidos
-            # Esto respeta el Encapsulamiento[cite: 212, 215], no dejamos que se cambie el cliente o el vehículo.
             if 'fecha_inicio' in datos:
                 alquiler.fecha_inicio = date.fromisoformat(datos['fecha_inicio'])
             if 'fecha_fin' in datos:
@@ -126,9 +131,6 @@ class AlquilerService:
             if 'costo_total' in datos:
                 alquiler.costo_total = float(datos['costo_total'])
             
-            # (Aquí podríamos re-validar la lógica de fechas si fuera necesario)
-
-            # 3. Guardamos
             self.alquiler_dao.actualizar_alquiler(alquiler)
             return alquiler
         
@@ -137,6 +139,26 @@ class AlquilerService:
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al actualizar alquiler: {e}")
+    
+    def finalizar_alquiler(self, id_alquiler):
+        """
+        Finaliza un alquiler y libera el vehículo.
+        Retorna: El objeto Alquiler finalizado.
+        """
+        try:
+            alquiler = self.buscar_alquiler(id_alquiler)
+            alquiler.finalizar()
+            vehiculo = alquiler.vehiculo
+            vehiculo.marcar_disponible()
+            self.vehiculo_dao.actualizar_vehiculo(vehiculo)
+            self.alquiler_dao.actualizar_alquiler(alquiler)
+            return alquiler
+            
+        except ValueError as e:
+             raise DatosInvalidosError(f"Error al finalizar alquiler: {e}")
+        except Exception as e:
+            if isinstance(e, ErrorDeAplicacion): raise e
+            raise ErrorDeAplicacion(f"Error al finalizar alquiler: {e}")
 
     def eliminar_alquiler(self, id_alquiler):
         """
@@ -145,16 +167,10 @@ class AlquilerService:
         Levanta: RecursoNoEncontradoError.
         """
         try:
-            # 1. Aseguramos que existe
             alquiler = self.buscar_alquiler(id_alquiler) 
-
-            # 2. Lógica de negocio: ¿Deberíamos volver a poner el auto "disponible"?
-            # ¡SÍ! Si borramos el alquiler, el auto debe volver a estar disponible.
             vehiculo = alquiler.vehiculo
-            vehiculo.marcar_disponible() # (Asumo que tienes este método)
+            vehiculo.marcar_disponible()
             self.vehiculo_dao.actualizar_vehiculo(vehiculo)
-
-            # 3. Ahora sí, eliminamos el alquiler
             self.alquiler_dao.eliminar_alquiler(id_alquiler)
             return True
 
@@ -175,13 +191,16 @@ class AlquilerService:
             if not empleado:
                 raise RecursoNoEncontradoError(f"Empleado con ID {empleado_id} no encontrado.")
             
+            if not reserva.vehiculo:
+                raise DatosInvalidosError("La reserva no tiene un vehículo asignado.")
+            
             patente = reserva.vehiculo.patente
             vehiculo = self.vehiculo_dao.buscar_por_id(patente)
             if not vehiculo:
                 raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
             
-            if vehiculo.estado.lower() != 'disponible':
-                raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} no está disponible.")
+            if vehiculo.estado == "Mantenimiento":
+                raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} está en mantenimiento.")
             
             cliente_id = reserva.cliente.id_cliente
             cliente = self.cliente_dao.buscar_por_id(cliente_id)
@@ -196,10 +215,12 @@ class AlquilerService:
                 fecha_registro=date.today(),
                 cliente=cliente,
                 empleado=empleado,
-                vehiculo=vehiculo
+                vehiculo=vehiculo,
+                id_reserva=reserva.id_reserva,
+                estado="Activo"
             )
             nuevo_id = self.alquiler_dao.crear_alquiler(alquiler)
-            vehiculo.marcar_no_disponible()
+            vehiculo.estado = "Alquilado"
             self.vehiculo_dao.actualizar_vehiculo(vehiculo)
             return self.alquiler_dao.buscar_por_id(nuevo_id)
         

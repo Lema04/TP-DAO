@@ -1,8 +1,7 @@
-# --- Archivo: servicios/mantenimiento_service.py ---
-
 from Crud.mantenimiento_crud import MantenimientoCRUD
 from clases.mantenimiento import Mantenimiento
-from servicios.vehiculo_service import VehiculoService # Usamos el servicio de Vehiculo
+from servicios.vehiculo_service import VehiculoService
+
 from datetime import date
 from servicios.excepciones import (
     ErrorDeAplicacion, 
@@ -13,7 +12,6 @@ from servicios.excepciones import (
 class MantenimientoService:
     def __init__(self):
         self.dao = MantenimientoCRUD()
-        # El servicio de Mantenimiento usa el servicio de Vehiculo
         self.vehiculo_service = VehiculoService()
 
     def crear_mantenimiento(self, datos):
@@ -22,14 +20,14 @@ class MantenimientoService:
         'datos' es un JSON crudo del controlador.
         """
         try:
-            # 1. Validar y obtener el Vehiculo (Objeto Compuesto)
             patente = datos.get("patente")
             if not patente:
                 raise DatosInvalidosError("La 'patente' del vehículo es obligatoria.")
-            # Usamos el servicio para buscarlo (este ya levanta RecursoNoEncontradoError)
             vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
+
+            if vehiculo.estado == "Alquilado":
+                raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo esté alquilado.")
             
-            # 2. Validar y convertir datos crudos
             fecha_inicio_str = datos.get("fecha_inicio")
             fecha_fin_str = datos.get("fecha_fin")
             costo_raw = datos.get("costo")
@@ -41,28 +39,33 @@ class MantenimientoService:
             fecha_fin = date.fromisoformat(fecha_fin_str)
             costo = float(costo_raw)
 
-            # 3. Crear el objeto Mantenimiento (aquí se valida la lógica de fechas)
+            if vehiculo.estado == "Reservado":
+                reserva = vehiculo.reservas[-1]
+                if reserva.fecha_inicio_deseada <= fecha_fin or reserva.fecha_fin_deseada >= fecha_inicio:
+                    raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo está alquilado")
+
             mantenimiento = Mantenimiento(
-                id_mantenimiento=None, # El ID es autoincremental
+                id_mantenimiento=None,
                 fecha_inicio=fecha_inicio,
                 fecha_fin=fecha_fin,
                 tipo_servicio=datos.get("tipo_servicio", ""),
                 costo=costo,
-                vehiculo=vehiculo # Pasamos el objeto completo
+                vehiculo=vehiculo,
+                estado="En curso"
             )
 
-            # 4. Guardar y retornar el objeto recién creado
+            vehiculo.estado = "Mantenimiento"
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, vehiculo)
+
             nuevo_id = self.dao.crear_mantenimiento(mantenimiento)
+            vehiculo.agregar_mantenimiento(mantenimiento)
             return self.dao.buscar_por_id(nuevo_id)
 
         except (ValueError, TypeError) as e: 
-            # Captura errores de fromisoformat(), float(), o del __init__
             raise DatosInvalidosError(f"Datos inválidos: {e}")
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al crear mantenimiento: {e}")
-
-    # --- MÉTODOS ADICIONALES (FALTANTES) ---
 
     def listar_mantenimientos(self):
         """ Retorna: Una lista de objetos Mantenimiento. """
@@ -88,9 +91,9 @@ class MantenimientoService:
         Retorna: Una lista de objetos Mantenimiento.
         Levanta: RecursoNoEncontradoError (si el vehículo no existe).
         """
-        # 1. Validamos que el vehículo exista primero
-        self.vehiculo_service.buscar_vehiculo(patente)
-        # 2. Si existe, buscamos sus mantenimientos
+        vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
+        if not vehiculo:
+            raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado.")
         return self.dao.buscar_por_patente(patente)
 
     def actualizar_mantenimiento(self, id_mantenimiento, datos):
@@ -99,10 +102,10 @@ class MantenimientoService:
         Retorna: El objeto Mantenimiento actualizado.
         """
         try:
-            # 1. Buscamos el objeto existente
             mantenimiento = self.buscar_mantenimiento(id_mantenimiento)
+            if not mantenimiento:
+                raise RecursoNoEncontradoError(f"Mantenimiento con ID {id_mantenimiento} no encontrado.")
 
-            # 2. Actualizamos campos (sin 'setattr')
             if 'fecha_inicio' in datos:
                 mantenimiento.fecha_inicio = date.fromisoformat(datos['fecha_inicio'])
             if 'fecha_fin' in datos:
@@ -112,11 +115,9 @@ class MantenimientoService:
             if 'costo' in datos:
                 mantenimiento.costo = float(datos['costo'])
             
-            # (Validación de fechas en el __init__ se puede re-chequear aquí)
             if mantenimiento.fecha_inicio > mantenimiento.fecha_fin:
                 raise DatosInvalidosError("La fecha de inicio no puede ser posterior a la de fin.")
 
-            # 3. Guardamos
             self.dao.actualizar_mantenimiento(mantenimiento)
             return mantenimiento
 
@@ -131,7 +132,7 @@ class MantenimientoService:
         Elimina un mantenimiento.
         Retorna: True si fue exitoso.
         """
-        self.buscar_mantenimiento(id_mantenimiento) # Asegura que existe
+        self.buscar_mantenimiento(id_mantenimiento)
         try:
             self.dao.eliminar_mantenimiento(id_mantenimiento)
             return True

@@ -54,9 +54,6 @@ def get_estilos_reportlab():
     return estilos
 
 class ReporteService:
-    
-    # --- ¡NUEVO! Definimos las carpetas de salida ---
-    # Asume que 'static' está al mismo nivel que tu 'app.py'
     STATIC_DIR = 'static' 
     REPORTES_DIR = os.path.join(STATIC_DIR, 'reportes')
 
@@ -64,10 +61,7 @@ class ReporteService:
         """Inicializa los servicios necesarios."""
         self.alquiler_service = AlquilerService()
         self.vehiculo_service = VehiculoService()
-        
-        # --- ¡NUEVO! Aseguramos que la carpeta de reportes exista ---
         os.makedirs(self.REPORTES_DIR, exist_ok=True)
-
         self.estilos_rl = get_estilos_reportlab()
 
     def _get_alquileres_list(self):
@@ -80,31 +74,23 @@ class ReporteService:
                 raise RecursoNoEncontradoError("No se encontraron alquileres en el sistema.")
             return alquileres_obj_list
         except ErrorDeAplicacion as e:
-            raise Exception(f"Error al obtener alquileres: {e}") # Re-lanza para el controlador
+            raise Exception(f"Error al obtener alquileres: {e}")
 
     def _generar_ruta_reporte(self, nombre_base, extension="pdf"):
         """Helper para crear una ruta de archivo única y una URL web."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         nombre_archivo = f"{nombre_base}_{timestamp}.{extension}"
-        
-        # Ruta completa del sistema para guardar el archivo
         ruta_completa_os = os.path.join(self.REPORTES_DIR, nombre_archivo)
-        
-        # URL web que devolveremos al frontend
-        # (Usamos '/' para las URLs web, independientemente del SO)
-        url_web = f"/{self.STATIC_DIR}/reportes/{nombre_archivo}"
-        
+        url_web = f"/{self.STATIC_DIR}/reportes/{nombre_archivo}"        
         return ruta_completa_os, url_web
 
     # Reporte de alquileres por cliente
     def generar_reporte_alquileres_por_cliente(self, cliente_id: int, formato: str = "pdf"):
-        # 1. Obtener datos (forma POO)
         alquileres_obj_list = self.alquiler_service.buscar_por_cliente(cliente_id)
 
         if not alquileres_obj_list:
             raise RecursoNoEncontradoError(f"No se encontraron alquileres para el cliente con ID {cliente_id}.")
 
-        # 2. "Aplanar" los objetos para el DataFrame
         data_para_df = []
         nombre_cliente = ""
         for alq in alquileres_obj_list:
@@ -122,14 +108,12 @@ class ReporteService:
         
         df = pd.DataFrame(data_para_df)
         
-        # (Aseguramos el orden de columnas deseado)
         columnas_ordenadas = [
             "Fecha Inicio", "Fecha Fin", "Patente", 
             "Vehículo", "Costo Total ($)", "Empleado", "Fecha Registro"
         ]
         df = df[columnas_ordenadas]
 
-        # 3. Exportar PDF
         if formato.lower() == "pdf":
             ruta_guardar, url_retorno = self._generar_ruta_reporte(f"alquileres_cliente_{cliente_id}")
 
@@ -146,12 +130,12 @@ class ReporteService:
             tabla_rl = Table(datos_tabla, colWidths=[1*inch, 1*inch, 1*inch, 2*inch, 1.5*inch, 1.5*inch])
             estilo_tabla = TableStyle([
                 ("BACKGROUND", (0, 0), (-1, 0), COLOR_PRINCIPAL),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke), # Header text
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), COLOR_TERCIARIO), # Zebra striping
+                ('BACKGROUND', (0, 1), (-1, -1), COLOR_TERCIARIO),
                 ('GRID', (0, 0), (-1, -1), 1, COLOR_BORDES),
             ])
 
@@ -165,7 +149,7 @@ class ReporteService:
 
             doc.build(elementos_pdf)
             
-            return url_retorno # Devolvemos la URL web
+            return url_retorno
         else:
             raise DatosInvalidosError("Formato no soportado. Use 'pdf'.")
         
@@ -189,7 +173,6 @@ class ReporteService:
         if df.empty:
             raise RecursoNoEncontradoError(f"No hay alquileres registrados en {anio}.")
 
-        # (Tu lógica de groupby)
         if frecuencia.upper() == "M":
              conteo = df.groupby(df["fecha_inicio"].dt.month)["id_alquiler"].count().reindex(range(1, 13), fill_value=0)
              etiquetas_x = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
@@ -294,10 +277,7 @@ class ReporteService:
 
     # Reporte de vehículos más alquilados
     def generar_reporte_vehiculos_mas_alquilados(self, limite=None):
-        
-        alquileres_obj_list = self._get_alquileres_list()
-        
-        # Acceso POO limpio
+        alquileres_obj_list = self._get_alquileres_list()        
         patentes = [alq.vehiculo.patente for alq in alquileres_obj_list]
         conteo = pd.Series(patentes).value_counts().reset_index()
         conteo.columns = ["patente", "cantidad"]
@@ -316,7 +296,6 @@ class ReporteService:
         
         titulo_subtitulo = "VEHICULOS MÁS ALQUILADOS"
         if limite and len(df) > limite:
-            # Agrupar los "Otros"
             titulo_subtitulo += f" (Top {limite})"
             df_top = df.head(limite - 1)
             df_resto = df.iloc[limite-1:]

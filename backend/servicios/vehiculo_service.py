@@ -1,8 +1,6 @@
-# --- Archivo: servicios/vehiculo_service.py ---
-
 from Crud.vehiculo_crud import VehiculoCRUD
 from clases.vehiculo import Vehiculo
-# Importamos las excepciones que usaremos
+
 from servicios.excepciones import (
     ErrorDeAplicacion, 
     RecursoNoEncontradoError, 
@@ -20,7 +18,6 @@ class VehiculoService:
         Levanta: DatosInvalidosError, ErrorDeAplicacion.
         """
         try:
-            # La validación de la patente ocurre aquí, en el constructor
             vehiculo = Vehiculo(
                 patente=datos.get('patente'),
                 marca=datos.get('marca'),
@@ -30,17 +27,12 @@ class VehiculoService:
                 estado=datos.get('estado', 'Disponible')
             )
             
-            # El DAO retorna la patente
             patente_creada = self.dao.crear_vehiculo(vehiculo)
-            
-            # Retornamos el objeto completo
             return self.dao.buscar_por_id(patente_creada)
         
         except (ValueError, TypeError) as e: 
-            # Captura errores del __init__ (patente mal) o de int()/float()
             raise DatosInvalidosError(f"Datos inválidos: {e}")
         except Exception as e:
-            # Captura errores del DAO (ej. patente duplicada)
             raise ErrorDeAplicacion(f"Error al crear vehículo: {e}")
 
     def buscar_vehiculo(self, patente: str):
@@ -73,11 +65,7 @@ class VehiculoService:
         Levanta: RecursoNoEncontradoError, DatosInvalidosError.
         """
         try:
-            # 1. Usamos nuestro propio método para buscar (y validar existencia)
             vehiculo = self.buscar_vehiculo(patente)
-
-            # 2. ¡NO USAR setattr! Actualizamos campos controlados.
-            # Esto respeta el Encapsulamiento.
             if 'marca' in nuevos_datos:
                 vehiculo.marca = nuevos_datos['marca'].strip()
             if 'modelo' in nuevos_datos:
@@ -89,9 +77,8 @@ class VehiculoService:
             if 'estado' in nuevos_datos:
                 vehiculo.estado = nuevos_datos['estado'].strip()
 
-            # 3. Guardamos el objeto modificado
             self.dao.actualizar_vehiculo(vehiculo)
-            return vehiculo # Retornamos el objeto actualizado
+            return vehiculo
         
         except (ValueError, TypeError) as e:
             raise DatosInvalidosError(f"Datos de actualización inválidos: {e}")
@@ -106,13 +93,9 @@ class VehiculoService:
         Levanta: RecursoNoEncontradoError.
         """
         try:
-            # 1. Verificamos que exista
             self.buscar_vehiculo(patente) 
-            
-            # 2. Eliminamos
             self.dao.eliminar_vehiculo(patente)
             return True
         except Exception as e:
-            # (El DAO podría levantar un error de FK si el auto está en un alquiler)
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al eliminar vehículo: {e}")
