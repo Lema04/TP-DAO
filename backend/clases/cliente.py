@@ -148,6 +148,14 @@ class Cliente:
 
         self._direccion = valor
 
+    def agregar_reserva(self, reserva: "Reserva"):
+        if reserva not in self.reservas:
+            self.reservas.append(reserva)
+
+    def agregar_alquiler(self, alquiler: "Alquiler"):
+        if alquiler not in self.alquileres:
+            self.alquileres.append(alquiler)
+
     def __repr__(self):
         return f"Cliente {self.id_cliente} - {self.nombre} {self.apellido}"
 

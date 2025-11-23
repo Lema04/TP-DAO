@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 
 class Mantenimiento:
     def __init__(self, id_mantenimiento: int, fecha_inicio: date, fecha_fin: date,
-                 tipo_servicio: str, costo: float, vehiculo: "Vehiculo"):
+                 tipo_servicio: str, costo: float, vehiculo: "Vehiculo", estado: str):
 
         # Validaciones iniciales
         if vehiculo is None:
@@ -18,6 +18,7 @@ class Mantenimiento:
         self.tipo_servicio = tipo_servicio
         self.costo = costo
         self.vehiculo = vehiculo
+        self.estado = estado
 
         # Relación bidireccional
         vehiculo.agregar_mantenimiento(self)
@@ -54,5 +55,6 @@ class Mantenimiento:
             "fecha_fin": self.fecha_fin.isoformat() if self.fecha_fin else None,
             "tipo_servicio": self.tipo_servicio,
             "costo": self.costo,
-            "vehiculo": self.vehiculo.a_dict() if hasattr(self.vehiculo, "a_dict") else {"patente": getattr(self.vehiculo, "patente", None)}
+            "vehiculo": self.vehiculo.a_dict() if hasattr(self.vehiculo, "a_dict") else {"patente": getattr(self.vehiculo, "patente", None)},
+            "estado": self.estado
         }

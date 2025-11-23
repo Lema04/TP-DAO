@@ -1,5 +1,3 @@
-# --- Archivo: clases/vehiculo.py ---
-
 import re
 from typing import List, TYPE_CHECKING
 
@@ -12,7 +10,7 @@ class Vehiculo:
     def __init__(self, patente: str, marca: str, modelo: str, anio: int,
                  precio_diario: float, estado: str = "Disponible"):
         
-        self.patente = patente  # Esto llama al setter
+        self.patente = patente
         self.marca = marca
         self.modelo = modelo
         self.anio = anio
@@ -33,15 +31,29 @@ class Vehiculo:
     def patente(self, valor):
         if not valor or not valor.strip():
             raise ValueError("La patente no puede estar vacía.")
-        valor = valor.strip().upper() # Estandarizamos a mayúsculas
+        valor = valor.strip().upper()
         if not re.fullmatch(r"[A-Z0-9]{6,7}", valor):
             raise ValueError("Patente inválida. Debe contener 6 o 7 caracteres alfanuméricos.")
         self._patente = valor
     
+    # --- Propiedad 'estado' con validación ---
+    @property
+    def estado(self):
+        return self._estado
+
+    @estado.setter
+    def estado(self, valor):
+        estados_validos = ["Disponible", "Mantenimiento", "Reservado", "Alquilado"]
+        if valor not in estados_validos:
+            # Si viene de la base de datos tal vez venga en minusculas o algo, podriamos normalizar
+            # Pero por ahora estricto según pedido
+            raise ValueError(f"Estado inválido. Debe ser uno de: {', '.join(estados_validos)}")
+        self._estado = valor
+    
     # --- Métodos de estado ---
     
     def marcar_no_disponible(self):
-        self.estado = "No disponible"
+        self.estado = "Alquilado"
 
     def marcar_disponible(self):
         self.estado = "Disponible"
@@ -60,8 +72,6 @@ class Vehiculo:
         if mantenimiento not in self.mantenimientos:
             self.mantenimientos.append(mantenimiento)
     
-    # --- Métodos Mágicos ---
-    
     def __repr__(self):
         return f"Vehículo {self.patente} - {self.marca} {self.modelo} ({self.anio})"
 
@@ -70,7 +80,7 @@ class Vehiculo:
         Retorna una representación del vehículo en diccionario (serializable).
         """
         return {
-            "patente": self.patente, # Llama al getter @property
+            "patente": self.patente,
             "marca": self.marca,
             "modelo": self.modelo,
             "anio": self.anio,

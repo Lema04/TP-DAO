@@ -46,20 +46,11 @@ class MultaDano:
     def __repr__(self):
         return (f"Multa {self.id_multa} - Alquiler {self.alquiler.id_alquiler}")
 
-# --- Archivo: clases/multa.py (¡ARREGLADO!) ---
-
-# ... (tu __init__ y @properties están perfectos) ...
-
     def a_dict(self):
         return {
             "id_multa": self.id_multa,
             "descripcion": self.descripcion,
             "monto": self.monto,
             "fecha_incidente": self.fecha_incidente.isoformat() if self.fecha_incidente else None,
-            
-            # --- ¡LA SOLUCIÓN! ---
-            # En lugar de enviar solo el ID,
-            # le pedimos al objeto Alquiler que se "traduzca" entero.
-            # Esto funcionará porque Alquiler.a_dict() ya incluye al Vehiculo.
             "alquiler": self.alquiler.a_dict() if self.alquiler else None
         }

@@ -80,8 +80,6 @@ class Empleado:
     
     def a_dict(self):
         """ Retorna una representación del empleado en diccionario. """
-        # ¡IMPORTANTE! Decide qué datos son seguros de exponer.
-        # Por ejemplo, NUNCA expongas un password.
         return {
             "id_empleado": self.id_empleado,
             "nombre": self.nombre,

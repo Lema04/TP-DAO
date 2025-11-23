@@ -52,7 +52,6 @@ class Usuario:
         Verifica si la contraseña proporcionada coincide con la almacenada.
         (Esto es POO: el objeto sabe cómo verificarse a sí mismo)
         """
-        # (En una app real, usarías: return check_password_hash(self.contraseña, password_plana))
         return self.contraseña == password_plana
 
     def a_dict(self):

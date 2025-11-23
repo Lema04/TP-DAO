@@ -1,4 +1,4 @@
-from typing import List, TYPE_CHECKING
+from typing import List, TYPE_CHECKING, Optional
 from datetime import date
 
 if TYPE_CHECKING:
@@ -10,7 +10,8 @@ if TYPE_CHECKING:
 class Alquiler:
     def __init__(self, id_alquiler: int, fecha_inicio: date, fecha_fin: date,
                  costo_total: float, fecha_registro: date,
-                 cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo"):
+                 cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo",
+                 id_reserva: Optional[int] = None, estado: str = "Activo"):
 
         # Validaciones iniciales
         if cliente is None or empleado is None or vehiculo is None:
@@ -30,6 +31,8 @@ class Alquiler:
         self.cliente = cliente
         self.empleado = empleado
         self.vehiculo = vehiculo
+        self.id_reserva = id_reserva
+        self.estado = estado  # "Activo", "Finalizado", "Cancelado"
 
         # Relaciones
         self.multas: List["MultaDano"] = []
@@ -37,6 +40,7 @@ class Alquiler:
         empleado.agregar_alquiler(self)
         vehiculo.agregar_alquiler(self)
         vehiculo.marcar_no_disponible()
+        vehiculo.estado= "Alquilado"
     
     # Propiedades con validación
     @property
@@ -54,15 +58,16 @@ class Alquiler:
         if multa not in self.multas:
             self.multas.append(multa)
     
+    def finalizar(self):
+        """Marca el alquiler como finalizado"""
+        if self.estado == "Finalizado":
+            raise ValueError("El alquiler ya está finalizado.")
+        self.estado = "Finalizado"
+    
     # Representación legible
     def __repr__(self):
         return f"Alquiler {self.id_alquiler} - Cliente {self.cliente.nombre} {self.cliente.apellido} - Vehículo {self.vehiculo.patente}"
-    
-
-#     En lugar de que el controlador (app.py) intente adivinar cómo desarmar tu objeto, le pedimos al objeto que lo haga él mismo.
-
-# Esto es un principio clave de Encapsulamiento (Capítulo 8) . El objeto Cliente es el único que debe saber cómo representarse a sí mismo en un formato de diccionario.
-    
+        
     def a_dict(self):
         """ Retorna una representación del alquiler en diccionario. """
         return {
