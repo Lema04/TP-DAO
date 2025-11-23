@@ -1,41 +1,41 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { 
+  FaUsers, FaCar, FaClipboardList, FaMoneyBillWave, 
+  FaFileAlt, FaUserCog, FaUserTie 
+} from "react-icons/fa";
 
 const HomeMenu = () => {
   const { hasPermission } = useAuth();
 
-  return (
-    <div className="form-card">
-      <h2 className="form-title">Panel de Operaciones</h2>
+  const opciones = [
+    { permiso: "GestionUsuario", ruta: "/usuario", texto: "Gestión de Usuario", icono: <FaUserCog /> },
+    { permiso: "GestionEmpleados", ruta: "/empleado", texto: "Gestión de Empleados", icono: <FaUserTie /> },
+    { permiso: "GestionClientes", ruta: "/clientes", texto: "Gestión de Clientes", icono: <FaUsers /> },
+    { permiso: "RegistrarVehiculo", ruta: "/registrar-vehiculo", texto: "Gestión de Vehículos", icono: <FaCar /> },
+    { permiso: "RegistroAlquiler", ruta: "/alquiler", texto: "Gestión de Alquiler", icono: <FaClipboardList /> },
+    { permiso: "MisAlquileres", ruta: "/mis-alquileres", texto: "Mis Alquileres", icono: <FaClipboardList /> },
+    { permiso: "GestionMultas", ruta: "/gestion", texto: "Gestión de Multas y Daños", icono: <FaMoneyBillWave /> },
+    { permiso: "MisMultas", ruta: "/mis-multas", texto: "Mis Multas", icono: <FaMoneyBillWave /> },
+    { permiso: "Reportes", ruta: "/reportes", texto: "Gestión de Reportes", icono: <FaFileAlt /> },
+  ];
 
-      {hasPermission('GestionClientes') && (
-        <Link to="/clientes" className="menu-button">Gestión de Clientes</Link>
-      )}
-      {hasPermission('RegistrarVehiculo') && (
-        <Link to="/registrar-vehiculo" className="menu-button">Registrar Nuevo Vehículo</Link>
-      )}
-      {hasPermission('MisAlquileres') && (
-        <Link to="/mis-alquileres" className="menu-button">Ver Mis Alquileres</Link>
-      )}
-      {hasPermission('MisMultas') && (
-        <Link to="/mis-multas" className="menu-button">Ver Mis Multas</Link> 
-      )}
-      {hasPermission('RegistroAlquiler') && (
-        <Link to="/alquiler" className="menu-button">Registrar Nuevo Alquiler</Link>
-      )}
-      {hasPermission('GestionMultas') && (
-        <Link to="/gestion" className="menu-button">Gestión de Multas y Daños</Link>
-      )}
-      {hasPermission('Reportes') && (
-        <Link to="/reportes" className="menu-button">Gestión de Reportes Estratégicos</Link>
-      )}
-      {hasPermission('GestionUsuario') && (
-        <Link to="/usuario" className="menu-button">Gestión de Usuario</Link>
-      )}
-      {hasPermission('GestionEmpleados') && (
-        <Link to="/empleado" className="menu-button">Gestión de Empleados</Link>  
-      )}
+  return (
+    <div className="home-container">
+      <h1 className="main-title">Panel de Operaciones</h1>
+      <hr className="header-separator" />
+
+      <div className="dashboard-grid">
+        {opciones
+          .filter(op => hasPermission(op.permiso))
+          .map((op, idx) => (
+            <Link key={idx} to={op.ruta} className="dashboard-card">
+              <div className="icon">{op.icono}</div>
+              <span>{op.texto}</span>
+            </Link>
+        ))}
+      </div>
     </div>
   );
 };

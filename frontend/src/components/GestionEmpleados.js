@@ -83,7 +83,7 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
       setEmpleadoSeleccionado(null);
       setModo("listar");
       await cargarEmpleados();
-      mostrarMensaje(`Empleado ${tipo === "crear" ? "registrado" : "actualizado"} correctamente.`);
+      mostrarMensaje(`Empleado con ID ${idEmpleado} ${tipo === "crear" ? "registrado" : "actualizado"} correctamente.`);
 
     } catch (e) {
       mostrarMensaje(`Error al ${tipo === "crear" ? "registrar" : "actualizar"} empleado: ${e.message}`, true);
@@ -114,7 +114,7 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
       if (!res.ok) throw new Error(data.error);
 
       await cargarEmpleados();
-      mostrarMensaje(`Empleado con ID ${id} eliminado.`);
+      mostrarMensaje(`Empleado con ID ${id} eliminado correctamente.`);
     } catch (e) {
       mostrarMensaje(`Error al eliminar empleado: ${e.message}`, true);
     }
@@ -162,7 +162,7 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
             </button>
           </div>
 
-          <div className="list-header-row"><h3 className="list-header-red">Listado de Empleados Registrados</h3></div>
+          <div className="list-header-row"><h3 className="list-header-red">Listado de Empleados</h3></div>
 
           <div className="table-responsive">
             <table className="client-data-table">
@@ -215,7 +215,7 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
           <div className="form-fields-grid">
             {modo === "editar" && (
               <div className="form-group-client">
-                <label className="form-label-client"><strong>ID:</strong></label>
+                <label className="form-label-client"><strong>ID Empleado</strong></label>
                 <input className="form-input-client disabled-input" type="text" readOnly value={empleadoSeleccionado?.id_empleado} />
               </div>
             )}

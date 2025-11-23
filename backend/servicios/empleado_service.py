@@ -9,6 +9,19 @@ from servicios.excepciones import (
     RecursoNoEncontradoError,
     DatosInvalidosError
 )
+import unicodedata
+
+def normalizar_texto(texto):
+    """
+    Convierte el texto a minúsculas y elimina tildes.
+    """
+    if not texto:
+        return ""
+    texto = texto.lower()
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    )
 
 class EmpleadoService:
     def __init__(self):
@@ -88,14 +101,19 @@ class EmpleadoService:
     # ACTUALIZAR EMPLEADO + ACTUALIZAR USUARIO AUTOMÁTICAMENTE
     # -------------------------------------------------------------------
     def actualizar_empleado(self, id_empleado, nuevos_datos):
+        """
+        Actualiza los datos de un empleado y sincroniza el rol del usuario
+        asociado si el puesto cambia. Solo el rol del usuario se actualiza desde
+        la gestión de empleados.
+        """
         try:
+            # 1️⃣ Buscar empleado existente
             empleado = self.buscar_empleado(id_empleado)
 
-            nombre_viejo = empleado.nombre
-            apellido_viejo = empleado.apellido
+            # Guardar puesto antiguo para detectar cambios
             puesto_viejo = empleado.puesto
 
-            # --- Actualizar empleado ---
+            # 2️⃣ Actualizar campos del empleado
             if 'nombre' in nuevos_datos:
                 empleado.nombre = nuevos_datos['nombre'].strip()
             if 'apellido' in nuevos_datos:
@@ -108,30 +126,15 @@ class EmpleadoService:
                 id_sup = nuevos_datos.get('id_supervisor')
                 empleado.id_supervisor = int(id_sup) if id_sup else None
 
+            # 3️⃣ Guardar cambios en el empleado
             self.dao.actualizar_empleado(empleado)
 
-            # ------------------------------------------------------------
-            # ACTUALIZAR USUARIO SI EXISTE
-            # ------------------------------------------------------------
-            usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
-
-            if usuario:
-                cambios = False
-
-                # -------- actualizar nombre_usuario si cambia nombre o apellido --------
-                if (empleado.nombre != nombre_viejo) or (empleado.apellido != apellido_viejo):
-                    usuario.nombre_usuario = (
-                        f"{empleado.nombre.lower()}.{empleado.apellido.lower()}.{empleado.id_empleado}"
-                    )
-                    cambios = True
-
-                # -------- actualizar rol si cambia el puesto --------
-                if empleado.puesto != puesto_viejo:
-                    puesto_lower = empleado.puesto.lower()
-                    usuario.rol = "atencion" if puesto_lower == "atencion" else "supervisor"
-                    cambios = True
-
-                if cambios:
+            # 4️⃣ Actualizar solo el rol del usuario asociado si cambió el puesto
+            if empleado.puesto != puesto_viejo:
+                usuario = self.usuario_dao.buscar_por_empleado_id(id_empleado)
+                if usuario:
+                    puesto_normalizado = normalizar_texto(empleado.puesto)
+                    usuario.rol = "atencion" if puesto_normalizado == "atencion" else "supervisor"
                     self.usuario_dao.actualizar_usuario(usuario)
 
             return empleado
