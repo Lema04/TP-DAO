@@ -1,6 +1,5 @@
 import sqlite3, os
 
-# Subimos un nivel: de /servicios a /backend
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 BASE_DIR = os.path.join(BASE_DIR, "backend")
 DB_PATH = os.path.join(BASE_DIR, "bd_alquiler_vehiculos.db")
