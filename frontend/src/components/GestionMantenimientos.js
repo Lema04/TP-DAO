@@ -8,7 +8,11 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
     const [view, setView] = useState("list"); // 'list' | 'form'
     const [mantenimientoToEdit, setMantenimientoToEdit] = useState(null);
     const [error, setError] = useState("");
-
+    const formatDate = (dateString) => {
+        if (!dateString) return "";
+        const [y, m, d] = dateString.split("T")[0].split("-");
+        return `${d}/${m}/${y}`;
+    };
     useEffect(() => {
         fetchMantenimientos();
     }, []);
@@ -134,8 +138,9 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
                                         {m.vehiculo ? `${m.vehiculo.patente} - ${m.vehiculo.marca}` : 'N/A'}
                                     </td>
                                     <td>{m.tipo_servicio}</td>
-                                    <td>{new Date(m.fecha_inicio).toLocaleDateString()}</td>
-                                    <td>{new Date(m.fecha_fin).toLocaleDateString()}</td>
+                                    <td>{formatDate(m.fecha_inicio)}</td>
+                                    <td>{formatDate(m.fecha_fin)}</td>
+
                                     <td>${parseFloat(m.costo).toFixed(2)}</td>
                                     
                                     <td className="action-buttons-cell">

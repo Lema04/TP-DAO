@@ -55,7 +55,8 @@ class MantenimientoService:
                 estado="En curso"
             )
 
-            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Mantenimiento"})
+            if fecha_inicio == date.today():
+                self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Mantenimiento"})
 
             nuevo_id = self.dao.crear_mantenimiento(mantenimiento)
             vehiculo.agregar_mantenimiento(mantenimiento)
@@ -127,14 +128,19 @@ class MantenimientoService:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al actualizar mantenimiento: {e}")
 
-    def eliminar_mantenimiento(self, id_mantenimiento):
-        """
-        Elimina un mantenimiento.
-        Retorna: True si fue exitoso.
-        """
-        self.buscar_mantenimiento(id_mantenimiento)
+    def eliminar_mantenimiento(self, id_mantenimiento): ## aca cambie porq eliminabamos el mantenimiento pero no se borraba su estado Mantenimiento
+    # 1. Obtener el mantenimiento antes de borrarlo
+        mantenimiento = self.buscar_mantenimiento(id_mantenimiento)
+
         try:
+            # 2. Eliminar el mantenimiento
             self.dao.eliminar_mantenimiento(id_mantenimiento)
+
+            # 3. AL BORRAR: devolver el vehículo a estado Disponible
+            vehiculo = mantenimiento.vehiculo
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Disponible"})
+
             return True
+
         except Exception as e:
             raise ErrorDeAplicacion(f"Error al eliminar mantenimiento: {e}")

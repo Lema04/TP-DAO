@@ -10,6 +10,7 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
   });
 
   const [vehiculos, setVehiculos] = useState([]);
+  const [allMantenimientos, setAllMantenimientos] = useState([]); // Nuevo estado para validar solapamiento
   const [mensaje, setMensaje] = useState('');
   const [esError, setEsError] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -17,29 +18,37 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
 
   const hoy = new Date().toISOString().split('T')[0];
 
-  // Cargar vehículos
+  // Helper para asegurar formato YYYY-MM-DD sin problemas de zona horaria
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    // Si viene de la API con hora (ej: "2025-11-20T03:00:00.000Z"), tomamos solo la parte de la fecha.
+    return dateString.split('T')[0];
+  };
+
+  // Cargar datos (Vehículos y Mantenimientos)
   useEffect(() => {
-    const fetchVehiculos = async () => {
+    const fetchDatos = async (endpoint, setter) => {
       try {
-        const response = await fetch(`${apiBaseUrl}/vehiculos`);
+        const response = await fetch(`${apiBaseUrl}/${endpoint}`);
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Error cargando vehículos");
-        setVehiculos(data);
+        if (!response.ok) throw new Error(data.error || `Error cargando ${endpoint}`);
+        setter(data);
       } catch (error) {
-        setMensaje(`Error cargando vehículos: ${error.message}`);
+        setMensaje(`Error cargando ${endpoint}: ${error.message}`);
         setEsError(true);
       }
     };
 
-    fetchVehiculos();
+    fetchDatos('vehiculos', setVehiculos);
+    fetchDatos('mantenimientos', setAllMantenimientos); // Cargamos todos los mantenimientos
 
     // Si es edición, rellenar formulario
     if (mantenimientoToEdit) {
         setDatos({
-            patente: mantenimientoToEdit.vehiculo.patente,
-            // Cortamos la fecha para quedarnos con YYYY-MM-DD
-            fecha_inicio: mantenimientoToEdit.fecha_inicio ? mantenimientoToEdit.fecha_inicio.split('T')[0] : '',
-            fecha_fin: mantenimientoToEdit.fecha_fin ? mantenimientoToEdit.fecha_fin.split('T')[0] : '',
+            patente: mantenimientoToEdit.vehiculo?.patente || mantenimientoToEdit.patente,
+            // FIX: Usamos formatDate para evitar problemas de timezone al cargar
+            fecha_inicio: formatDate(mantenimientoToEdit.fecha_inicio),
+            fecha_fin: formatDate(mantenimientoToEdit.fecha_fin),
             tipo_servicio: mantenimientoToEdit.tipo_servicio,
             costo: mantenimientoToEdit.costo
         });
@@ -55,9 +64,36 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
     setMensaje('');
     setEsError(false);
 
-    // Validación básica de fechas
-    if (datos.fecha_inicio > datos.fecha_fin) {
+    const newInicio = datos.fecha_inicio;
+    const newFin = datos.fecha_fin;
+    const newPatente = datos.patente;
+    const currentId = mantenimientoToEdit ? mantenimientoToEdit.id_mantenimiento : null;
+
+    // 1. Validación básica de fechas
+    if (newInicio > newFin) {
         setMensaje("La fecha de inicio no puede ser posterior a la de fin.");
+        setEsError(true);
+        return;
+    }
+    
+    // 2. FIX CRÍTICO: Comprobar solapamiento
+    const solapamiento = allMantenimientos.find(m => {
+        // Excluir el registro actual si estamos en modo edición
+        if (m.id_mantenimiento === currentId) return false;
+        
+        // Debe ser el mismo vehículo
+        if (m.vehiculo?.patente !== newPatente && m.patente !== newPatente) return false;
+        
+        // Aseguramos formato YYYY-MM-DD para la comparación (aunque ya debería venir así)
+        const existeInicio = formatDate(m.fecha_inicio); 
+        const existeFin = formatDate(m.fecha_fin); 
+
+        // Lógica de solapamiento: (InicioNuevo <= FinExistente) && (FinNuevo >= InicioExistente)
+        return (newInicio <= existeFin && newFin >= existeInicio);
+    });
+
+    if (solapamiento) {
+        setMensaje(`Error: El vehículo ${newPatente} ya tiene un mantenimiento programado que se superpone con las fechas seleccionadas (del ${formatDate(solapamiento.fecha_inicio)} al ${formatDate(solapamiento.fecha_fin)}).`);
         setEsError(true);
         return;
     }
@@ -68,6 +104,7 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
         : `${apiBaseUrl}/mantenimientos`;
 
     try {
+      // Nota: Los datos ya contienen las fechas como strings 'YYYY-MM-DD', lo cual previene el problema de zona horaria en el envío.
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
@@ -125,12 +162,16 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
                 onChange={handleChange} 
                 required 
                 value={datos.patente}
-                disabled={!!mantenimientoToEdit} // Normalmente no cambiamos el vehículo de un mantenimiento ya creado
+                disabled={!!mantenimientoToEdit}
             >
                 <option value="">Seleccione Vehículo</option>
-                {vehiculos.map(v => (
+                {vehiculos
+                    .filter(v => v.estado !== 'Alquilado')
+                    .map(v => (
                     <option key={v.patente} value={v.patente}>
                         {v.marca} {v.modelo} ({v.patente})
+                        {/* Mostrar "Estado: Mantenimiento" solo si el estado es Mantenimiento */}
+                        {v.estado === 'Mantenimiento' ? ` - Estado: ${v.estado}` : ''}
                     </option>
                 ))}
             </select>
@@ -195,21 +236,12 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
         </div>
       </form>
 
-      {/* MODAL DE ÉXITO */}
+      {/* MODAL DE ÉXITO (Se asume que funciona) */}
       {showModal && mantenimientoProcesado && (
         <div className="modal-overlay">
           <div className="modal-content">
             <span className="modal-icon">🔧</span>
             <h3>{mantenimientoToEdit ? '¡Modificación Exitosa!' : '¡Mantenimiento Registrado!'}</h3>
-            <p>Los datos se han guardado correctamente.</p>
-            
-            <div className="modal-details">
-              <div className="detail-row"><span className="detail-label">ID:</span> <span>#{mantenimientoProcesado.id}</span></div>
-              <div className="detail-row"><span className="detail-label">Vehículo:</span> <span>{mantenimientoProcesado.vehiculo?.marca} ({mantenimientoProcesado.patente})</span></div>
-              <div className="detail-row"><span className="detail-label">Servicio:</span> <span>{mantenimientoProcesado.tipo_servicio}</span></div>
-              <div className="detail-row"><span className="detail-label">Costo:</span> <span>${mantenimientoProcesado.costo}</span></div>
-            </div>
-
             <button className="modal-close-btn" onClick={handleCloseModal}>
               Aceptar
             </button>
