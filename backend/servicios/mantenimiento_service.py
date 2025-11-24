@@ -23,6 +23,7 @@ class MantenimientoService:
             patente = datos.get("patente")
             if not patente:
                 raise DatosInvalidosError("La 'patente' del vehículo es obligatoria.")
+            
             vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
 
             if vehiculo.estado == "Alquilado":
@@ -54,8 +55,7 @@ class MantenimientoService:
                 estado="En curso"
             )
 
-            vehiculo.estado = "Mantenimiento"
-            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, vehiculo)
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Mantenimiento"})
 
             nuevo_id = self.dao.crear_mantenimiento(mantenimiento)
             vehiculo.agregar_mantenimiento(mantenimiento)

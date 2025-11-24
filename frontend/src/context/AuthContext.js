@@ -4,8 +4,8 @@ const AuthContext = createContext();
 
 // Permisos: Define qué puede ver cada rol
 const PERMISSIONS = {
-  supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes', 'GestionClientes', 'RegistrarVehiculo', 'GestionUsuario', 'GestionEmpleados'],
-  atencion: ['RegistroAlquiler', 'GestionMultas', 'GestionClientes', 'RegistrarVehiculo', 'GestionUsuario'],
+  supervisor: ['RegistroAlquiler', 'GestionMultas', 'Reportes', 'GestionClientes', 'RegistrarVehiculo', 'GestionUsuario', 'GestionEmpleados', 'RegistroReserva', 'GestionAlquileres', 'GestionReservas', 'GestionVehiculos', 'GestionMantenimientos', 'RegistroUsuarioEmpleado'],
+  atencion: ['RegistroAlquiler', 'GestionMultas', 'GestionClientes', 'RegistrarVehiculo', 'GestionUsuario', 'GestionVehiculos', 'RegistroReserva', 'GestionAlquileres', 'GestionReservas', 'GestionMantenimientos',],
   cliente: ['MisAlquileres', 'MisMultas', 'GestionUsuario'],
   Anonimo: []
 };

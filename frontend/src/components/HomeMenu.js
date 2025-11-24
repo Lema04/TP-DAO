@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   FaUsers, FaCar, FaClipboardList, FaMoneyBillWave, 
-  FaFileAlt, FaUserCog, FaUserTie 
+  FaFileAlt, FaUserCog, FaUserTie, 
+  FaBookmark,
+  FaWrench
 } from "react-icons/fa";
 
 const HomeMenu = () => {
@@ -13,8 +15,10 @@ const HomeMenu = () => {
     { permiso: "GestionUsuario", ruta: "/usuario", texto: "Gestión de Usuario", icono: <FaUserCog /> },
     { permiso: "GestionEmpleados", ruta: "/empleado", texto: "Gestión de Empleados", icono: <FaUserTie /> },
     { permiso: "GestionClientes", ruta: "/clientes", texto: "Gestión de Clientes", icono: <FaUsers /> },
-    { permiso: "RegistrarVehiculo", ruta: "/vehiculos", texto: "Gestión de Vehículos", icono: <FaCar /> },
-    { permiso: "RegistroAlquiler", ruta: "/alquiler", texto: "Gestión de Alquiler", icono: <FaClipboardList /> },
+    { permiso: "GestionVehiculos", ruta: "/vehiculos", texto: "Gestión de Vehículos", icono: <FaCar /> },
+    { permiso: "GestionReservas", ruta: "/reservas", texto: "Gestión de Reservas", icono: <FaBookmark />},
+    { permiso: "GestionAlquileres", ruta: "/alquiler", texto: "Gestión de Alquileres", icono: <FaClipboardList /> },
+    { permiso: "GestionMantenimientos", ruta: "/mantenimientos", texto: "Gestión de Mantenimientos", icono: <FaWrench />},
     { permiso: "MisAlquileres", ruta: "/mis-alquileres", texto: "Mis Alquileres", icono: <FaClipboardList /> },
     { permiso: "GestionMultas", ruta: "/gestion", texto: "Gestión de Multas y Daños", icono: <FaMoneyBillWave /> },
     { permiso: "MisMultas", ruta: "/mis-multas", texto: "Mis Multas", icono: <FaMoneyBillWave /> },

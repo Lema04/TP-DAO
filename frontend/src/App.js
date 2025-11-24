@@ -15,9 +15,12 @@ import MisAlquileres from './components/MisAlquileres';
 import RegistroUsuario from './components/RegistroUsuario';
 import GestionUsuario from './components/GestionUsuario';
 import MisMultas from './components/MisMultas';
-import RegistrarVehiculo from './components/RegistrarVehiculo';
 import GestionVehiculos from './components/GestionVehiculos';
 import GestionEmpleados from './components/GestionEmpleados';
+import GestionAlquileres from './components/GestionAlquileres';
+import GestionReservas from './components/GestionReservas';
+import GestionMantenimientos from './components/GestionMantenimientos';
+import RegistroUsuarioEmpleado from './components/RegistroUsuarioEmpleado';
 
 const API_BASE_URL = 'http://127.0.0.1:5000';
 
@@ -61,8 +64,8 @@ function App() {
 
             {/* Rutas protegidas por rol */}
             <Route path="/alquiler" element={
-              <ProtectedRoute permissionName="RegistroAlquiler">
-                <RegistroAlquiler apiBaseUrl={API_BASE_URL} />
+              <ProtectedRoute permissionName="GestionAlquileres">
+                <GestionAlquileres apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
             <Route path="/gestion" element={
@@ -91,7 +94,7 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/vehiculos" element={
-              <ProtectedRoute permissionName="RegistrarVehiculo">
+              <ProtectedRoute permissionName="GestionVehiculos">
                 <GestionVehiculos apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
@@ -106,6 +109,24 @@ function App() {
             <Route path="/empleado" element={
               <ProtectedRoute permissionName="GestionEmpleados">
                 <GestionEmpleados apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/reservas' element={
+              <ProtectedRoute permissionName="GestionReservas">
+                <GestionReservas apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/mantenimientos' element={
+              <ProtectedRoute permissionName="GestionMantenimientos">
+                <GestionMantenimientos apiBaseUrl={API_BASE_URL} />
+              </ProtectedRoute>
+            } />
+
+            <Route path='/registro-empleado' element={
+              <ProtectedRoute permissionName="RegistroUsuarioEmpleado">
+                <RegistroUsuarioEmpleado apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
 

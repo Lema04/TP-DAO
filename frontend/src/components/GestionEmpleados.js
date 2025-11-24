@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom"; // Importamos useNavigate
 
 const GestionEmpleados = ({ apiBaseUrl }) => {
+  const navigate = useNavigate(); // Hook para navegar
   const [modo, setModo] = useState("listar");
   const [empleados, setEmpleados] = useState([]);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
@@ -9,6 +11,10 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
   const [form, setForm] = useState({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
   const [mensaje, setMensaje] = useState("");
   const [esError, setEsError] = useState(false);
+
+  // --- NUEVOS ESTADOS PARA EL MODAL ---
+  const [showModalExito, setShowModalExito] = useState(false);
+  const [empleadoCreado, setEmpleadoCreado] = useState(null);
 
   const CAMPO_ORDEN = ["nombre", "apellido", "dni", "puesto", "id_supervisor"];
   const LABELS = { nombre: "Nombre", apellido: "Apellido", dni: "Documento", puesto: "Puesto", id_supervisor: "ID Supervisor" };
@@ -24,7 +30,6 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
     }, 5000);
   };
 
-  // Carga inicial de empleados
   const cargarEmpleados = async () => {
     try {
       const res = await fetch(`${apiBaseUrl}/empleados`);
@@ -39,8 +44,6 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  // Creación y edición de empleados.
-  // Si se edita un empleado, también se sincroniza el usuario vinculado.
   const accionEmpleado = async (tipo) => {
     try {
       const url = tipo === "crear"
@@ -56,41 +59,28 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error desconocido");
 
-      const idEmpleado = tipo === "crear" ? data.id_empleado : empleadoSeleccionado.id_empleado;
-
-      // Sincronizar datos del usuario si se edita un empleado
-      if (tipo === "editar") {
-        try {
-          const resUser = await fetch(`${apiBaseUrl}/usuarios/empleado/${idEmpleado}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              nombre: form.nombre,
-              apellido: form.apellido,
-              dni: form.dni,
-              rol: form.puesto
-            })
-          });
-
-          const dataUser = await resUser.json();
-          if (!resUser.ok) throw new Error(dataUser.error);
-        } catch (e) {
-          mostrarMensaje(`Empleado actualizado, pero falló la sincronización del usuario: ${e.message}`, true);
-        }
+      // --- LÓGICA MODIFICADA ---
+      if (tipo === "crear") {
+        // Si es creación, mostramos el modal para crear usuario
+        setEmpleadoCreado(data); // data es el objeto empleado nuevo
+        setShowModalExito(true);
+        setModo("listar"); 
+        setForm({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
+        await cargarEmpleados();
+      } else {
+        // Si es edición, flujo normal
+        mostrarMensaje(`Empleado actualizado correctamente.`);
+        setForm({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
+        setEmpleadoSeleccionado(null);
+        setModo("listar");
+        await cargarEmpleados();
       }
-
-      setForm({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
-      setEmpleadoSeleccionado(null);
-      setModo("listar");
-      await cargarEmpleados();
-      mostrarMensaje(`Empleado con ID ${idEmpleado} ${tipo === "crear" ? "registrado" : "actualizado"} correctamente.`);
 
     } catch (e) {
       mostrarMensaje(`Error al ${tipo === "crear" ? "registrar" : "actualizar"} empleado: ${e.message}`, true);
     }
   };
 
-  // Trae un empleado para edición
   const buscarEmpleado = async (id) => {
     try {
       const res = await fetch(`${apiBaseUrl}/empleados/${id}`);
@@ -105,14 +95,14 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
     }
   };
 
-  // Elimina empleado y también su usuario
   const eliminarEmpleado = async (id) => {
     if (!window.confirm(`¿Desea eliminar el empleado con ID ${id}?`)) return;
     try {
       const res = await fetch(`${apiBaseUrl}/empleados/${id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-
+      if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error);
+      }
       await cargarEmpleados();
       mostrarMensaje(`Empleado con ID ${id} eliminado correctamente.`);
     } catch (e) {
@@ -120,7 +110,6 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
     }
   };
 
-  // Filtro dinámico
   const empleadosFiltrados = empleados.filter((e) => {
     if (!valorFiltro) return true;
     const valor = valorFiltro.toLowerCase();
@@ -133,6 +122,18 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
   });
 
   const supervisores = empleados.filter(e => e.puesto.toLowerCase() === "supervisor");
+
+  // --- NAVEGACIÓN AL CERRAR MODAL ---
+  const handleCrearUsuario = () => {
+      setShowModalExito(false);
+      // Redirigimos al componente de creación de usuario pasando el empleado
+      navigate('/registrar-usuario-empleado', { state: { empleado: empleadoCreado } });
+  };
+
+  const handleOmitir = () => {
+      setShowModalExito(false);
+      setEmpleadoCreado(null);
+  };
 
   return (
     <div className="client-manager-container">
@@ -265,6 +266,50 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
           </div>
         </form>
       )}
+
+      {/* --- MODAL DE ÉXITO --- */}
+      {showModalExito && empleadoCreado && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <span className="modal-icon">👔</span>
+            <h3>¡Empleado Registrado!</h3>
+            <p>El empleado ha sido dado de alta correctamente.</p>
+            
+            <div className="modal-details" style={{textAlign: 'left'}}>
+              <div className="detail-row">
+                <span className="detail-label">Nombre:</span>
+                <span className="detail-value">{empleadoCreado.nombre} {empleadoCreado.apellido}</span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Puesto:</span>
+                <span className="detail-value">{empleadoCreado.puesto}</span>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1.5rem', textAlign: 'center' }}>
+              ¿Deseas crear un usuario de acceso para este empleado ahora?
+            </p>
+
+            <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={handleOmitir}
+                style={{ marginTop: 0, flex: 1 }}
+              >
+                Omitir
+              </button>
+              <button 
+                className="modal-close-btn"
+                onClick={handleCrearUsuario}
+                style={{ flex: 1 }}
+              >
+                Crear Usuario
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
