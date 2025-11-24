@@ -12,9 +12,11 @@ import HomeMenu from './components/HomeMenu';
 import HeaderNav from './components/HeaderNav';
 import GestionClientes from "./components/GestionClientes";
 import MisAlquileres from './components/MisAlquileres';
+import RegistroUsuario from './components/RegistroUsuario';
 import GestionUsuario from './components/GestionUsuario';
 import MisMultas from './components/MisMultas';
 import RegistrarVehiculo from './components/RegistrarVehiculo';
+import GestionVehiculos from './components/GestionVehiculos';
 import GestionEmpleados from './components/GestionEmpleados';
 
 const API_BASE_URL = 'http://127.0.0.1:5000';
@@ -55,6 +57,7 @@ function App() {
                 <HomeMenu />
               </ProtectedRoute>
             } />
+            <Route path='/registrarme' element={<RegistroUsuario />} />
 
             {/* Rutas protegidas por rol */}
             <Route path="/alquiler" element={
@@ -87,9 +90,9 @@ function App() {
                 <MisMultas apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
-            <Route path="/registrar-vehiculo" element={
+            <Route path="/vehiculos" element={
               <ProtectedRoute permissionName="RegistrarVehiculo">
-                <RegistrarVehiculo apiBaseUrl={API_BASE_URL} />
+                <GestionVehiculos apiBaseUrl={API_BASE_URL} />
               </ProtectedRoute>
             } />
 

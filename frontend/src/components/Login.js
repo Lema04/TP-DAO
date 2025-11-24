@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Logo from './Logo';
 
@@ -84,6 +84,10 @@ const Login = () => {
       </form>
       
       {error && <div className="error-message">{error}</div>}
+      {/* BOTÓN REGISTRARME */}
+      <div style={{textAlign: 'center', marginTop: '1.5rem'}}>
+        <p style={{color: '#718096'}}>¿No tienes cuenta? <Link to="/registrarme" style={{color: '#cc0000', fontWeight: 'bold'}}>Registrarme</Link></p>
+      </div>
     </div>
   );
 };

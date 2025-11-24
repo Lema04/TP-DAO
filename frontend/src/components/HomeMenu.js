@@ -13,7 +13,7 @@ const HomeMenu = () => {
     { permiso: "GestionUsuario", ruta: "/usuario", texto: "Gestión de Usuario", icono: <FaUserCog /> },
     { permiso: "GestionEmpleados", ruta: "/empleado", texto: "Gestión de Empleados", icono: <FaUserTie /> },
     { permiso: "GestionClientes", ruta: "/clientes", texto: "Gestión de Clientes", icono: <FaUsers /> },
-    { permiso: "RegistrarVehiculo", ruta: "/registrar-vehiculo", texto: "Gestión de Vehículos", icono: <FaCar /> },
+    { permiso: "RegistrarVehiculo", ruta: "/vehiculos", texto: "Gestión de Vehículos", icono: <FaCar /> },
     { permiso: "RegistroAlquiler", ruta: "/alquiler", texto: "Gestión de Alquiler", icono: <FaClipboardList /> },
     { permiso: "MisAlquileres", ruta: "/mis-alquileres", texto: "Mis Alquileres", icono: <FaClipboardList /> },
     { permiso: "GestionMultas", ruta: "/gestion", texto: "Gestión de Multas y Daños", icono: <FaMoneyBillWave /> },

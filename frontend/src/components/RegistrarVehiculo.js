@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import './RegistrarVehiculo.css'; // Ya no es necesario, usamos estilos globales en App.css
 
-const RegistrarVehiculo = ({ apiBaseUrl }) => {
+const RegistrarVehiculo = ({ apiBaseUrl, onBack, onSuccess, vehicleToEdit }) => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -15,8 +14,30 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
   });
 
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [registeredVehicle, setRegisteredVehicle] = useState(null);
+
+  // EFECTO: Si recibimos un vehículo para editar, llenamos el formulario
+  useEffect(() => {
+    if (vehicleToEdit) {
+        setFormData({
+            patente: vehicleToEdit.patente,
+            marca: vehicleToEdit.marca,
+            modelo: vehicleToEdit.modelo,
+            anio: vehicleToEdit.anio,
+            precio_diario: vehicleToEdit.precio_diario,
+            estado: vehicleToEdit.estado
+        });
+    } else {
+        // Limpiar si es registro nuevo
+        setFormData({
+            patente: '',
+            marca: '',
+            modelo: '',
+            anio: '',
+            precio_diario: '',
+            estado: 'Disponible'
+        });
+    }
+  }, [vehicleToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,9 +57,17 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
         return;
     }
 
+    // Determinamos si es PUT (Actualizar) o POST (Crear)
+    const method = vehicleToEdit ? 'PUT' : 'POST';
+    
+    // Si es PUT, la URL incluye la patente original. Si es POST, es solo /vehiculos
+    const url = vehicleToEdit 
+        ? `${apiBaseUrl}/vehiculos/${vehicleToEdit.patente}`
+        : `${apiBaseUrl}/vehiculos`;
+
     try {
-      const response = await fetch(`${apiBaseUrl}/vehiculos`, {
-        method: 'POST',
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -52,21 +81,10 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
       const data = await response.json();
 
       if (response.ok) {
-        // Guardamos los datos del vehículo registrado para el modal
-        setRegisteredVehicle(data);
-        setShowModal(true);
-        
-        // Limpiar formulario
-        setFormData({
-            patente: '',
-            marca: '',
-            modelo: '',
-            anio: '',
-            precio_diario: '',
-            estado: 'Disponible'
-        });
+        alert(vehicleToEdit ? "Vehículo actualizado con éxito" : "Vehículo registrado con éxito");
+        if (onSuccess) onSuccess(); // Avisar al padre para recargar la lista
       } else {
-        setError(data.error || "Error al registrar el vehículo.");
+        setError(data.error || "Error al procesar la solicitud.");
       }
     } catch (err) {
       setError("Error de conexión con el servidor.");
@@ -74,14 +92,11 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
     }
   };
 
-  const closeModal = () => {
-    setShowModal(false);
-    setRegisteredVehicle(null);
-  };
-
   return (
     <div className="form-card">
-      <h2 className="form-title">Registrar Nuevo Vehículo</h2>
+      <h2 className="form-title">
+          {vehicleToEdit ? `Modificar Vehículo ${vehicleToEdit.patente}` : 'Registrar Nuevo Vehículo'}
+      </h2>
       
       {error && <div className="error-message">{error}</div>}
 
@@ -97,8 +112,11 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             placeholder="Ej: AA123BB"
             maxLength="7"
             required
+            // AQUÍ ESTÁ LA CLAVE: Si estamos editando, se deshabilita
+            disabled={!!vehicleToEdit} 
+            style={{ backgroundColor: vehicleToEdit ? '#e9ecef' : 'white' }} // Visualmente gris si está bloqueado
           />
-          <small>6 o 7 caracteres alfanuméricos</small>
+          {!vehicleToEdit && <small>6 o 7 caracteres alfanuméricos. (No editable posteriormente)</small>}
         </div>
 
         <div className="form-group">
@@ -109,7 +127,6 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             name="marca"
             value={formData.marca}
             onChange={handleChange}
-            placeholder="Ej: Toyota"
             required
           />
         </div>
@@ -122,7 +139,6 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             name="modelo"
             value={formData.modelo}
             onChange={handleChange}
-            placeholder="Ej: Corolla"
             required
           />
         </div>
@@ -135,9 +151,6 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             name="anio"
             value={formData.anio}
             onChange={handleChange}
-            placeholder="Ej: 2022"
-            min="1900"
-            max={new Date().getFullYear() + 1}
             required
           />
         </div>
@@ -150,15 +163,13 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             name="precio_diario"
             value={formData.precio_diario}
             onChange={handleChange}
-            placeholder="Ej: 50.00"
             step="0.01"
-            min="0"
             required
           />
         </div>
 
         <div className="form-group">
-            <label>Estado Inicial</label>
+            <label>Estado</label>
             <select className="form-select" name="estado" value={formData.estado} onChange={handleChange}>
                 <option value="Disponible">Disponible</option>
                 <option value="Mantenimiento">Mantenimiento</option>
@@ -167,51 +178,16 @@ const RegistrarVehiculo = ({ apiBaseUrl }) => {
             </select>
         </div>
 
-        <button type="submit" className="btn-primary">Registrar Vehículo</button>
-      </form>
-      
-      <button className="btn-secondary" onClick={() => navigate('/home')}>
-        Volver al Menú
-      </button>
-
-      {/* MODAL DE ÉXITO */}
-      {showModal && registeredVehicle && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <span className="modal-icon">🎉</span>
-            <h3>¡Registro Exitoso!</h3>
-            <p>El vehículo ha sido agregado correctamente al sistema.</p>
-            
-            <div className="modal-details">
-              <div className="detail-row">
-                <span className="detail-label">Patente:</span>
-                <span className="detail-value">{registeredVehicle.patente}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Vehículo:</span>
-                <span className="detail-value">{registeredVehicle.marca} {registeredVehicle.modelo}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Año:</span>
-                <span className="detail-value">{registeredVehicle.anio}</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Precio:</span>
-                <span className="detail-value">${registeredVehicle.precio_diario} / día</span>
-              </div>
-              <div className="detail-row">
-                <span className="detail-label">Estado:</span>
-                <span className="detail-value">{registeredVehicle.estado}</span>
-              </div>
-            </div>
-
-            <button className="modal-close-btn" onClick={closeModal}>
-              Aceptar
+        <div style={{ display: 'flex', gap: '10px', marginTop: '1rem' }}>
+            <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                {vehicleToEdit ? 'Guardar Cambios' : 'Registrar'}
             </button>
-          </div>
+            
+            <button type="button" className="btn-secondary" onClick={onBack} style={{ flex: 1 }}>
+                Cancelar
+            </button>
         </div>
-      )}
-
+      </form>
     </div>
   );
 };
