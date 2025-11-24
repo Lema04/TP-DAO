@@ -1,152 +1,236 @@
-// --- /frontend/src/components/GestionUsuario.js ---
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { useNavigate } from "react-router-dom"; 
+// 1. FIX: Uso correcto del hook de autenticación
+import { useAuth } from "../context/AuthContext"; 
 
-const GestionUsuario = ({ apiBaseUrl }) => {
-  const { user, actualizarUsuarioContext } = useAuth();
-  const usuarioId = user?.id_usuario;
+const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
+  // Consumo del contexto
+  const { token, user } = useAuth(); 
+  const navigate = useNavigate();
 
-  const [form, setForm] = useState({ nombre_usuario: "", contraseña: "" });
+  const [modo, setModo] = useState("crear");
   const [mensaje, setMensaje] = useState("");
   const [esError, setEsError] = useState(false);
-  const [cargando, setCargando] = useState(true);
-  const [mostrarContraseña, setMostrarContraseña] = useState(false);
 
-  const cargarUsuario = async () => {
-    if (!usuarioId) return;
-    setCargando(true);
-    try {
-      const res = await fetch(`${apiBaseUrl}/usuarios/${usuarioId}`);
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Error al cargar usuario: ${text}`);
-      }
-      const data = await res.json();
-      setForm({
-        nombre_usuario: data.nombre_usuario || "",
-        contraseña: data.contraseña || ""
-      });
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    email: "",
+    rol: "atencion", // Valor inicial corregido a 'atencion' (empleado estándar)
+    id_empleado: "",
+    id_cliente: ""
+  });
+
+  const mostrarMensaje = (texto, error = false) => {
+    setMensaje(texto);
+    setEsError(error);
+    setTimeout(() => {
       setMensaje("");
       setEsError(false);
-    } catch (e) {
-      setMensaje(e.message);
-      setEsError(true);
-    } finally {
-      setCargando(false);
-    }
+    }, 5000);
   };
 
+  // 2. FIX: Lógica de inicialización (Priorizar empleado sobre el usuario logueado)
   useEffect(() => {
-    cargarUsuario();
-  }, [usuarioId]);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const guardarCambios = async () => {
-    if (!usuarioId) {
-      setMensaje("ID de usuario no definido.");
-      setEsError(true);
+    if (empleadoPreseleccionado) {
+      setModo("crear");
+      setForm({
+        username: "", 
+        password: "123456", 
+        email: "", 
+        // 3. FIX: Rol corregido a valores del Backend
+        rol: empleadoPreseleccionado.puesto === "Supervisor" ? "supervisor" : "atencion", 
+        id_empleado: empleadoPreseleccionado.id_empleado,
+        id_cliente: ""
+      });
       return;
     }
 
-    try {
-      const res = await fetch(`${apiBaseUrl}/usuarios/${usuarioId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "Error desconocido al actualizar usuario");
-
-      setMensaje("Usuario actualizado correctamente.");
-      setEsError(false);
-
-      if (actualizarUsuarioContext) actualizarUsuarioContext({ nombre_usuario: form.nombre_usuario });
-
+    if (!empleadoPreseleccionado && user && !onClose) {
+      setModo("editar");
       setForm({
-        nombre_usuario: form.nombre_usuario,
-        contraseña: form.contraseña
+        username: user.sub || "", 
+        password: "",
+        email: user.email || "",
+        rol: user.rol || "atencion",
+        id_empleado: user.id_empleado || "",
+        id_cliente: user.id_cliente || ""
+      });
+    }
+  }, [empleadoPreseleccionado, user, onClose]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!form.username || !form.email) {
+      mostrarMensaje("Usuario y Email son obligatorios", true);
+      return;
+    }
+    if (modo === "crear" && !form.password) {
+      mostrarMensaje("La contraseña es obligatoria para nuevos usuarios", true);
+      return;
+    }
+
+    // 4. FIX: Mapeo de claves de Frontend a Backend
+    const datosParaEnviar = {
+      nombre_usuario: form.username, // Mapeo crítico
+      contraseña: form.password,     // Mapeo crítico
+      email: form.email,
+      rol: form.rol,
+      id_empleado: form.id_empleado || null,
+      id_cliente: form.id_cliente || null
+    };
+
+    try {
+      if (modo === "editar" && !datosParaEnviar.contraseña) {
+         delete datosParaEnviar.contraseña;
+      }
+
+      const endpoint = modo === "crear" ? "/usuarios" : `/usuarios/${user.id_usuario}`; 
+      const method = modo === "crear" ? "POST" : "PUT";
+
+      const res = await fetch(`${apiBaseUrl}${endpoint}`, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(datosParaEnviar)
       });
 
-      setMostrarContraseña(false);
+      const data = await res.json();
 
-      setTimeout(() => setMensaje(""), 3000);
+      if (!res.ok) throw new Error(data.error || "Error en la operación");
 
-    } catch (e) {
-      setMensaje(e.message);
-      setEsError(true);
-      setTimeout(() => setMensaje(""), 3000);
+      mostrarMensaje(
+        modo === "crear" 
+          ? `Usuario creado con éxito para el empleado ID ${form.id_empleado}` 
+          : "Usuario actualizado correctamente"
+      );
+
+      setForm(prevForm => ({ ...prevForm, password: "" }));
+      
+      if (onClose && modo === "crear") {
+          setTimeout(() => { onClose(); }, 2000); 
+      }
+
+    } catch (err) {
+      mostrarMensaje(err.message, true);
     }
   };
 
-  if (!usuarioId) return <p>Cargando usuario...</p>;
-
   return (
-    <div className="form-card">
-      <h2 className="form-title">Gestión de Usuario</h2>
+    <div className="form-container-inner-shadow" style={{ padding: '20px', backgroundColor: '#fff' }}>
+      <div className="form-header-row">
+        <h3 className="form-subtitle-black">
+          {modo === "crear" 
+            ? `Crear Usuario para Empleado #${form.id_empleado || "?"}` 
+            : "Mis Datos de Usuario"}
+        </h3>
+        {onClose && (
+            <button type="button" className="btn-delete-red" onClick={onClose} style={{marginLeft: 'auto'}}>
+                Cerrar
+            </button>
+        )}
+      </div>
 
-      {/* Línea divisora debajo del título */}
-      <hr style={{ border: "none", borderTop: "2px solid #000000", margin: "0.5rem 0 2rem 0" }} />
-
+      <hr className="form-separator" />
+      
       {mensaje && (
-        <div className={esError ? "error-message" : "success-message"}>
+        <div className={esError ? "error-message" : "success-message"} style={{marginBottom: '1rem'}}>
           {mensaje}
         </div>
       )}
 
-      {cargando ? (
-        <p>Cargando datos...</p>
-      ) : (
+      {/* 5. FIX ESTRUCTURAL: Orden y existencia de todos los campos en un solo grid */}
+      <form onSubmit={handleSubmit}>
         <div className="form-fields-grid">
-          {/* Usuario */}
+          
+          {/* Fila 1 Columna 1: Nombre de Usuario */}
           <div className="form-group-client">
-            <label className="form-label-client"><strong>Usuario</strong></label>
-            <input
-              type="text"
-              name="nombre_usuario"
+            <label className="form-label-client">Nombre de Usuario</label>
+            <input 
               className="form-input-client"
-              value={form.nombre_usuario}
-              onChange={handleChange}
+              name="username" 
+              value={form.username} 
+              onChange={e => setForm({...form, username: e.target.value})}
+              required
             />
           </div>
 
-          {/* Contraseña */}
+          {/* Fila 1 Columna 2: Email */}
           <div className="form-group-client">
-            <label className="form-label-client"><strong>Contraseña</strong></label>
-            <div className="password-input-wrapper">
-              <input
-                type={mostrarContraseña ? "text" : "password"}
-                name="contraseña"
-                className="form-input-client"
-                value={form.contraseña}
-                onChange={handleChange}
-              />
-              <button
-                type="button"
-                className="password-toggle-btn"
-                onClick={() => setMostrarContraseña(!mostrarContraseña)}
-              >
-                {mostrarContraseña ? <FaEyeSlash /> : <FaEye />}
-              </button>
-            </div>
+            <label className="form-label-client">Email</label>
+            <input 
+              className="form-input-client"
+              type="email"
+              name="email" 
+              value={form.email} 
+              onChange={e => setForm({...form, email: e.target.value})}
+              required
+            />
+          </div>
+          
+          {/* Fila 2 Columna 1: Contraseña */}
+          <div className="form-group-client">
+            <label className="form-label-client">
+                {modo === "crear" ? "Contraseña" : "Nueva Contraseña (dejar en blanco para mantener)"}
+            </label>
+            <input 
+              className="form-input-client"
+              type="password" 
+              name="password" 
+              value={form.password} 
+              onChange={e => setForm({...form, password: e.target.value})}
+              required={modo === "crear"}
+            />
           </div>
 
-          {/* Botón Guardar (ocupa ambas columnas) */}
-          <div className="form-actions-client-full-width" style={{ gridColumn: "1 / -1" }}>
-            <button
-              className="btn-submit-client-full-width"
-              type="button"
-              onClick={guardarCambios}
+          {/* Fila 2 Columna 2: Rol (Select corregido) */}
+          <div className="form-group-client">
+            <label className="form-label-client">Rol</label>
+            <select 
+              className="form-input-client"
+              name="rol" 
+              value={form.rol} 
+              onChange={e => setForm({...form, rol: e.target.value})}
             >
-              Actualizar Usuario
-            </button>
+              <option value="atencion">Empleado</option> 
+              <option value="supervisor">Administrador</option> 
+              <option value="cliente">Cliente</option>
+            </select>
           </div>
+
+          {/* Fila 3 Columna 1: ID Empleado Vinculado */}
+          <div className="form-group-client">
+            <label className="form-label-client">ID Empleado Vinculado</label>
+            <input 
+              className="form-input-client disabled-input"
+              value={form.id_empleado} 
+              readOnly
+              placeholder="Ninguno"
+            />
+          </div>
+          
+          {/* Fila 3 Columna 2: ID Cliente Vinculado */}
+          <div className="form-group-client">
+            <label className="form-label-client">ID Cliente Vinculado</label>
+            <input 
+              className="form-input-client disabled-input"
+              value={form.id_cliente} 
+              readOnly
+              placeholder="Ninguno"
+            />
+          </div>
+
+        </div> {/* Cierre de form-fields-grid */}
+
+        <div className="form-actions-client-full-width" style={{marginTop: '20px'}}>
+          <button type="submit" className="btn-submit-client-full-width">
+            {modo === "crear" ? "Registrar Usuario" : "Actualizar Mis Datos"}
+          </button>
         </div>
-      )}
+      </form>
     </div>
   );
 };

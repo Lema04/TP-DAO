@@ -7,13 +7,13 @@ const GestionReservas = ({ apiBaseUrl }) => {
     const [filter, setFilter] = useState("");
     
     // Vistas y Modales
-    const [view, setView] = useState("list"); // 'list' | 'form'
+    const [view, setView] = useState("list"); 
     const [reservaToEdit, setReservaToEdit] = useState(null);
     
-    // Estado para el modal de conversión CUSTOM
+    // Estado para el modal de conversión
     const [showModal, setShowModal] = useState(false);
     const [reservaSeleccionada, setReservaSeleccionada] = useState(null);
-    const [empleados, setEmpleados] = useState([]); // Necesitamos lista de empleados para el select
+    const [empleados, setEmpleados] = useState([]); 
     const [datosConversion, setDatosConversion] = useState({
         id_empleado: '',
         costo_total: ''
@@ -23,7 +23,7 @@ const GestionReservas = ({ apiBaseUrl }) => {
 
     useEffect(() => {
         fetchReservas();
-        fetchEmpleados(); // Cargamos empleados al inicio
+        fetchEmpleados(); 
     }, []);
 
     useEffect(() => {
@@ -60,12 +60,17 @@ const GestionReservas = ({ apiBaseUrl }) => {
         }
     };
 
+    // Función para cancelar reserva (ahora se llamará desde el modal)
     const handleEliminar = async (id_reserva) => {
         if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) return;
         try {
             const response = await fetch(`${apiBaseUrl}/reservas/${id_reserva}`, { method: 'DELETE' });
-            if (response.ok) fetchReservas();
-            else {
+            if (response.ok) {
+                alert("Reserva cancelada correctamente.");
+                setShowModal(false); // Cerramos el modal si se elimina
+                setReservaSeleccionada(null);
+                fetchReservas();
+            } else {
                 const data = await response.json();
                 alert(data.error || "No se pudo eliminar.");
             }
@@ -74,33 +79,29 @@ const GestionReservas = ({ apiBaseUrl }) => {
 
     // --- ACCIONES ---
     const handleNuevo = () => { setReservaToEdit(null); setView('form'); };
-    const handleEditar = (reserva) => { setReservaToEdit(reserva); setView('form'); };
 
-    // Abrir modal de conversión (Lógica Custom)
+    // Abrir modal de conversión
     const handleAbrirConversion = (reserva) => {
         if (!reserva.vehiculo) {
-            alert("Esta reserva no tiene un vehículo asignado. Edítela primero para asignar uno.");
+            alert("Esta reserva no tiene un vehículo asignado.");
             return;
         }
         setReservaSeleccionada(reserva);
-        // Reiniciamos los campos del modal
         setDatosConversion({ id_empleado: '', costo_total: '' });
         setShowModal(true);
     };
 
     const convertirAAlquiler = async () => {
-        // Validaciones simples
         if (!datosConversion.id_empleado || !datosConversion.costo_total) {
             alert("Por favor, seleccione un empleado e ingrese el costo.");
             return;
         }
 
-        // Construimos el objeto para crear el alquiler
         const alquilerPayload = {
             id_cliente: reservaSeleccionada.cliente.id_cliente,
             patente: reservaSeleccionada.vehiculo.patente,
             id_empleado: datosConversion.id_empleado,
-            fecha_inicio: reservaSeleccionada.fecha_inicio_deseada, // Usamos las fechas de la reserva
+            fecha_inicio: reservaSeleccionada.fecha_inicio_deseada, 
             fecha_fin: reservaSeleccionada.fecha_fin_deseada,
             costo_total: parseFloat(datosConversion.costo_total)
         };
@@ -118,14 +119,13 @@ const GestionReservas = ({ apiBaseUrl }) => {
                 throw new Error(errData.error || "Error al crear el alquiler.");
             }
 
-            // 2. Eliminar Reserva (Una vez confirmado el alquiler, la reserva se "consume")
-            // Nota: Podrías hacer esto automáticamente en el backend, pero aquí lo hacemos explícito
+            // 2. Eliminar Reserva
             await fetch(`${apiBaseUrl}/reservas/${reservaSeleccionada.id_reserva}`, { method: 'DELETE' });
 
             alert("¡Reserva convertida en alquiler exitosamente!");
             setShowModal(false);
             setReservaSeleccionada(null);
-            fetchReservas(); // Recargar lista
+            fetchReservas(); 
 
         } catch (err) {
             alert(err.message);
@@ -135,11 +135,24 @@ const GestionReservas = ({ apiBaseUrl }) => {
     const getBadgeStyle = (estado) => {
         const base = { padding: '0.3rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem', color: 'white', display: 'inline-block' };
         switch(estado) {
-            case 'Convertida': return { ...base, backgroundColor: '#48bb78' };
             case 'Pendiente': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' };
-            case 'Cancelada': return { ...base, backgroundColor: '#e53e3e' };
             default: return { ...base, backgroundColor: '#cbd5e0' };
         }
+    };
+
+    // --- HELPER: Validar fecha LOCAL (sin UTC) ---
+    const checkEsFechaValida = (fechaInicioStr) => {
+        if (!fechaInicioStr) return false;
+        // Creamos fechas en hora local (00:00:00)
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+
+        // Parseamos la fecha string (YYYY-MM-DD) asumiendo local
+        const [y, m, d] = fechaInicioStr.split('-').map(Number);
+        const fechaInicio = new Date(y, m - 1, d); // Mes es 0-indexado
+
+        // Retorna true si hoy es igual o posterior al inicio
+        return hoy >= fechaInicio;
     };
 
     // --- RENDERIZADO ---
@@ -192,9 +205,18 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                         <td><span style={getBadgeStyle(res.estado)}>{res.estado}</span></td>
                                         <td className="action-buttons-cell">
                                             {res.estado === 'Pendiente' && (
-                                                <button className="btn-edit-red" style={{ backgroundColor: '#48bb78', marginRight: '5px' }} onClick={() => handleAbrirConversion(res)} title="Convertir en Alquiler">Convertir</button>
-                                                // <button className="btn-edit-red" onClick={() => handleEditar(res)}>Editar</button>
-                                                // <button className="btn-delete-red" onClick={() => handleEliminar(res.id_reserva)}>Cancelar</button>
+                                                /* CAMBIO CLAVE: El botón se llama "Gestionar" o "Ver" 
+                                                   y siempre está habilitado para permitir entrar y cancelar.
+                                                   La validación de "Convertir" se hace ADENTRO.
+                                                */
+                                                <button 
+                                                    className="btn-edit-red" 
+                                                    style={{ backgroundColor: '#3182ce', marginRight: '5px' }} // Azul para indicar gestión general
+                                                    onClick={() => handleAbrirConversion(res)} 
+                                                    title="Gestionar Reserva (Convertir o Cancelar)"
+                                                >
+                                                    Gestionar
+                                                </button>
                                             )}
                                         </td>
                                     </tr>
@@ -205,34 +227,39 @@ const GestionReservas = ({ apiBaseUrl }) => {
                 </table>
             </div>
 
-            {/* MODAL DE CONVERSIÓN PERSONALIZADO */}
+            {/* MODAL DE CONVERSIÓN / GESTIÓN */}
             {showModal && reservaSeleccionada && (
                 <div className="modal-overlay">
                     <div className="modal-content">
                         <span className="modal-icon">🚗</span>
-                        <h3>Convertir Reserva a Alquiler</h3>
-                        <p>Reserva #{reservaSeleccionada.id_reserva}</p>
+                        <h3>Gestionar Reserva #{reservaSeleccionada.id_reserva}</h3>
                         
                         <div className="modal-details" style={{textAlign: 'left'}}>
                             <div className="detail-row">
-                                <span className="detail-label">Cliente:</span>
-                                <span className="detail-value">
-                                    {reservaSeleccionada.cliente ? `${reservaSeleccionada.cliente.nombre} ${reservaSeleccionada.cliente.apellido}` : 'N/A'}
-                                </span>
-                            </div>
-                            <div className="detail-row">
                                 <span className="detail-label">Vehículo:</span>
-                                <span className="detail-value">
-                                    {reservaSeleccionada.vehiculo ? `${reservaSeleccionada.vehiculo.marca} ${reservaSeleccionada.vehiculo.modelo} (${reservaSeleccionada.vehiculo.patente})` : 'Sin asignar'}
-                                </span>
+                                <span className="detail-value">{reservaSeleccionada.vehiculo?.patente}</span>
                             </div>
                             <div className="detail-row">
-                                <span className="detail-label">Período:</span>
-                                <span className="detail-value">
-                                    {reservaSeleccionada.fecha_inicio_deseada} a {reservaSeleccionada.fecha_fin_deseada}
-                                </span>
+                                <span className="detail-label">Fecha Inicio:</span>
+                                <span className="detail-value">{reservaSeleccionada.fecha_inicio_deseada}</span>
                             </div>
                         </div>
+
+                        {/* MENSAJE DE VALIDACIÓN DE FECHA */}
+                        {!checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada) && (
+                            <div style={{
+                                backgroundColor: '#fffaf0', 
+                                border: '1px solid #ed8936', 
+                                color: '#c05621', 
+                                padding: '10px', 
+                                borderRadius: '4px',
+                                marginTop: '10px',
+                                fontSize: '0.9rem'
+                            }}>
+                                ⚠️ <strong>Aún no se puede convertir a alquiler.</strong> <br/>
+                                La fecha de inicio es posterior a hoy.
+                            </div>
+                        )}
 
                         <div className="form-group-client" style={{marginTop: '1rem'}}>
                             <label className="form-label-client">Empleado que procesa:</label>
@@ -240,6 +267,7 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 className="form-input-client"
                                 value={datosConversion.id_empleado}
                                 onChange={(e) => setDatosConversion({...datosConversion, id_empleado: e.target.value})}
+                                disabled={!checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada)}
                             >
                                 <option value="">Seleccione Empleado</option>
                                 {empleados.map((emp) => (
@@ -260,23 +288,44 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 value={datosConversion.costo_total}
                                 onChange={(e) => setDatosConversion({...datosConversion, costo_total: e.target.value})}
                                 placeholder="0.00"
+                                disabled={!checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada)}
                             />
                         </div>
 
-                        <div style={{display: 'flex', gap: '1rem', marginTop: '1.5rem'}}>
-                            <button className="btn-submit-client-full-width" onClick={convertirAAlquiler}>
-                                Confirmar Conversión
-                            </button>
+                        <div style={{display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem'}}>
+                            {/* BOTÓN 1: CONFIRMAR CONVERSIÓN (Bloqueado si no es fecha) */}
                             <button 
-                                className="btn-back-link" 
-                                style={{flex: 1, border: '1px solid #ccc', padding: '10px', borderRadius: '4px', textAlign: 'center'}}
-                                onClick={() => {
-                                    setShowModal(false);
-                                    setReservaSeleccionada(null);
+                                className="btn-submit-client-full-width" 
+                                onClick={convertirAAlquiler}
+                                disabled={!checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada)}
+                                style={{
+                                    opacity: checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada) ? 1 : 0.5,
+                                    cursor: checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada) ? 'pointer' : 'not-allowed'
                                 }}
                             >
-                                Cancelar
+                                {checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada) ? "Confirmar Conversión" : "Conversión No Disponible"}
                             </button>
+
+                            {/* FILA DE BOTONES SECUNDARIOS */}
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                {/* BOTÓN 2: CANCELAR RESERVA (MOVIDO AQUÍ) */}
+                                <button 
+                                    className="btn-delete-red"
+                                    style={{ flex: 1 }}
+                                    onClick={() => handleEliminar(reservaSeleccionada.id_reserva)}
+                                >
+                                    Eliminar Reserva
+                                </button>
+
+                                {/* BOTÓN 3: CERRAR MODAL (Cancelar acción) */}
+                                <button 
+                                    className="btn-back-link" 
+                                    style={{flex: 1, border: '1px solid #ccc', padding: '10px', borderRadius: '4px', textAlign: 'center'}}
+                                    onClick={() => { setShowModal(false); setReservaSeleccionada(null); }}
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -10,6 +10,9 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
     const [view, setView] = useState("list"); // 'list' | 'form'
     const [alquilerToEdit, setAlquilerToEdit] = useState(null);
     
+    // --- NUEVO ESTADO PARA DATOS INICIALES ---
+    const [initialFormData, setInitialFormData] = useState(null);
+    
     const [error, setError] = useState("");
 
     // Cargar datos
@@ -44,13 +47,31 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
 
     // --- ACCIONES ---
 
+    // Handler para "Nuevo Alquiler" estándar (Sin fecha preestablecida)
     const handleNuevo = () => {
-        setAlquilerToEdit(null); // Limpiamos para indicar creación
+        setAlquilerToEdit(null);
+        setInitialFormData(null); // Limpiamos datos iniciales
         setView('form');
     };
+    
+    // --- NUEVA ACCIÓN: ALQUILER RÁPIDO (Fecha de inicio: HOY) ---
+    const handleAlquilerRapido = () => {
+        // Obtenemos la fecha de hoy en formato YYYY-MM-DD
+        const today = new Date().toISOString().split('T')[0];
+        
+        setAlquilerToEdit(null);
+        // Establecemos la fecha de inicio a hoy y el estado inicial a 'En Curso'
+        setInitialFormData({ 
+            fecha_inicio: today,
+            estado: 'En Curso' 
+        });
+        setView('form');
+    };
+    // -----------------------------------------------------------
 
     const handleEditar = (alquiler) => {
         setAlquilerToEdit(alquiler); // Pasamos el objeto a editar
+        setInitialFormData(null); // Siempre limpiar al editar
         setView('form');
     };
 
@@ -73,8 +94,28 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
         }
     };
 
+    const getCalculatedEstado = (alquiler) => {
+        const estadoActual = alquiler.estado || 'En Curso';
+
+        if (estadoActual === 'Terminado') {
+            return 'Terminado';
+        }
+        
+        const fechaFin = new Date(alquiler.fecha_fin);
+        const hoy = new Date();
+        
+        fechaFin.setHours(0, 0, 0, 0);
+        hoy.setHours(0, 0, 0, 0);
+        
+        if (fechaFin < hoy) {
+            return 'Terminado';
+        }
+        
+        return estadoActual;
+    };
+
     const getEstadoBadgeStyle = (estado) => {
-        const estadoStr = estado || "Desconocido";
+        const estadoStr = estado || "En Curso";
         const baseStyle = {
             padding: '0.3rem 0.6rem',
             borderRadius: '4px',
@@ -86,7 +127,7 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
         
         if (estadoStr === 'Terminado') return { ...baseStyle, backgroundColor: '#718096' }; // Gris
         if (estadoStr === 'En Curso') return { ...baseStyle, backgroundColor: '#48bb78' }; // Verde
-        return { ...baseStyle, backgroundColor: '#3182ce' }; // Azul por defecto
+        return { ...baseStyle, backgroundColor: '#3182ce' }; // Azul (Otros estados, como 'Reservado')
     };
 
     // --- RENDERIZADO ---
@@ -99,13 +140,17 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                 onBack={() => {
                     setView('list');
                     setAlquilerToEdit(null);
+                    setInitialFormData(null); // Limpiamos al salir
                 }}
                 onSuccess={() => {
                     setView('list');
                     setAlquilerToEdit(null);
+                    setInitialFormData(null); // Limpiamos al salir
                     fetchAlquileres();
                 }}
-                alquilerToEdit={alquilerToEdit} // Pasamos el prop nuevo
+                alquilerToEdit={alquilerToEdit}
+                // --- PROPUESTA DE CAMBIO 1: Pasamos la data inicial al formulario ---
+                initialFormData={initialFormData} 
             />
         );
     }
@@ -116,7 +161,7 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
             <h1 className="main-title">Gestión de Alquileres</h1>
             <hr className="header-separator" />
 
-            <div className="filter-and-button-row">
+            <div className="filter-and-button-row" style={{ justifyContent: 'space-between' }}>
                 <div className="filter-group-compact">
                     <input 
                         type="text" 
@@ -128,9 +173,13 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                     />
                 </div>
 
-                <button className="btn-register-list-standalone" onClick={handleNuevo}>
-                    + Nuevo Alquiler
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    {/* --- BOTÓN AÑADIDO: ALQUILER RÁPIDO --- */}
+                    <button className="btn-register-list-standalone" onClick={handleAlquilerRapido} style={{ backgroundColor: '#ed8936' }}>
+                        + Alquiler Rápido (Hoy) 🚀
+                    </button>
+                   
+                </div>
             </div>
 
             <div className="list-header-row"><h3 className="list-header-red">Historial de Alquileres</h3></div>
@@ -155,7 +204,10 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                         {filteredAlquileres.length === 0 ? (
                             <tr><td colSpan="8" className="text-center-message">No hay alquileres registrados.</td></tr>
                         ) : (
-                            filteredAlquileres.map((alq) => (
+                            filteredAlquileres.map((alq) => {
+                                const estadoDisplay = getCalculatedEstado(alq);
+
+                                return (
                                 <tr key={alq.id_alquiler}>
                                     <td>{alq.id_alquiler}</td>
                                     <td style={{ fontWeight: 'bold' }}>
@@ -167,8 +219,8 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                                     <td>{new Date(alq.fecha_inicio).toLocaleDateString()}</td>
                                     <td>{new Date(alq.fecha_fin).toLocaleDateString()}</td>
                                     <td>
-                                        <span style={getEstadoBadgeStyle(alq.estado)}>
-                                            {alq.estado || 'En Curso'}
+                                        <span style={getEstadoBadgeStyle(estadoDisplay)}>
+                                            {estadoDisplay}
                                         </span>
                                     </td>
                                     <td>${parseFloat(alq.costo_total).toFixed(2)}</td>
@@ -189,7 +241,8 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                                         </button>
                                     </td>
                                 </tr>
-                            ))
+                                );
+                            })
                         )}
                     </tbody>
                 </table>

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; // Importamos useNavigate
+// Eliminamos useNavigate si no se usa para otra cosa, o lo dejamos si planeas usarlo a futuro
+// import { useNavigate } from "react-router-dom"; 
+import GestionUsuario from "./GestionUsuario"; // <---  Importamos el componente
 
 const GestionEmpleados = ({ apiBaseUrl }) => {
-  const navigate = useNavigate(); // Hook para navegar
+  // const navigate = useNavigate(); // Ya no navegamos fuera de la vista
   const [modo, setModo] = useState("listar");
   const [empleados, setEmpleados] = useState([]);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
@@ -12,8 +14,9 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
   const [mensaje, setMensaje] = useState("");
   const [esError, setEsError] = useState(false);
 
-  // --- NUEVOS ESTADOS PARA EL MODAL ---
+  // --- ESTADOS PARA LOS MODALES ---
   const [showModalExito, setShowModalExito] = useState(false);
+  const [mostrarModalUsuario, setMostrarModalUsuario] = useState(false); // <--- 2. Nuevo estado para el modal de usuario
   const [empleadoCreado, setEmpleadoCreado] = useState(null);
 
   const CAMPO_ORDEN = ["nombre", "apellido", "dni", "puesto", "id_supervisor"];
@@ -59,16 +62,13 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error desconocido");
 
-      // --- LÓGICA MODIFICADA ---
       if (tipo === "crear") {
-        // Si es creación, mostramos el modal para crear usuario
-        setEmpleadoCreado(data); // data es el objeto empleado nuevo
+        setEmpleadoCreado(data);
         setShowModalExito(true);
         setModo("listar"); 
         setForm({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
         await cargarEmpleados();
       } else {
-        // Si es edición, flujo normal
         mostrarMensaje(`Empleado actualizado correctamente.`);
         setForm({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
         setEmpleadoSeleccionado(null);
@@ -123,11 +123,10 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
 
   const supervisores = empleados.filter(e => e.puesto.toLowerCase() === "supervisor");
 
-  // --- NAVEGACIÓN AL CERRAR MODAL ---
+  // --- LÓGICA MODIFICADA: ABRIR MODAL EN LUGAR DE NAVEGAR ---
   const handleCrearUsuario = () => {
       setShowModalExito(false);
-      // Redirigimos al componente de creación de usuario pasando el empleado
-      navigate('/registrar-usuario-empleado', { state: { empleado: empleadoCreado } });
+      setMostrarModalUsuario(true); // <--- 3. Abrimos el modal interno
   };
 
   const handleOmitir = () => {
@@ -306,6 +305,28 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
                 Crear Usuario
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- 4. NUEVO MODAL PARA GESTION DE USUARIO --- */}
+      {mostrarModalUsuario && (
+        <div className="modal-overlay" style={{zIndex: 1000}}>
+          <div className="modal-content" style={{ maxWidth: '900px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
+             <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                <button 
+                  onClick={() => setMostrarModalUsuario(false)}
+                  style={{background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer'}}
+                >
+                  &times;
+                </button>
+             </div>
+             {/* Renderizamos GestionUsuario pasándole el empleado preseleccionado */}
+             <GestionUsuario 
+                apiBaseUrl={apiBaseUrl} 
+                empleadoPreseleccionado={empleadoCreado} 
+                onClose={() => setMostrarModalUsuario(false)}
+             />
           </div>
         </div>
       )}

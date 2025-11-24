@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
 const GestionVehiculos = ({ apiBaseUrl }) => {
+    const mostrarMensaje = (texto, error = false) => {
+    // Esta función es necesaria para mostrar la validación en el UI
+    setMensaje(texto);
+    setEsError(error);
+    setTimeout(() => {
+        setMensaje("");
+        setEsError(false);
+    }, 5000);
+};
     // --- ESTADOS ---
     const [vehiculos, setVehiculos] = useState([]);
     const [vehiculosFiltrados, setVehiculosFiltrados] = useState([]);
@@ -53,46 +62,45 @@ const GestionVehiculos = ({ apiBaseUrl }) => {
         }
     };
 
-    const accionVehiculo = async (tipoAccion) => {
-        // Validaciones básicas
-        if (!form.patente || !form.marca || !form.modelo || !form.anio || !form.precio_diario) {
-            setMensaje("Por favor, complete todos los campos obligatorios.");
-            setEsError(true);
-            return;
+    const accionVehiculo = async (tipo) => {
+        const currentYear = new Date().getFullYear();
+        const vehiculoAnio = parseInt(form.anio);
+        
+        // Esto maneja casos como campo vacío, null o texto ingresado
+        if (isNaN(vehiculoAnio)) {
+            mostrarMensaje(`Error: El campo 'Año' debe ser un número entero válido.`, true);
+            return; // Detiene la ejecución
         }
 
-        const method = tipoAccion === "crear" ? 'POST' : 'PUT';
-        const url = tipoAccion === "crear"
-            ? `${apiBaseUrl}/vehiculos`
-            : `${apiBaseUrl}/vehiculos/${form.patente}`;
-
+        // 
+        if (vehiculoAnio > currentYear) {
+            mostrarMensaje(`Error: El año del vehículo (${vehiculoAnio}) no puede ser superior al año actual (${currentYear}).`, true);
+            return; // Detiene la ejecución y previene la llamada a la API
+        }
+        
         try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    ...form,
-                    anio: parseInt(form.anio),
-                    precio_diario: parseFloat(form.precio_diario)
-                }),
+            const url = tipo === "crear"
+                ? `${apiBaseUrl}/vehiculos`
+                : `${apiBaseUrl}/vehiculos/${form.patente}`; 
+
+            const res = await fetch(url, {
+                method: tipo === "crear" ? "POST" : "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form)
             });
 
-            const data = await response.json();
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Error desconocido en la API");
 
-            if (response.ok) {
-                setMensaje(tipoAccion === "crear" ? "Vehículo registrado con éxito." : "Vehículo actualizado con éxito.");
-                setEsError(false);
-                fetchVehiculos();
-                setModo("listar");
-            } else {
-                setMensaje(data.error || "Error al procesar la solicitud.");
-                setEsError(true);
-            }
-        } catch (err) {
-            setMensaje("Error de conexión.");
-            setEsError(true);
+            // Lógica de éxito
+            mostrarMensaje(`Vehículo ${tipo === "crear" ? "registrado" : "actualizado"} correctamente.`);
+            setForm({ patente: '', marca: '', modelo: '', anio: '', precio_diario: '', estado: 'Disponible' }); // Limpiar formulario
+            setModo("listar");
+            fetchVehiculos(); // Recargar lista
+        } catch (e) {
+            mostrarMensaje(`Error al ${tipo === "crear" ? "registrar" : "actualizar"} vehículo: ${e.message}`, true);
         }
-    };
+};
 
     const eliminarVehiculo = async (patente) => {
         if (!window.confirm(`¿Estás seguro de eliminar el vehículo ${patente}?`)) return;
