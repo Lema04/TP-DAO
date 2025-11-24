@@ -661,16 +661,16 @@ def eliminar_mantenimiento(id_mantenimiento):
 #     except ErrorDeAplicacion as e:
 #         return jsonify({"error": str(e)}), 500
 
-# @app.route("/usuarios/<int:id_usuario>", methods=["GET"])
-# def obtener_usuario(id_usuario):
-#     """ Obtiene un usuario específico por ID """
-#     try:
-#         usuario = servicio_usuario.buscar_usuario(id_usuario)
-#         return jsonify(usuario.a_dict()), 200 # .a_dict() oculta la contraseña
-#     except RecursoNoEncontradoError as e:
-#         return jsonify({"error": str(e)}), 404
-#     except ErrorDeAplicacion as e:
-#         return jsonify({"error": str(e)}), 500
+@app.route("/usuarios/<int:id_usuario>", methods=["GET"])
+def obtener_usuario(id_usuario):
+    """ Obtiene un usuario específico por ID """
+    try:
+        usuario = servicio_usuario.buscar_usuario(id_usuario)
+        return jsonify(usuario.a_dict()), 200 # .a_dict() oculta la contraseña
+    except RecursoNoEncontradoError as e:
+        return jsonify({"error": str(e)}), 404
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/usuarios", methods=["POST"])
 def registrar_usuario():

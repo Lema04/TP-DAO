@@ -81,7 +81,7 @@ const Reportes = ({ apiBaseUrl }) => {
           setEsError(true);
           return;
         }
-        fetchReporte(`/reportes/cliente/${idCliente}`); 
+        fetchReporte(`/reportes/alquileres_por_cliente/${idCliente}`); 
         break;
         
       case 'vehiculos_mas_alquilados':
