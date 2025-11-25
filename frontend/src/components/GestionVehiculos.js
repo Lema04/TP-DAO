@@ -63,6 +63,12 @@ const GestionVehiculos = ({ apiBaseUrl }) => {
     };
 
     const accionVehiculo = async (tipo) => {
+        // Validar que no haya campos vacíos
+        if (!form.patente || !form.marca || !form.modelo || !form.anio || !form.precio_diario || !form.estado) {
+            mostrarMensaje("Error: Todos los campos son obligatorios.", true);
+            return;
+        }
+
         const currentYear = new Date().getFullYear();
         const vehiculoAnio = parseInt(form.anio);
         

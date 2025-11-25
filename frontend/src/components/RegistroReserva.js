@@ -39,11 +39,6 @@ const RegistroReserva = ({ apiBaseUrl, onBack, onSuccess, reservaToEdit }) => {
   maxLeadTime.setDate(hoy.getDate() + 7);
   const maxLeadTimeStr = maxLeadTime.toISOString().split('T')[0];
 
-  // Fecha Máxima de Fin (para el input): Hoy + 30 días (ejemplo arbitrario de duración max)
-  const maxDateObj = new Date();
-  maxDateObj.setDate(hoy.getDate() + 30); 
-  const maxDateStr = maxDateObj.toISOString().split('T')[0];
-
   // Cargar Clientes al inicio
   useEffect(() => {
     const fetchClientes = async () => {
@@ -220,7 +215,7 @@ const RegistroReserva = ({ apiBaseUrl, onBack, onSuccess, reservaToEdit }) => {
                 required 
                 value={datos.fecha_fin_deseada}
                 min={datos.fecha_inicio_deseada || tomorrowStr} 
-                max={maxDateStr}
+                max="2099-12-31"
                 />
             </div>
         </div>
