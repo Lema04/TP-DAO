@@ -14,7 +14,13 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
     const [initialFormData, setInitialFormData] = useState(null);
     
     const [error, setError] = useState("");
-
+    
+    // Función para parsear fecha en formato YYYY-MM-DD a objeto Date local
+    function parseFechaLocal(iso) {
+        const [y, m, d] = iso.split("-");
+        return new Date(y, m - 1, d);
+    }
+    
     // Cargar datos
     useEffect(() => {
         fetchAlquileres();
@@ -216,8 +222,8 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                                     <td>
                                         {alq.cliente ? `${alq.cliente.nombre} ${alq.cliente.apellido}` : 'N/A'}
                                     </td>
-                                    <td>{new Date(alq.fecha_inicio).toLocaleDateString()}</td>
-                                    <td>{new Date(alq.fecha_fin).toLocaleDateString()}</td>
+                                    <td>{parseFechaLocal(alq.fecha_inicio).toLocaleDateString()}</td>
+                                    <td>{parseFechaLocal(alq.fecha_fin).toLocaleDateString()}</td>
                                     <td>
                                         <span style={getEstadoBadgeStyle(estadoDisplay)}>
                                             {estadoDisplay}
