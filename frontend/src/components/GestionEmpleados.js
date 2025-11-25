@@ -42,9 +42,22 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
 
   useEffect(() => { cargarEmpleados(); }, []);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  // const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "puesto" && value === "Supervisor") {
+      setForm({ ...form, [name]: value, id_supervisor: "" });
+    } else {
+      setForm({ ...form, [name]: value });
+    }
+  };
 
   const accionEmpleado = async (tipo) => {
+    if (form.puesto === "Atención" && !form.id_supervisor) {
+      mostrarMensaje("Un empleado de 'Atención' debe tener un supervisor asignado.", true);
+      return;
+    }
     try {
       const url = tipo === "crear"
         ? `${apiBaseUrl}/empleados`
