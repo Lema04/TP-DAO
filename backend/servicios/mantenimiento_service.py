@@ -45,6 +45,12 @@ class MantenimientoService:
                 if reserva.fecha_inicio_deseada <= fecha_fin or reserva.fecha_fin_deseada >= fecha_inicio:
                     raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo está alquilado")
 
+            # --- NUEVO: Validar solapamiento con otros mantenimientos ---
+            conflictos = self.dao.buscar_conflictos(patente, fecha_inicio, fecha_fin)
+            if conflictos:
+                c = conflictos[0]
+                raise DatosInvalidosError(f"El vehículo ya tiene un mantenimiento programado entre {c.fecha_inicio} y {c.fecha_fin}.")
+
             mantenimiento = Mantenimiento(
                 id_mantenimiento=None,
                 fecha_inicio=fecha_inicio,

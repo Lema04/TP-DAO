@@ -8,11 +8,13 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
     const [view, setView] = useState("list"); // 'list' | 'form'
     const [mantenimientoToEdit, setMantenimientoToEdit] = useState(null);
     const [error, setError] = useState("");
+    
     const formatDate = (dateString) => {
         if (!dateString) return "";
         const [y, m, d] = dateString.split("T")[0].split("-");
         return `${d}/${m}/${y}`;
     };
+
     useEffect(() => {
         fetchMantenimientos();
     }, []);
@@ -72,6 +74,15 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
         setView('form');
     };
 
+    const getEstadoBadgeStyle = (estado) => {
+        const base = { padding: '0.3rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem', color: 'white', display: 'inline-block' };
+        switch(estado) {
+            case 'En curso': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' }; // Amarillo
+            case 'Finalizado': return { ...base, backgroundColor: '#48bb78' }; // Verde
+            default: return { ...base, backgroundColor: '#cbd5e0' };
+        }
+    };
+
     // --- RENDERIZADO ---
 
     if (view === 'form') {
@@ -123,13 +134,14 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
                             <th>Tipo Servicio</th>
                             <th>Fecha Inicio</th>
                             <th>Fecha Fin</th>
+                            <th>Estado</th>
                             <th>Costo</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredMantenimientos.length === 0 ? (
-                            <tr><td colSpan="7" className="text-center-message">No hay mantenimientos registrados.</td></tr>
+                            <tr><td colSpan="8" className="text-center-message">No hay mantenimientos registrados.</td></tr>
                         ) : (
                             filteredMantenimientos.map((m) => (
                                 <tr key={m.id_mantenimiento}>
@@ -140,7 +152,11 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
                                     <td>{m.tipo_servicio}</td>
                                     <td>{formatDate(m.fecha_inicio)}</td>
                                     <td>{formatDate(m.fecha_fin)}</td>
-
+                                    <td>
+                                        <span style={getEstadoBadgeStyle(m.estado)}>
+                                            {m.estado || 'N/A'}
+                                        </span>
+                                    </td>
                                     <td>${parseFloat(m.costo).toFixed(2)}</td>
                                     
                                     <td className="action-buttons-cell">

@@ -90,3 +90,19 @@ class MantenimientoCRUD(ORMBase):
 
     def eliminar_mantenimiento(self, id_mantenimiento):
         self.eliminar(id_mantenimiento)
+
+    def buscar_conflictos(self, patente, fecha_inicio, fecha_fin):
+        """
+        Busca si existe algún mantenimiento para el vehículo (patente)
+        que se solape con el rango [fecha_inicio, fecha_fin].
+        Retorna una lista de mantenimientos conflictivos (o vacía).
+        """
+        # Condición de solapamiento:
+        # (InicioExistente <= FinNuevo) AND (FinExistente >= InicioNuevo)
+        condicion = f"""
+            patente = '{patente}' AND
+            fecha_inicio <= '{fecha_fin}' AND
+            fecha_fin >= '{fecha_inicio}'
+        """
+        tuplas = self.obtener_por_condicion(condicion)
+        return [self._build_mantenimiento(t) for t in tuplas if self._build_mantenimiento(t)]
