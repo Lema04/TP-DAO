@@ -19,6 +19,10 @@ const GestionReservas = ({ apiBaseUrl }) => {
         costo_total: ''
     });
 
+    // --- NUEVO: Estado para el modal de cancelación ---
+    const [showCancelModal, setShowCancelModal] = useState(false);
+    const [reservaToDelete, setReservaToDelete] = useState(null);
+
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -60,21 +64,35 @@ const GestionReservas = ({ apiBaseUrl }) => {
         }
     };
 
-    // Función para cancelar reserva (ahora se llamará desde el modal)
-    const handleEliminar = async (id_reserva) => {
-        if (!window.confirm("¿Estás seguro de cancelar esta reserva?")) return;
+    // --- ACCIÓN: Abrir Modal de Cancelación ---
+    const handleEliminar = (reserva) => {
+        setReservaToDelete(reserva);
+        setShowCancelModal(true);
+    };
+
+    // --- ACCIÓN: Confirmar Cancelación ---
+    const confirmEliminar = async () => {
+        if (!reservaToDelete) return;
+
         try {
-            const response = await fetch(`${apiBaseUrl}/reservas/${id_reserva}`, { method: 'DELETE' });
+            const response = await fetch(`${apiBaseUrl}/reservas/${reservaToDelete.id_reserva}`, { method: 'DELETE' });
             if (response.ok) {
-                alert("Reserva cancelada correctamente.");
-                setShowModal(false); // Cerramos el modal si se elimina
-                setReservaSeleccionada(null);
+                // alert("Reserva cancelada correctamente."); // Feedback visual suficiente con el cierre del modal
+                setShowCancelModal(false);
+                setReservaToDelete(null);
+                // Si estaba abierto el modal de gestión, también cerrarlo
+                if (showModal) {
+                    setShowModal(false);
+                    setReservaSeleccionada(null);
+                }
                 fetchReservas();
             } else {
                 const data = await response.json();
                 alert(data.error || "No se pudo eliminar.");
             }
-        } catch (err) { alert("Error de conexión."); }
+        } catch (err) { 
+            alert("Error de conexión."); 
+        }
     };
 
     // --- ACCIONES ---
@@ -151,8 +169,8 @@ const GestionReservas = ({ apiBaseUrl }) => {
         const [y, m, d] = fechaInicioStr.split('-').map(Number);
         const fechaInicio = new Date(y, m - 1, d); // Mes es 0-indexado
 
-        // Retorna true si hoy es igual o posterior al inicio
-        return hoy >= fechaInicio;
+        // Retorna true SOLO si hoy es EXACTAMENTE igual a la fecha de inicio
+        return hoy.getTime() === fechaInicio.getTime();
     };
 
     // --- RENDERIZADO ---
@@ -205,18 +223,32 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                         <td><span style={getBadgeStyle(res.estado)}>{res.estado}</span></td>
                                         <td className="action-buttons-cell">
                                             {res.estado === 'Pendiente' && (
-                                                /* CAMBIO CLAVE: El botón se llama "Gestionar" o "Ver" 
-                                                   y siempre está habilitado para permitir entrar y cancelar.
-                                                   La validación de "Convertir" se hace ADENTRO.
-                                                */
-                                                <button 
-                                                    className="btn-edit-red" 
-                                                    style={{ backgroundColor: '#3182ce', marginRight: '5px' }} // Azul para indicar gestión general
-                                                    onClick={() => handleAbrirConversion(res)} 
-                                                    title="Gestionar Reserva (Convertir o Cancelar)"
-                                                >
-                                                    Gestionar
-                                                </button>
+                                                <>
+                                                    <button 
+                                                        className="btn-delete-red" 
+                                                        style={{ marginRight: '5px' }} 
+                                                        onClick={() => handleEliminar(res)} 
+                                                        title="Cancelar Reserva"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                    
+                                                    <button 
+                                                        className="btn-edit-red" 
+                                                        style={{ 
+                                                            backgroundColor: checkEsFechaValida(res.fecha_inicio_deseada) ? '#3182ce' : '#a0aec0',
+                                                            cursor: checkEsFechaValida(res.fecha_inicio_deseada) ? 'pointer' : 'not-allowed',
+                                                            opacity: checkEsFechaValida(res.fecha_inicio_deseada) ? 1 : 0.6
+                                                        }} 
+                                                        onClick={() => handleAbrirConversion(res)} 
+                                                        disabled={!checkEsFechaValida(res.fecha_inicio_deseada)}
+                                                        title={checkEsFechaValida(res.fecha_inicio_deseada) 
+                                                            ? "Gestionar Reserva (Convertir a Alquiler)" 
+                                                            : "Solo disponible el día de inicio de la reserva"}
+                                                    >
+                                                        Gestionar
+                                                    </button>
+                                                </>
                                             )}
                                         </td>
                                     </tr>
@@ -257,7 +289,7 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 fontSize: '0.9rem'
                             }}>
                                 ⚠️ <strong>Aún no se puede convertir a alquiler.</strong> <br/>
-                                La fecha de inicio es posterior a hoy.
+                                La conversión solo está disponible el día de inicio de la reserva.
                             </div>
                         )}
 
@@ -312,7 +344,11 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 <button 
                                     className="btn-delete-red"
                                     style={{ flex: 1 }}
-                                    onClick={() => handleEliminar(reservaSeleccionada.id_reserva)}
+                                    onClick={() => {
+                                        // Cerrar este modal y abrir el de confirmación de cancelación
+                                        setShowModal(false);
+                                        handleEliminar(reservaSeleccionada);
+                                    }}
                                 >
                                     Eliminar Reserva
                                 </button>
@@ -330,6 +366,49 @@ const GestionReservas = ({ apiBaseUrl }) => {
                     </div>
                 </div>
             )}
+
+            {/* --- NUEVO: MODAL DE CONFIRMACIÓN DE CANCELACIÓN --- */}
+            {showCancelModal && reservaToDelete && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ maxWidth: '400px' }}>
+                        <span className="modal-icon" style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>⚠️</span>
+                        <h3 style={{ color: '#c53030' }}>Cancelar Reserva</h3>
+                        
+                        <p style={{ textAlign: 'center', margin: '1rem 0', color: '#4a5568' }}>
+                            ¿Estás seguro de que deseas cancelar la reserva de <strong>{reservaToDelete.cliente?.nombre} {reservaToDelete.cliente?.apellido}</strong>?
+                        </p>
+                        
+                        <div className="modal-details" style={{ textAlign: 'left', backgroundColor: '#fff5f5', border: '1px solid #feb2b2' }}>
+                            <div className="detail-row">
+                                <span className="detail-label">Vehículo:</span>
+                                <span className="detail-value">{reservaToDelete.vehiculo?.patente || 'Sin Asignar'}</span>
+                            </div>
+                            <div className="detail-row">
+                                <span className="detail-label">Fecha Inicio:</span>
+                                <span className="detail-value">{reservaToDelete.fecha_inicio_deseada}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
+                            <button 
+                                className="btn-delete-red"
+                                style={{ flex: 1, justifyContent: 'center' }}
+                                onClick={confirmEliminar}
+                            >
+                                Sí, Cancelar
+                            </button>
+                            <button 
+                                className="btn-back-link" 
+                                style={{ flex: 1, border: '1px solid #ccc', padding: '10px', borderRadius: '4px', textAlign: 'center' }}
+                                onClick={() => { setShowCancelModal(false); setReservaToDelete(null); }}
+                            >
+                                No, Volver
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 };

@@ -10,6 +10,11 @@ from servicios.excepciones import (
 class VehiculoService:
     def __init__(self):
         self.dao = VehiculoCRUD()
+        # Importamos aquí para evitar ciclos, o usamos lazy loading
+        from Crud.reserva_crud import ReservaCRUD
+        from Crud.alquiler_crud import AlquilerCRUD
+        self.reserva_dao = ReservaCRUD()
+        self.alquiler_dao = AlquilerCRUD()
 
     def crear_vehiculo(self, datos):
         """
@@ -99,3 +104,34 @@ class VehiculoService:
         except Exception as e:
             if isinstance(e, ErrorDeAplicacion): raise e
             raise ErrorDeAplicacion(f"Error al eliminar vehículo: {e}")
+
+    def buscar_vehiculos_disponibles(self, fecha_inicio, fecha_fin):
+        """
+        Retorna una lista de vehículos disponibles para el rango de fechas dado.
+        Excluye vehículos en mantenimiento, reservados o alquilados en ese rango.
+        """
+        try:
+            todos = self.listar_vehiculos()
+            disponibles = []
+            
+            for v in todos:
+                # 1. Descartar si está en mantenimiento
+                if v.estado == "Mantenimiento":
+                    continue
+                
+                # 2. Chequear conflictos de Reserva
+                conflictos_reserva = self.reserva_dao.buscar_conflictos(v.patente, fecha_inicio, fecha_fin)
+                if conflictos_reserva:
+                    continue
+                
+                # 3. Chequear conflictos de Alquiler
+                conflictos_alquiler = self.alquiler_dao.buscar_conflictos(v.patente, fecha_inicio, fecha_fin)
+                if conflictos_alquiler:
+                    continue
+                
+                disponibles.append(v)
+            
+            return disponibles
+
+        except Exception as e:
+            raise ErrorDeAplicacion(f"Error al buscar vehículos disponibles: {e}")

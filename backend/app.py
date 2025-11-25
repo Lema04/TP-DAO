@@ -281,6 +281,27 @@ def obtener_vehiculo(patente):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/vehiculos/disponibles", methods=["GET"])
+def listar_vehiculos_disponibles():
+    """
+    Lista vehículos disponibles en un rango de fechas.
+    Ej: GET /vehiculos/disponibles?fecha_inicio=2025-11-25&fecha_fin=2025-11-30
+    """
+    try:
+        fecha_inicio = request.args.get('fecha_inicio')
+        fecha_fin = request.args.get('fecha_fin')
+
+        if not fecha_inicio or not fecha_fin:
+            raise DatosInvalidosError("Se requieren 'fecha_inicio' y 'fecha_fin'.")
+
+        vehiculos = servicio_vehiculo.buscar_vehiculos_disponibles(fecha_inicio, fecha_fin)
+        return jsonify([v.a_dict() for v in vehiculos]), 200
+
+    except DatosInvalidosError as e:
+        return jsonify({"error": str(e)}), 400
+    except ErrorDeAplicacion as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/vehiculos", methods=["POST"])
 def crear_vehiculo():
     try:

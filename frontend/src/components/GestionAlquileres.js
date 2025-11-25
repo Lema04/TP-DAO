@@ -176,7 +176,7 @@ const GestionAlquileres = ({ apiBaseUrl }) => {
                 <div style={{ display: 'flex', gap: '10px' }}>
                     {/* --- BOTÓN AÑADIDO: ALQUILER RÁPIDO --- */}
                     <button className="btn-register-list-standalone" onClick={handleAlquilerRapido} style={{ backgroundColor: '#ed8936' }}>
-                        + Alquiler Rápido (Hoy) 🚀
+                        Registrar Alquiler
                     </button>
                    
                 </div>
