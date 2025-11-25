@@ -77,7 +77,7 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
     const getEstadoBadgeStyle = (estado) => {
         const base = { padding: '0.3rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem', color: 'white', display: 'inline-block' };
         switch(estado) {
-            case 'En curso': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' }; // Amarillo
+            case 'En Curso': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' }; // Amarillo
             case 'Finalizado': return { ...base, backgroundColor: '#c53030' }; // Rojo
             default: return { ...base, backgroundColor: '#cbd5e0' };
         }
