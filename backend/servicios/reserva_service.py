@@ -41,6 +41,9 @@ class ReservaService:
             if patente:
                 vehiculo = self.vehiculo_service.buscar_vehiculo(patente)
 
+                if not vehiculo:
+                    raise RecursoNoEncontradoError(f"Vehículo con patente {patente} no encontrado")
+
                 if vehiculo.estado == "Mantenimiento":
                     raise ErrorDeLogicaDeNegocio(f"El vehículo {patente} está en mantenimiento.")
                 
@@ -62,6 +65,8 @@ class ReservaService:
                 cliente=cliente,
                 vehiculo=vehiculo
             )
+
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Reservado"})
             
             nuevo_id = self.reserva_dao.crear_reserva(reserva)
             return self.reserva_dao.buscar_por_id(nuevo_id)
