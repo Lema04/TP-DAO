@@ -277,7 +277,10 @@ class ReporteService:
 
     # Reporte de vehículos más alquilados
     def generar_reporte_vehiculos_mas_alquilados(self, limite=None):
-        alquileres_obj_list = self._get_alquileres_list()        
+        
+        # 1. Procesar datos con Pandas
+        alquileres_obj_list = self._get_alquileres_list()
+        
         patentes = [alq.vehiculo.patente for alq in alquileres_obj_list]
         conteo = pd.Series(patentes).value_counts().reset_index()
         conteo.columns = ["patente", "cantidad"]
@@ -292,50 +295,49 @@ class ReporteService:
                 nombre = f"Desconocido ({patente})"
             vehiculos_info.append({"Vehículo": nombre, "Cantidad": cantidad})
 
+        # Ordenamos de mayor a menor para tener el ranking correcto
         df = pd.DataFrame(vehiculos_info).sort_values(by="Cantidad", ascending=False)
         
-        titulo_subtitulo = "VEHICULOS MÁS ALQUILADOS"
-        if limite and len(df) > limite:
-            titulo_subtitulo += f" (Top {limite})"
-            df_top = df.head(limite - 1)
-            df_resto = df.iloc[limite-1:]
-            suma_otros = df_resto["Cantidad"].sum()
-
-            df_otros = pd.DataFrame({
-                "Vehículo": [f"Otros ({len(df_resto)})"],
-                "Cantidad": [suma_otros]
-            })
-            df = pd.concat([df_top, df_otros], ignore_index=True)
+        titulo_subtitulo = "VEHÍCULOS MÁS ALQUILADOS"
         
-        elif limite:
+        if limite:
             titulo_subtitulo += f" (Top {limite})"
             df = df.head(limite)
 
-        df = df.sort_values(by="Cantidad", ascending=True)
+        # Para el gráfico de barras horizontales, necesitamos el orden inverso 
+        # (el de mayor valor abajo para que Matplotlib lo dibuje arriba)
+        df_plot = df.sort_values(by="Cantidad", ascending=True)
             
-        fig, ax = plt.subplots(figsize=(7.5, 5))
+        # 2. Generar Gráfico con Matplotlib
+        # Ajustamos el alto dinámicamente según la cantidad de barras para que no se vean muy anchas o apretadas
+        alto_grafico = max(4, len(df_plot) * 0.6) 
+        fig, ax = plt.subplots(figsize=(7.5, alto_grafico))
+        
         colores = plt.cm.Paired.colors
-        barras = ax.barh(df["Vehículo"], df["Cantidad"], color=colores, edgecolor=COLOR_SECUNDARIO_MPL)
+        barras = ax.barh(df_plot["Vehículo"], df_plot["Cantidad"], color=colores, edgecolor=COLOR_SECUNDARIO_MPL)
+        
         ax.set_xlabel("Cantidad de Alquileres")
-
         ax.grid(axis="x", linestyle="--", alpha=0.7)
         ax.spines["top"].set_visible(False)
         ax.spines["right"].set_visible(False)
 
+        # Etiquetas de valor en las barras
         for barra in barras:
             ax.text(barra.get_width() + 0.1, 
                     barra.get_y() + barra.get_height()/2,
-                    f'{barra.get_width()}',
+                    f'{int(barra.get_width())}',
                     va='center', 
                     color=COLOR_SECUNDARIO_MPL)
         
         fig.tight_layout()
 
+        # 3. Guardar en BytesIO
         buffer = BytesIO()
         fig.savefig(buffer, format='png', dpi=150)
         plt.close(fig)
         buffer.seek(0)
 
+        # 4. Construir PDF con ReportLab
         nombre_base_pdf = f"vehiculos_top{limite}" if limite else "vehiculos_todos"
         ruta_guardar, url_retorno = self._generar_ruta_reporte(nombre_base_pdf)
         
