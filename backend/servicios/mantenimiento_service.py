@@ -40,16 +40,18 @@ class MantenimientoService:
             fecha_fin = date.fromisoformat(fecha_fin_str)
             costo = float(costo_raw)
 
-            if vehiculo.estado == "Reservado":
-                reserva = vehiculo.reservas[-1]
-                if reserva.fecha_inicio_deseada <= fecha_fin or reserva.fecha_fin_deseada >= fecha_inicio:
-                    raise DatosInvalidosError("No se puede realizar mantenimiento mientras el vehículo está alquilado")
+            # --- NUEVA REGLA: Fecha de inicio debe ser HOY ---
+            if fecha_inicio != date.today():
+                raise DatosInvalidosError("La fecha de inicio del mantenimiento debe ser la fecha actual.")
+            
+            if fecha_inicio >= fecha_fin:
+                raise DatosInvalidosError("La fecha de fin debe ser posterior a la fecha de inicio.")
 
             # --- NUEVO: Validar solapamiento con otros mantenimientos ---
             conflictos = self.dao.buscar_conflictos(patente, fecha_inicio, fecha_fin)
             if conflictos:
                 c = conflictos[0]
-                raise DatosInvalidosError(f"El vehículo ya tiene un mantenimiento programado entre {c.fecha_inicio} y {c.fecha_fin}.")
+                raise DatosInvalidosError(f"El vehículo ya tiene un mantenimiento programado que se solapa con las fechas seleccionadas (del {c.fecha_inicio} al {c.fecha_fin}).")
 
             mantenimiento = Mantenimiento(
                 id_mantenimiento=None,
@@ -58,11 +60,11 @@ class MantenimientoService:
                 tipo_servicio=datos.get("tipo_servicio", ""),
                 costo=costo,
                 vehiculo=vehiculo,
-                estado="Pendiente" if fecha_inicio < date.today() else "Activo"
+                estado="En curso" # --- NUEVA REGLA: Estado inicial siempre es "En curso" ---
             )
 
-            if fecha_inicio == date.today():
-                self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Mantenimiento"})
+            # --- NUEVA REGLA: Actualizar vehículo a "Mantenimiento" inmediatamente ---
+            self.vehiculo_service.actualizar_vehiculo(vehiculo.patente, {"estado": "Mantenimiento"})
 
             nuevo_id = self.dao.crear_mantenimiento(mantenimiento)
             vehiculo.agregar_mantenimiento(mantenimiento)
@@ -115,6 +117,7 @@ class MantenimientoService:
 
             if 'fecha_inicio' in datos:
                 mantenimiento.fecha_inicio = date.fromisoformat(datos['fecha_inicio'])
+                
             if 'fecha_fin' in datos:
                 mantenimiento.fecha_fin = date.fromisoformat(datos['fecha_fin'])
             if 'tipo_servicio' in datos:
@@ -122,10 +125,26 @@ class MantenimientoService:
             if 'costo' in datos:
                 mantenimiento.costo = float(datos['costo'])
             
+            if 'estado' in datos:
+                 mantenimiento.estado = datos['estado'] # Permitir actualizar el estado (ej. a 'Finalizado')
+
             if mantenimiento.fecha_inicio > mantenimiento.fecha_fin:
                 raise DatosInvalidosError("La fecha de inicio no puede ser posterior a la de fin.")
+            
+            # Revalidar conflictos en caso de cambio de fechas
+            # Nota: Esto asume que el dao.buscar_conflictos acepta un id_mantenimiento a excluir.
+            # Sin acceso al DAO, esta línea queda como asunción del fix.
+            # conflictos = self.dao.buscar_conflictos(mantenimiento.vehiculo.patente, mantenimiento.fecha_inicio, mantenimiento.fecha_fin, id_mantenimiento)
+            # if conflictos:
+            #    c = conflictos[0]
+            #    raise DatosInvalidosError(f"El vehículo ya tiene un mantenimiento programado que se solapa con las fechas seleccionadas (del {c.fecha_inicio} al {c.fecha_fin}).")
 
             self.dao.actualizar_mantenimiento(mantenimiento)
+            
+            # Lógica de estado del vehículo en caso de finalización:
+            if mantenimiento.estado == "Finalizado":
+                self.vehiculo_service.actualizar_vehiculo(mantenimiento.vehiculo.patente, {"estado": "Disponible"})
+                
             return mantenimiento
 
         except (ValueError, TypeError) as e:

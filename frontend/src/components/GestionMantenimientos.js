@@ -78,7 +78,7 @@ const GestionMantenimientos = ({ apiBaseUrl }) => {
         const base = { padding: '0.3rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem', color: 'white', display: 'inline-block' };
         switch(estado) {
             case 'En curso': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' }; // Amarillo
-            case 'Finalizado': return { ...base, backgroundColor: '#48bb78' }; // Verde
+            case 'Finalizado': return { ...base, backgroundColor: '#c53030' }; // Rojo
             default: return { ...base, backgroundColor: '#cbd5e0' };
         }
     };
