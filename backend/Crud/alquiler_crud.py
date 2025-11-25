@@ -9,7 +9,7 @@ from datetime import date
 class AlquilerCRUD(ORMBase):
     tabla = "ALQUILER"
     campos = ["fecha_inicio", "fecha_fin", "costo_total", "fecha_registro", 
-              "id_empleado", "patente", "id_cliente", "estado", "id_reserva"]
+              "id_empleado", "patente", "id_cliente", "estado"]
     clave_primaria = "id_alquiler"
 
     def __init__(self):
@@ -42,7 +42,6 @@ class AlquilerCRUD(ORMBase):
             patente = tupla[6]
             id_cliente = tupla[7]
             estado = tupla[8] if len(tupla) > 8 else "Activo"
-            id_reserva = tupla[9] if len(tupla) > 9 else None
 
             cliente = self.cliente_dao.buscar_por_id(id_cliente)
             empleado = self.empleado_dao.buscar_por_id(id_empleado)
@@ -61,7 +60,6 @@ class AlquilerCRUD(ORMBase):
                 empleado=empleado, 
                 vehiculo=vehiculo,  
                 cliente=cliente,
-                id_reserva=id_reserva,
                 estado=estado     
             )
         except (ValueError, TypeError) as e:
@@ -82,7 +80,6 @@ class AlquilerCRUD(ORMBase):
             alquiler.vehiculo.patente,
             alquiler.cliente.id_cliente,
             alquiler.estado,
-            alquiler.id_reserva
         ]
         return self.insertar(valores)
 
@@ -112,7 +109,6 @@ class AlquilerCRUD(ORMBase):
             alquiler.vehiculo.patente,
             alquiler.cliente.id_cliente,
             alquiler.estado,
-            alquiler.id_reserva
         ]
         self.actualizar(alquiler.id_alquiler, valores)
 

@@ -11,7 +11,7 @@ class Alquiler:
     def __init__(self, id_alquiler: int, fecha_inicio: date, fecha_fin: date,
                  costo_total: float, fecha_registro: date,
                  cliente: "Cliente", empleado: "Empleado", vehiculo: "Vehiculo",
-                 id_reserva: Optional[int] = None, estado: str = "Activo"):
+                 estado: str = "Activo"):
 
         # Validaciones iniciales
         if cliente is None or empleado is None or vehiculo is None:
@@ -31,7 +31,6 @@ class Alquiler:
         self.cliente = cliente
         self.empleado = empleado
         self.vehiculo = vehiculo
-        self.id_reserva = id_reserva
         self.estado = estado  # "Activo", "Finalizado", "Cancelado"
 
         # Relaciones

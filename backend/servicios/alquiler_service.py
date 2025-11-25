@@ -216,7 +216,6 @@ class AlquilerService:
                 cliente=cliente,
                 empleado=empleado,
                 vehiculo=vehiculo,
-                id_reserva=reserva.id_reserva,
                 estado="En Curso"
             )
             nuevo_id = self.alquiler_dao.crear_alquiler(alquiler)
