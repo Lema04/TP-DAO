@@ -166,7 +166,7 @@ const RegistroAlquiler = ({ apiBaseUrl, onBack, onSuccess, alquilerToEdit, initi
         {/* FECHAS PRIMERO: Para filtrar vehículos según disponibilidad */}
         <div className="form-group">
             <label>Fecha Inicio:</label>
-            <input className="form-input" type="date" name="fecha_inicio" onChange={handleChange} required value={datos.fecha_inicio} min={hoy} readOnly={isEditMode} />
+            <input className="form-input" type="date" name="fecha_inicio" onChange={handleChange} required value={datos.fecha_inicio} min={hoy} max={hoy} readOnly={isEditMode} />
         </div>
 
         <div className="form-group">
