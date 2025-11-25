@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from "react";
-// Eliminamos useNavigate si no se usa para otra cosa, o lo dejamos si planeas usarlo a futuro
-// import { useNavigate } from "react-router-dom"; 
-import GestionUsuario from "./GestionUsuario"; // <---  Importamos el componente
+import { useNavigate } from "react-router-dom"; 
 
 const GestionEmpleados = ({ apiBaseUrl }) => {
-  // const navigate = useNavigate(); // Ya no navegamos fuera de la vista
+  const navigate = useNavigate(); 
   const [modo, setModo] = useState("listar");
   const [empleados, setEmpleados] = useState([]);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
-  const [tipoFiltro, setTipoFiltro] = useState("nombreCompleto");
+  // const [tipoFiltro, setTipoFiltro] = useState("nombreCompleto"); // REMOVED
   const [valorFiltro, setValorFiltro] = useState("");
   const [form, setForm] = useState({ nombre: "", apellido: "", dni: "", puesto: "", id_supervisor: "" });
   const [mensaje, setMensaje] = useState("");
@@ -16,7 +14,6 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
 
   // --- ESTADOS PARA LOS MODALES ---
   const [showModalExito, setShowModalExito] = useState(false);
-  const [mostrarModalUsuario, setMostrarModalUsuario] = useState(false); // <--- 2. Nuevo estado para el modal de usuario
   const [empleadoCreado, setEmpleadoCreado] = useState(null);
 
   const CAMPO_ORDEN = ["nombre", "apellido", "dni", "puesto", "id_supervisor"];
@@ -112,21 +109,22 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
 
   const empleadosFiltrados = empleados.filter((e) => {
     if (!valorFiltro) return true;
-    const valor = valorFiltro.toLowerCase();
-    switch (tipoFiltro) {
-      case "id": return e.id_empleado.toString().includes(valor);
-      case "dni": return e.dni.toString().includes(valor);
-      case "puesto": return e.puesto.toLowerCase().includes(valor);
-      default: return `${e.nombre} ${e.apellido}`.toLowerCase().includes(valor);
-    }
+    const valor = valorFiltro.toLowerCase().trim();
+    const nombreCompleto = `${e.nombre || ''} ${e.apellido || ''}`.toLowerCase();
+    const dni = e.dni ? e.dni.toString() : '';
+    const puesto = e.puesto ? e.puesto.toLowerCase() : '';
+
+    // Filtrar por Puesto, DNI o Nombre
+    return nombreCompleto.includes(valor) || dni.includes(valor) || puesto.includes(valor);
   });
 
   const supervisores = empleados.filter(e => e.puesto.toLowerCase() === "supervisor");
 
-  // --- LÓGICA MODIFICADA: ABRIR MODAL EN LUGAR DE NAVEGAR ---
+  // --- LÓGICA MODIFICADA: NAVEGAR A REGISTRO USUARIO EMPLEADO ---
   const handleCrearUsuario = () => {
       setShowModalExito(false);
-      setMostrarModalUsuario(true); // <--- 3. Abrimos el modal interno
+      // Navegamos a la ruta del componente RegistroUsuarioEmpleado pasando el empleado
+      navigate('/registro-empleado', { state: { empleado: empleadoCreado } });
   };
 
   const handleOmitir = () => {
@@ -145,13 +143,15 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
         <>
           <div className="filter-and-button-row">
             <div className="filter-group-compact">
-              <input type="text" className="filter-input-compact" placeholder="Buscar..." value={valorFiltro} onChange={e => setValorFiltro(e.target.value)} />
-              <select className="filter-select-compact" value={tipoFiltro} onChange={(e) => setTipoFiltro(e.target.value)}>
-                <option value="nombreCompleto">Filtrar por Nombre</option>
-                <option value="id">Filtrar por ID</option>
-                <option value="dni">Filtrar por Documento</option>
-                <option value="puesto">Filtrar por Puesto</option>
-              </select>
+              <input 
+                type="text" 
+                className="filter-input-compact" 
+                placeholder="Buscar por Puesto, DNI o Nombre..." 
+                value={valorFiltro} 
+                onChange={e => setValorFiltro(e.target.value)} 
+                style={{ width: '100%', maxWidth: '400px' }}
+              />
+              {/* SELECT REMOVED */}
             </div>
 
             <button className="btn-register-list-standalone" onClick={() => {
@@ -305,28 +305,6 @@ const GestionEmpleados = ({ apiBaseUrl }) => {
                 Crear Usuario
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* --- 4. NUEVO MODAL PARA GESTION DE USUARIO --- */}
-      {mostrarModalUsuario && (
-        <div className="modal-overlay" style={{zIndex: 1000}}>
-          <div className="modal-content" style={{ maxWidth: '900px', width: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
-             <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-                <button 
-                  onClick={() => setMostrarModalUsuario(false)}
-                  style={{background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer'}}
-                >
-                  &times;
-                </button>
-             </div>
-             {/* Renderizamos GestionUsuario pasándole el empleado preseleccionado */}
-             <GestionUsuario 
-                apiBaseUrl={apiBaseUrl} 
-                empleadoPreseleccionado={empleadoCreado} 
-                onClose={() => setMostrarModalUsuario(false)}
-             />
           </div>
         </div>
       )}

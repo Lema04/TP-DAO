@@ -7,7 +7,7 @@ const GestionClientes = ({ apiBaseUrl }) => {
   const [modo, setModo] = useState("listar"); // 'listar', 'crear' o 'editar'
   const [clientes, setClientes] = useState([]); // Lista de clientes
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null); // Cliente que se está editando
-  const [tipoFiltro, setTipoFiltro] = useState("nombreCompleto"); // Tipo de filtro
+  // const [tipoFiltro, setTipoFiltro] = useState("nombreCompleto"); // REMOVED
   const [valorFiltro, setValorFiltro] = useState(""); // Valor del filtro
   const [form, setForm] = useState({ nombre: "", apellido: "", dni: "", direccion: "", telefono: "", email: "" });
   const [mensaje, setMensaje] = useState(""); // Mensajes de éxito o error
@@ -41,6 +41,14 @@ const GestionClientes = ({ apiBaseUrl }) => {
 
   // Función unificada para crear o actualizar un cliente y su usuario
   const accionCliente = async (tipo) => {
+    // Validar que todos los campos estén completos
+    const camposIncompletos = Object.values(form).some(value => !value || value.toString().trim() === "");
+    if (camposIncompletos) {
+      setMensaje("Todos los campos son obligatorios. Por favor, complételos.");
+      setEsError(true);
+      return;
+    }
+
     try {
       const url = tipo === "crear" ? `${apiBaseUrl}/clientes` : `${apiBaseUrl}/clientes/${clienteSeleccionado.id_cliente}`;
       const method = tipo === "crear" ? "POST" : "PUT";
@@ -125,12 +133,11 @@ const GestionClientes = ({ apiBaseUrl }) => {
   const clientesFiltrados = clientes.filter((c) => {
     if (!valorFiltro) return true;
     const valor = valorFiltro.toLowerCase().trim();
-    switch (tipoFiltro) {
-      case "id": return c.id_cliente?.toString().includes(valor);
-      case "dni": return c.dni?.toString().includes(valor);
-      case "email": return c.email?.toLowerCase().includes(valor);
-      default: return `${c.nombre||''} ${c.apellido||''}`.toLowerCase().includes(valor);
-    }
+    const nombreCompleto = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase();
+    const dni = c.dni ? c.dni.toString() : '';
+    
+    // Filtrar por DNI o Nombre (que incluye apellido)
+    return nombreCompleto.includes(valor) || dni.includes(valor);
   });
 
   // ================================
@@ -154,13 +161,15 @@ const GestionClientes = ({ apiBaseUrl }) => {
         <>
           <div className="filter-and-button-row">
             <div className="filter-group-compact">
-              <input type="text" className="filter-input-compact" placeholder="Buscar..." value={valorFiltro} onChange={e=>setValorFiltro(e.target.value)} />
-              <select className="filter-select-compact" value={tipoFiltro} onChange={e=>setTipoFiltro(e.target.value)}>
-                <option value="nombreCompleto">Filtrar por Nombre</option>
-                <option value="id">Filtrar por ID</option>
-                <option value="dni">Filtrar por Documento</option>
-                <option value="email">Filtrar por Correo</option>
-              </select>
+              <input 
+                type="text" 
+                className="filter-input-compact" 
+                placeholder="Buscar por DNI o Nombre..." 
+                value={valorFiltro} 
+                onChange={e=>setValorFiltro(e.target.value)} 
+                style={{ width: '100%', maxWidth: '400px' }}
+              />
+              {/* SELECT REMOVED */}
             </div>
             <button className="btn-register-list-standalone" onClick={()=>{setModo("crear"); setForm({ nombre:"", apellido:"", dni:"", direccion:"", telefono:"", email:"" }); setMensaje(""); setEsError(false);}}>+ Registrar Cliente</button>
           </div>

@@ -120,117 +120,93 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
   };
 
   return (
-    <div className="form-container-inner-shadow" style={{ padding: '20px', backgroundColor: '#fff' }}>
-      <div className="form-header-row">
-        <h3 className="form-subtitle-black">
-          {modo === "crear" 
-            ? `Crear Usuario para Empleado #${form.id_empleado || "?"}` 
-            : "Mis Datos de Usuario"}
-        </h3>
-        {onClose && (
-            <button type="button" className="btn-delete-red" onClick={onClose} style={{marginLeft: 'auto'}}>
-                Cerrar
-            </button>
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: onClose ? 'auto' : '80vh',
+      padding: '20px'
+    }}>
+      <div className="form-card" style={{ width: '100%', maxWidth: '500px', padding: '2.5rem', margin: '0' }}>
+        <div className="form-header-row" style={{ justifyContent: 'center', position: 'relative' }}>
+          <h3 className="form-subtitle-black" style={{ textAlign: 'center', fontSize: '1.8rem', width: '100%' }}>
+            {modo === "crear" 
+              ? `Crear Usuario` 
+              : "Mis Datos de Usuario"}
+          </h3>
+          {onClose && (
+              <button type="button" className="btn-delete-red" onClick={onClose} style={{ position: 'absolute', right: 0, top: 0, padding: '0.5rem 1rem' }}>
+                  X
+              </button>
+          )}
+        </div>
+
+        {modo === "crear" && form.id_empleado && (
+           <p style={{ textAlign: 'center', color: '#718096', margin: '-10px 0 20px 0' }}>
+               Para Empleado #{form.id_empleado}
+           </p>
         )}
+
+        <hr className="form-separator" />
+        
+        {mensaje && (
+          <div className={esError ? "error-message" : "success-message"} style={{marginBottom: '1.5rem'}}>
+            {mensaje}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            <div className="form-group-client">
+              <label className="form-label-client">Nombre de Usuario</label>
+              <input 
+                className="form-input-client"
+                name="username" 
+                value={form.username} 
+                onChange={e => setForm({...form, username: e.target.value})}
+                required
+                placeholder="Ej: jperez"
+              />
+            </div>
+
+            <div className="form-group-client">
+              <label className="form-label-client">Email</label>
+              <input 
+                className="form-input-client"
+                type="email"
+                name="email" 
+                value={form.email} 
+                onChange={e => setForm({...form, email: e.target.value})}
+                required
+                placeholder="Ej: usuario@empresa.com"
+              />
+            </div>
+            
+            <div className="form-group-client">
+              <label className="form-label-client">
+                  {modo === "crear" ? "Contraseña" : "Nueva Contraseña"}
+              </label>
+              <input 
+                className="form-input-client"
+                type="password" 
+                name="password" 
+                value={form.password} 
+                onChange={e => setForm({...form, password: e.target.value})}
+                required={modo === "crear"}
+                placeholder={modo === "crear" ? "******" : "Dejar en blanco para mantener"}
+              />
+            </div>
+
+          </div>
+
+          <div className="form-actions-client-full-width" style={{marginTop: '2rem'}}>
+            <button type="submit" className="btn-submit-client-full-width">
+              {modo === "crear" ? "Registrar Usuario" : "Actualizar Mis Datos"}
+            </button>
+          </div>
+        </form>
       </div>
-
-      <hr className="form-separator" />
-      
-      {mensaje && (
-        <div className={esError ? "error-message" : "success-message"} style={{marginBottom: '1rem'}}>
-          {mensaje}
-        </div>
-      )}
-
-      {/* 5. FIX ESTRUCTURAL: Orden y existencia de todos los campos en un solo grid */}
-      <form onSubmit={handleSubmit}>
-        <div className="form-fields-grid">
-          
-          {/* Fila 1 Columna 1: Nombre de Usuario */}
-          <div className="form-group-client">
-            <label className="form-label-client">Nombre de Usuario</label>
-            <input 
-              className="form-input-client"
-              name="username" 
-              value={form.username} 
-              onChange={e => setForm({...form, username: e.target.value})}
-              required
-            />
-          </div>
-
-          {/* Fila 1 Columna 2: Email */}
-          <div className="form-group-client">
-            <label className="form-label-client">Email</label>
-            <input 
-              className="form-input-client"
-              type="email"
-              name="email" 
-              value={form.email} 
-              onChange={e => setForm({...form, email: e.target.value})}
-              required
-            />
-          </div>
-          
-          {/* Fila 2 Columna 1: Contraseña */}
-          <div className="form-group-client">
-            <label className="form-label-client">
-                {modo === "crear" ? "Contraseña" : "Nueva Contraseña (dejar en blanco para mantener)"}
-            </label>
-            <input 
-              className="form-input-client"
-              type="password" 
-              name="password" 
-              value={form.password} 
-              onChange={e => setForm({...form, password: e.target.value})}
-              required={modo === "crear"}
-            />
-          </div>
-
-          {/* Fila 2 Columna 2: Rol (Select corregido) */}
-          <div className="form-group-client">
-            <label className="form-label-client">Rol</label>
-            <select 
-              className="form-input-client"
-              name="rol" 
-              value={form.rol} 
-              onChange={e => setForm({...form, rol: e.target.value})}
-            >
-              <option value="atencion">Empleado</option> 
-              <option value="supervisor">Administrador</option> 
-              <option value="cliente">Cliente</option>
-            </select>
-          </div>
-
-          {/* Fila 3 Columna 1: ID Empleado Vinculado */}
-          <div className="form-group-client">
-            <label className="form-label-client">ID Empleado Vinculado</label>
-            <input 
-              className="form-input-client disabled-input"
-              value={form.id_empleado} 
-              readOnly
-              placeholder="Ninguno"
-            />
-          </div>
-          
-          {/* Fila 3 Columna 2: ID Cliente Vinculado */}
-          <div className="form-group-client">
-            <label className="form-label-client">ID Cliente Vinculado</label>
-            <input 
-              className="form-input-client disabled-input"
-              value={form.id_cliente} 
-              readOnly
-              placeholder="Ninguno"
-            />
-          </div>
-
-        </div> {/* Cierre de form-fields-grid */}
-
-        <div className="form-actions-client-full-width" style={{marginTop: '20px'}}>
-          <button type="submit" className="btn-submit-client-full-width">
-            {modo === "crear" ? "Registrar Usuario" : "Actualizar Mis Datos"}
-          </button>
-        </div>
-      </form>
     </div>
   );
 };
