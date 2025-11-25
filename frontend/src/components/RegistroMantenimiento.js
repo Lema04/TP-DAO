@@ -1,29 +1,42 @@
 import React, { useState, useEffect } from 'react';
 
 const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToEdit }) => {
-  const [datos, setDatos] = useState({
-    patente: '',
-    fecha_inicio: '',
-    fecha_fin: '',
-    tipo_servicio: '',
-    costo: 0.0
-  });
-
-  const [vehiculos, setVehiculos] = useState([]);
-  const [allMantenimientos, setAllMantenimientos] = useState([]); // Nuevo estado para validar solapamiento
-  const [mensaje, setMensaje] = useState('');
-  const [esError, setEsError] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [mantenimientoProcesado, setMantenimientoProcesado] = useState(null);
-
-  const hoy = new Date().toISOString().split('T')[0];
-
+  const hoy = new Date().toISOString().split('T')[0]; //
+    
   // Helper para asegurar formato YYYY-MM-DD sin problemas de zona horaria
   const formatDate = (dateString) => {
     if (!dateString) return '';
     // Si viene de la API con hora (ej: "2025-11-20T03:00:00.000Z"), tomamos solo la parte de la fecha.
     return dateString.split('T')[0];
   };
+
+  // Estado inicial
+  const [datos, setDatos] = useState(() => {
+    const baseData = mantenimientoToEdit ? {
+        patente: mantenimientoToEdit.vehiculo?.patente || mantenimientoToEdit.patente,
+        // FIX: Usamos formatDate para evitar problemas de timezone al cargar
+        fecha_inicio: formatDate(mantenimientoToEdit.fecha_inicio),
+        fecha_fin: formatDate(mantenimientoToEdit.fecha_fin),
+        tipo_servicio: mantenimientoToEdit.tipo_servicio,
+        costo: mantenimientoToEdit.costo,
+        estado: mantenimientoToEdit.estado // Necesario para edición
+    } : {
+        patente: '',
+        fecha_inicio: hoy, // <-- Establecer fecha inicio a HOY por defecto
+        fecha_fin: '',
+        tipo_servicio: '',
+        costo: 0.0,
+        estado: 'En curso' // Valor por defecto si es nuevo
+    };
+    return baseData;
+  });
+
+  const [vehiculos, setVehiculos] = useState([]);
+  const [allMantenimientos, setAllMantenimientos] = useState([]); 
+  const [mensaje, setMensaje] = useState('');
+  const [esError, setEsError] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [mantenimientoProcesado, setMantenimientoProcesado] = useState(null);
 
   // Cargar datos (Vehículos y Mantenimientos)
   useEffect(() => {
@@ -40,19 +53,8 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
     };
 
     fetchDatos('vehiculos', setVehiculos);
-    fetchDatos('mantenimientos', setAllMantenimientos); // Cargamos todos los mantenimientos
-
-    // Si es edición, rellenar formulario
-    if (mantenimientoToEdit) {
-        setDatos({
-            patente: mantenimientoToEdit.vehiculo?.patente || mantenimientoToEdit.patente,
-            // FIX: Usamos formatDate para evitar problemas de timezone al cargar
-            fecha_inicio: formatDate(mantenimientoToEdit.fecha_inicio),
-            fecha_fin: formatDate(mantenimientoToEdit.fecha_fin),
-            tipo_servicio: mantenimientoToEdit.tipo_servicio,
-            costo: mantenimientoToEdit.costo
-        });
-    }
+    fetchDatos('mantenimientos', setAllMantenimientos); 
+    
   }, [apiBaseUrl, mantenimientoToEdit]);
 
   const handleChange = (e) => {
@@ -68,6 +70,7 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
     const newFin = datos.fecha_fin;
     const newPatente = datos.patente;
     const currentId = mantenimientoToEdit ? mantenimientoToEdit.id_mantenimiento : null;
+    const isEditMode = !!mantenimientoToEdit;
 
     // 1. Validación básica de fechas
     if (newInicio > newFin) {
@@ -76,39 +79,55 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
         return;
     }
     
-    // 2. FIX CRÍTICO: Comprobar solapamiento
-    const solapamiento = allMantenimientos.find(m => {
-        // Excluir el registro actual si estamos en modo edición
-        if (m.id_mantenimiento === currentId) return false;
-        
-        // Debe ser el mismo vehículo
-        if (m.vehiculo?.patente !== newPatente && m.patente !== newPatente) return false;
-        
-        // Aseguramos formato YYYY-MM-DD para la comparación (aunque ya debería venir así)
-        const existeInicio = formatDate(m.fecha_inicio); 
-        const existeFin = formatDate(m.fecha_fin); 
-
-        // Lógica de solapamiento: (InicioNuevo <= FinExistente) && (FinNuevo >= InicioExistente)
-        return (newInicio <= existeFin && newFin >= existeInicio);
-    });
-
-    if (solapamiento) {
-        setMensaje(`Error: El vehículo ${newPatente} ya tiene un mantenimiento programado que se superpone con las fechas seleccionadas (del ${formatDate(solapamiento.fecha_inicio)} al ${formatDate(solapamiento.fecha_fin)}).`);
+    // 2. NUEVA REGLA: Forzar fecha de inicio sea HOY para nuevos registros (seguridad adicional)
+    if (!isEditMode && newInicio !== hoy) {
+        setMensaje("La fecha de inicio para un nuevo mantenimiento debe ser la fecha actual.");
         setEsError(true);
         return;
     }
+    
+    // 3. Validación de solapamiento simplificada para edición (el backend debería ser el principal validador)
+    if (isEditMode) {
+      const solapamiento = allMantenimientos.find(m => {
+          if (m.id_mantenimiento === currentId) return false;
+          if (m.vehiculo?.patente !== newPatente && m.patente !== newPatente) return false;
+          const existeInicio = formatDate(m.fecha_inicio); 
+          const existeFin = formatDate(m.fecha_fin); 
+          return (newInicio <= existeFin && newFin >= existeInicio);
+      });
 
-    const method = mantenimientoToEdit ? 'PUT' : 'POST';
-    const url = mantenimientoToEdit 
+      if (solapamiento) {
+          setMensaje(`Error: El vehículo ${newPatente} ya tiene un mantenimiento programado que se superpone con las fechas seleccionadas (del ${formatDate(solapamiento.fecha_inicio)} al ${formatDate(solapamiento.fecha_fin)}).`);
+          setEsError(true);
+          return;
+      }
+    }
+
+
+    const method = isEditMode ? 'PUT' : 'POST';
+    const url = isEditMode
         ? `${apiBaseUrl}/mantenimientos/${mantenimientoToEdit.id_mantenimiento}`
         : `${apiBaseUrl}/mantenimientos`;
 
     try {
-      // Nota: Los datos ya contienen las fechas como strings 'YYYY-MM-DD', lo cual previene el problema de zona horaria en el envío.
+      // Filtrar datos a enviar según modo (para que el PUT no toque patente/fecha_inicio)
+      const datosParaEnviar = isEditMode ? {
+          fecha_fin: datos.fecha_fin,
+          tipo_servicio: datos.tipo_servicio,
+          costo: parseFloat(datos.costo),
+          estado: datos.estado 
+      } : {
+          patente: datos.patente,
+          fecha_inicio: datos.fecha_inicio,
+          fecha_fin: datos.fecha_fin,
+          tipo_servicio: datos.tipo_servicio,
+          costo: parseFloat(datos.costo)
+      };
+
       const response = await fetch(url, {
         method: method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(datos),
+        body: JSON.stringify(datosParaEnviar),
       });
 
       const result = await response.json();
@@ -136,6 +155,8 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
     setMantenimientoProcesado(null);
     if (onSuccess) onSuccess();
   };
+  
+  const isEditMode = !!mantenimientoToEdit;
 
   return (
     <div className="form-container-inner-shadow">
@@ -162,15 +183,14 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
                 onChange={handleChange} 
                 required 
                 value={datos.patente}
-                disabled={!!mantenimientoToEdit}
+                disabled={isEditMode} // La patente no se cambia
             >
                 <option value="">Seleccione Vehículo</option>
                 {vehiculos
-                    .filter(v => v.estado !== 'Alquilado')
+                    .filter(v => v.estado !== 'Alquilado' || (isEditMode && v.patente === datos.patente))
                     .map(v => (
                     <option key={v.patente} value={v.patente}>
                         {v.marca} {v.modelo} ({v.patente})
-                        {/* Mostrar "Estado: Mantenimiento" solo si el estado es Mantenimiento */}
                         {v.estado === 'Mantenimiento' ? ` - Estado: ${v.estado}` : ''}
                     </option>
                 ))}
@@ -190,16 +210,22 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
             />
         </div>
 
+        {/* INPUT DE FECHA DE INICIO MODIFICADO */}
         <div className="form-group-client">
             <label className="form-label-client"><strong>Fecha Inicio</strong></label>
             <input 
-                className="form-input-client"
+                className="form-input-client disabled-input"
                 type="date" 
                 name="fecha_inicio" 
                 onChange={handleChange} 
                 required 
                 value={datos.fecha_inicio}
+                readOnly={true} // <-- Siempre de solo lectura
+                disabled={true} // <-- Deshabilitar
             />
+            <small style={{fontSize: '0.8rem', color: '#666', marginTop: '5px', display: 'block'}}>
+                La fecha de inicio se establece al día de hoy.
+            </small>
         </div>
 
         <div className="form-group-client">
@@ -224,10 +250,26 @@ const RegistroMantenimiento = ({ apiBaseUrl, onBack, onSuccess, mantenimientoToE
                 onChange={handleChange} 
                 required 
                 value={datos.costo}
-                min="0"
+                min="0.1"
                 step="0.01"
             />
         </div>
+        
+        {isEditMode && (
+          <div className="form-group-client">
+            <label className="form-label-client"><strong>Estado</strong></label>
+            <select
+              className="form-input-client"
+              name="estado"
+              value={datos.estado}
+              onChange={handleChange}
+              required
+            >
+              <option value="En curso">En curso</option>
+              <option value="Finalizado">Finalizado</option>
+            </select>
+          </div>
+        )}
 
         <div className="form-actions-client-full-width">
             <button type="submit" className="btn-submit-client-full-width">
