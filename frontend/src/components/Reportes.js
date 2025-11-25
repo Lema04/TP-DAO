@@ -8,6 +8,8 @@ const Reportes = ({ apiBaseUrl }) => {
   const [clientes, setClientes] = useState([]); // Estado para la lista de clientes
   const [mensaje, setMensaje] = useState('Seleccione un reporte para visualizar.');
   const [esError, setEsError] = useState(false);
+  const [frecuencia, setFrecuencia] = useState('M');
+  const [anio, setAnio] = useState(String(new Date().getFullYear()));
   
   // Estado para guardar el link del último reporte
   const [linkReporte, setLinkReporte] = useState('');
@@ -90,7 +92,11 @@ const Reportes = ({ apiBaseUrl }) => {
         
       case 'facturacion_mensual':
         // Asume el año actual, como en tu backend
-        fetchReporte(`/reportes/facturacion_mensual?anio=${new Date().getFullYear()}`); 
+        fetchReporte(`/reportes/facturacion_mensual?anio=${anio}`); 
+        break;
+
+      case 'alquileres_por_periodo':
+        fetchReporte(`/reportes/alquileres_por_periodo?frecuencia=${frecuencia}&anio=${anio}`);
         break;
         
       default:
@@ -98,6 +104,9 @@ const Reportes = ({ apiBaseUrl }) => {
         setEsError(true);
     }
   };
+
+  const anioActual = new Date().getFullYear();
+  const opcionesAnio = [anioActual, anioActual - 1, anioActual - 2];
 
   return (
     <div className="form-card">
@@ -114,6 +123,7 @@ const Reportes = ({ apiBaseUrl }) => {
             <option value="alquileres_cliente">Alquileres por Cliente</option>
             <option value="vehiculos_mas_alquilados">Vehículos Más Alquilados</option>
             <option value="facturacion_mensual">Facturación Mensual</option>
+            <option value="alquileres_por_periodo">Alquileres por Período</option>
         </select>
       </div>
 
@@ -134,6 +144,37 @@ const Reportes = ({ apiBaseUrl }) => {
             ))}
           </select>
         </div>
+      )}
+
+      {(reporteSeleccionado === "alquileres_por_periodo" || reporteSeleccionado === "facturacion_mensual") && (
+        <>
+          {reporteSeleccionado === "alquileres_por_periodo" && (
+            <div className='form-group'>
+              <label>Frecuencia:</label>
+              <select 
+                className='form-select' 
+                value={frecuencia} 
+                onChange={(e) => setFrecuencia(e.target.value)}
+              >
+                <option value="M">Mensual</option>
+                <option value="Q">Trimestral</option>
+              </select>
+            </div>
+          )}
+
+          <div className='form-group'>
+            <label>Año:</label>
+            <select 
+              className='form-select' 
+              value={anio} 
+              onChange={(e) => setAnio(e.target.value)}
+            >
+              {opcionesAnio.map(a => (
+                  <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
+        </>
       )}
 
       <button onClick={handleGenerarReporte} className="btn-primary" style={{marginBottom: '1rem'}}>
