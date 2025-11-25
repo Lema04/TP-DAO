@@ -23,6 +23,9 @@ const GestionReservas = ({ apiBaseUrl }) => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [reservaToDelete, setReservaToDelete] = useState(null);
 
+    // --- NUEVO: Estado para el modal de éxito ---
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+
     const [error, setError] = useState("");
 
     // Función para parsear fecha en formato YYYY-MM-DD a objeto Date local
@@ -110,8 +113,26 @@ const GestionReservas = ({ apiBaseUrl }) => {
             alert("Esta reserva no tiene un vehículo asignado.");
             return;
         }
+
+        // Calcular costo automáticamente
+        const fechaInicio = parseFechaLocal(reserva.fecha_inicio_deseada);
+        const fechaFin = parseFechaLocal(reserva.fecha_fin_deseada);
+        
+        // Diferencia en milisegundos
+        const diffTime = Math.abs(fechaFin - fechaInicio);
+        // Convertir a días
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+        // Si es el mismo día, contamos como 1 día
+        const dias = diffDays === 0 ? 1 : diffDays;
+        
+        const precioDiario = reserva.vehiculo.precio_diario || 0;
+        const costoCalculado = (dias * precioDiario).toFixed(2);
+
         setReservaSeleccionada(reserva);
-        setDatosConversion({ id_empleado: '', costo_total: '' });
+        setDatosConversion({ 
+            id_empleado: '', 
+            costo_total: costoCalculado 
+        });
         setShowModal(true);
     };
 
@@ -121,35 +142,28 @@ const GestionReservas = ({ apiBaseUrl }) => {
             return;
         }
 
-        const alquilerPayload = {
-            id_cliente: reservaSeleccionada.cliente.id_cliente,
-            patente: reservaSeleccionada.vehiculo.patente,
-            id_empleado: datosConversion.id_empleado,
-            fecha_inicio: reservaSeleccionada.fecha_inicio_deseada, 
-            fecha_fin: reservaSeleccionada.fecha_fin_deseada,
+        const payload = {
+            id_empleado: parseInt(datosConversion.id_empleado),
             costo_total: parseFloat(datosConversion.costo_total)
         };
 
         try {
-            // 1. Crear Alquiler
-            const responseAlq = await fetch(`${apiBaseUrl}/alquileres`, {
+            const response = await fetch(`${apiBaseUrl}/reservas/${reservaSeleccionada.id_reserva}/iniciar_alquiler`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(alquilerPayload)
+                body: JSON.stringify(payload)
             });
             
-            if (!responseAlq.ok) {
-                const errData = await responseAlq.json();
-                throw new Error(errData.error || "Error al crear el alquiler.");
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || "Error al iniciar el alquiler.");
             }
 
-            // 2. Eliminar Reserva
-            await fetch(`${apiBaseUrl}/reservas/${reservaSeleccionada.id_reserva}`, { method: 'DELETE' });
-
-            alert("¡Reserva convertida en alquiler exitosamente!");
+            // alert("¡Reserva convertida en alquiler exitosamente!");
             setShowModal(false);
             setReservaSeleccionada(null);
             fetchReservas(); 
+            setShowSuccessModal(true); // Mostrar modal de éxito
 
         } catch (err) {
             alert(err.message);
@@ -325,9 +339,8 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 min="0"
                                 step="0.01"
                                 value={datosConversion.costo_total}
-                                onChange={(e) => setDatosConversion({...datosConversion, costo_total: e.target.value})}
-                                placeholder="0.00"
-                                disabled={!checkEsFechaValida(reservaSeleccionada.fecha_inicio_deseada)}
+                                readOnly
+                                disabled
                             />
                         </div>
 
@@ -347,19 +360,6 @@ const GestionReservas = ({ apiBaseUrl }) => {
 
                             {/* FILA DE BOTONES SECUNDARIOS */}
                             <div style={{ display: 'flex', gap: '1rem' }}>
-                                {/* BOTÓN 2: CANCELAR RESERVA (MOVIDO AQUÍ) */}
-                                <button 
-                                    className="btn-delete-red"
-                                    style={{ flex: 1 }}
-                                    onClick={() => {
-                                        // Cerrar este modal y abrir el de confirmación de cancelación
-                                        setShowModal(false);
-                                        handleEliminar(reservaSeleccionada);
-                                    }}
-                                >
-                                    Eliminar Reserva
-                                </button>
-
                                 {/* BOTÓN 3: CERRAR MODAL (Cancelar acción) */}
                                 <button 
                                     className="btn-back-link" 
@@ -412,6 +412,36 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                 No, Volver
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- NUEVO: MODAL DE ÉXITO (CONVERSIÓN) --- */}
+            {showSuccessModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content" style={{ textAlign: 'center', padding: '2.5rem', maxWidth: '450px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+                        <div style={{ fontSize: '4rem', marginBottom: '1rem', animation: 'bounce 1s infinite' }}>🎉</div>
+                        <h2 style={{ color: '#2f855a', marginBottom: '0.5rem', fontSize: '1.8rem' }}>¡Conversión Exitosa!</h2>
+                        <p style={{ color: '#4a5568', marginBottom: '2rem', fontSize: '1.1rem', lineHeight: '1.6' }}>
+                            La reserva se ha convertido en un alquiler correctamente. <br/>
+                            El vehículo ahora figura como <strong>Alquilado</strong>.
+                        </p>
+                        <button 
+                            className="btn-submit-client-full-width"
+                            style={{ 
+                                backgroundColor: '#38a169', 
+                                fontSize: '1.1rem', 
+                                padding: '0.8rem',
+                                borderRadius: '8px',
+                                transition: 'transform 0.2s',
+                                boxShadow: '0 4px 6px rgba(56, 161, 105, 0.3)'
+                            }}
+                            onMouseOver={(e) => e.target.style.transform = 'scale(1.02)'}
+                            onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+                            onClick={() => setShowSuccessModal(false)}
+                        >
+                            Continuar
+                        </button>
                     </div>
                 </div>
             )}
