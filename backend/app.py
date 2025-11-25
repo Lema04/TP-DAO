@@ -438,6 +438,14 @@ def eliminar_alquiler(id_alquiler):
     except ErrorDeAplicacion as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/alquileres/anios-disponibles", methods=["GET"])
+def obtener_anios_disponibles():
+    try:
+        anios = servicio_alquiler.obtener_anios_disponibles()
+        return jsonify(anios), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # =============================
 #     RESERVAS CRUD
 # =============================

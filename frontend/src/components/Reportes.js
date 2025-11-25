@@ -10,28 +10,64 @@ const Reportes = ({ apiBaseUrl }) => {
   const [esError, setEsError] = useState(false);
   const [frecuencia, setFrecuencia] = useState('M');
   const [anio, setAnio] = useState(String(new Date().getFullYear()));
+  const [aniosDisponibles, setAniosDisponibles] = useState([]);
   
   // Estado para guardar el link del último reporte
   const [linkReporte, setLinkReporte] = useState('');
 
   // Cargar clientes al montar el componente
+  // useEffect(() => {
+  //   const fetchClientes = async () => {
+  //     try {
+  //       const response = await fetch(`${apiBaseUrl}/clientes`);
+  //       if (!response.ok) {
+  //         throw new Error('Error al cargar clientes');
+  //       }
+  //       const data = await response.json();
+  //       setClientes(data);
+  //     } catch (error) {
+  //       console.error('Error cargando clientes:', error);
+  //       setMensaje('Error al cargar la lista de clientes.');
+  //       setEsError(true);
+  //     }
+  //   };
+
+  //   fetchClientes();
+  // }, [apiBaseUrl]);
+
+  // Cargar datos iniciales (Clientes y Años)
   useEffect(() => {
-    const fetchClientes = async () => {
+    const cargarDatosIniciales = async () => {
       try {
-        const response = await fetch(`${apiBaseUrl}/clientes`);
-        if (!response.ok) {
+        // 1. Cargar Clientes
+        const resClientes = await fetch(`${apiBaseUrl}/clientes`);
+        if (resClientes.ok) {
+          setClientes(await resClientes.json());
+        } else {
           throw new Error('Error al cargar clientes');
+        };
+
+        // 2. Cargar Años Disponibles (NUEVO)
+        const resAnios = await fetch(`${apiBaseUrl}/alquileres/anios-disponibles`);
+        if (resAnios.ok) {
+          const dataAnios = await resAnios.json();
+          setAniosDisponibles(dataAnios);
+          // Si hay años disponibles, seleccionamos el más reciente por defecto
+          if (dataAnios.length > 0) {
+            setAnio(dataAnios[0]);
+          }
+        } else {
+          throw new Error('Error al cargar años disponibles');
         }
-        const data = await response.json();
-        setClientes(data);
+
       } catch (error) {
-        console.error('Error cargando clientes:', error);
-        setMensaje('Error al cargar la lista de clientes.');
+        console.error("Error cargando datos iniciales:", error);
+        setMensaje("Error de conexión al cargar filtros.");
         setEsError(true);
       }
     };
 
-    fetchClientes();
+    cargarDatosIniciales();
   }, [apiBaseUrl]);
 
   // Función para manejar el "fetch"
@@ -105,9 +141,6 @@ const Reportes = ({ apiBaseUrl }) => {
     }
   };
 
-  const anioActual = new Date().getFullYear();
-  const opcionesAnio = [anioActual, anioActual - 1, anioActual - 2];
-
   return (
     <div className="form-card">
       <h2 className="form-title">Selector de Reportes</h2>
@@ -169,9 +202,13 @@ const Reportes = ({ apiBaseUrl }) => {
               value={anio} 
               onChange={(e) => setAnio(e.target.value)}
             >
-              {opcionesAnio.map(a => (
-                  <option key={a} value={a}>{a}</option>
-              ))}
+              {aniosDisponibles.length > 0 ? (
+                  aniosDisponibles.map(a => (
+                      <option key={a} value={a}>{a}</option>
+                  ))
+              ) : (
+                  <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+              )}
             </select>
           </div>
         </>

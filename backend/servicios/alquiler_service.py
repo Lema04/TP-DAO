@@ -230,3 +230,14 @@ class AlquilerService:
             if isinstance(e, ErrorDeAplicacion):
                 raise e
             raise ErrorDeAplicacion(f"Error al crear alquiler desde reserva: {e}")
+        
+    def obtener_anios_disponibles(self):
+        """ Retorna la lista de años con actividad para filtros de reportes. """
+        try:
+            anios = self.alquiler_dao.obtener_anios_con_alquileres()
+            # Si no hay datos, devolvemos al menos el año actual para que el select no explote
+            if not anios:
+                return [str(date.today().year)]
+            return anios
+        except Exception as e:
+            raise ErrorDeAplicacion(f"Error al obtener años disponibles: {e}")

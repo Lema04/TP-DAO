@@ -132,3 +132,15 @@ class AlquilerCRUD(ORMBase):
         """
         tuplas = self.obtener_por_condicion(condicion)
         return [self._build_alquiler(t) for t in tuplas if self._build_alquiler(t)]
+    
+    def obtener_anios_con_alquileres(self):
+        """
+        Retorna una lista de años (strings) donde existen alquileres registrados.
+        Ejemplo: ['2025', '2024', '2023']
+        """
+        sql = "SELECT DISTINCT strftime('%Y', fecha_inicio) FROM ALQUILER ORDER BY 1 DESC"
+        
+        with self.conexion.conectar() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            return [row[0] for row in cursor.fetchall() if row[0]]
