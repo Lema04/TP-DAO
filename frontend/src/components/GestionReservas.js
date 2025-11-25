@@ -154,6 +154,7 @@ const GestionReservas = ({ apiBaseUrl }) => {
         const base = { padding: '0.3rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', fontSize: '0.8rem', color: 'white', display: 'inline-block' };
         switch(estado) {
             case 'Pendiente': return { ...base, backgroundColor: '#ecc94b', color: '#2d3748' };
+            case 'Convertida': return { ...base, backgroundColor: '#48bb78', color: '#2d3748' };
             default: return { ...base, backgroundColor: '#cbd5e0' };
         }
     };

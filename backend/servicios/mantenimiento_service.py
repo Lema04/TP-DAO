@@ -58,7 +58,7 @@ class MantenimientoService:
                 tipo_servicio=datos.get("tipo_servicio", ""),
                 costo=costo,
                 vehiculo=vehiculo,
-                estado="En curso"
+                estado="Pendiente" if fecha_inicio < date.today() else "Activo"
             )
 
             if fecha_inicio == date.today():
