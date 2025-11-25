@@ -15,7 +15,6 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
   const [form, setForm] = useState({
     username: "",
     password: "",
-    email: "",
     rol: "atencion", // Valor inicial corregido a 'atencion' (empleado estándar)
     id_empleado: "",
     id_cliente: ""
@@ -37,7 +36,6 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
       setForm({
         username: "", 
         password: "123456", 
-        email: "", 
         // 3. FIX: Rol corregido a valores del Backend
         rol: empleadoPreseleccionado.puesto === "Supervisor" ? "supervisor" : "atencion", 
         id_empleado: empleadoPreseleccionado.id_empleado,
@@ -49,9 +47,8 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
     if (!empleadoPreseleccionado && user && !onClose) {
       setModo("editar");
       setForm({
-        username: user.sub || "", 
+        username: user.nombre_usuario || "", 
         password: "",
-        email: user.email || "",
         rol: user.rol || "atencion",
         id_empleado: user.id_empleado || "",
         id_cliente: user.id_cliente || ""
@@ -62,7 +59,7 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!form.username || !form.email) {
+    if (!form.username) {
       mostrarMensaje("Usuario y Email son obligatorios", true);
       return;
     }
@@ -75,7 +72,6 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
     const datosParaEnviar = {
       nombre_usuario: form.username, // Mapeo crítico
       contraseña: form.password,     // Mapeo crítico
-      email: form.email,
       rol: form.rol,
       id_empleado: form.id_empleado || null,
       id_cliente: form.id_cliente || null
@@ -167,19 +163,6 @@ const GestionUsuario = ({ apiBaseUrl, empleadoPreseleccionado, onClose }) => {
                 onChange={e => setForm({...form, username: e.target.value})}
                 required
                 placeholder="Ej: jperez"
-              />
-            </div>
-
-            <div className="form-group-client">
-              <label className="form-label-client">Email</label>
-              <input 
-                className="form-input-client"
-                type="email"
-                name="email" 
-                value={form.email} 
-                onChange={e => setForm({...form, email: e.target.value})}
-                required
-                placeholder="Ej: usuario@empresa.com"
               />
             </div>
             
