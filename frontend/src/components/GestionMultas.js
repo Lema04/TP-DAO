@@ -124,6 +124,7 @@ const GestionMultas = ({ apiBaseUrl }) => {
             onChange={handleChange} 
             required 
             value={datosMulta.fecha_incidente} 
+            max={new Date().toISOString().split('T')[0]}
             />
         </div>
 
