@@ -52,6 +52,23 @@ class MultaCRUD(ORMBase):
         ]
         return self.insertar(valores)
     
+    # --- IMPLEMENTACIÓN CORREGIDA DE LISTAR MULTAS ---
+    def listar_multas(self):
+        """ 
+        Retorna una LISTA DE OBJETOS MultaDano sin aplicar filtros. 
+        Asume que ORMBase tiene un método 'conectar' y 'fetchall'.
+        """
+        sql = f"""
+            SELECT {self.clave_primaria}, {', '.join(self.campos)}
+            FROM {self.tabla}
+        """
+        with self.conexion.conectar() as conn:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            tuplas = cursor.fetchall()
+            return [self._build_multa(t) for t in tuplas if self._build_multa(t)]
+    # -----------------------------------------------------------------------
+    
     def buscar_por_id_cliente(self, id_cliente: int):
         """ Retorna una LISTA DE OBJETOS MultaDano. """
         sql = f"""

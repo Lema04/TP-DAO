@@ -48,6 +48,7 @@ def principal():
 def listar_multas():
     """
     Lista multas, filtrando por 'id_cliente' o 'patente' si se proveen.
+    Si no se proveen filtros, lista todas las multas.
     Ej: GET /multas
     Ej: GET /multas?id_cliente=1
     Ej: GET /multas?patente=ABC123
@@ -61,7 +62,7 @@ def listar_multas():
         elif patente:
             multas = servicio_multa.buscar_multas_por_patente(patente)
         else:
-            multas = [] 
+            multas = servicio_multa.listar_multas() # Llamar a listar todas las multas
         
         return jsonify([m.a_dict() for m in multas]), 200
     

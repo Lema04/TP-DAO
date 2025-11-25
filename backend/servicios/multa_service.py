@@ -59,6 +59,15 @@ class MultaService:
             raise RecursoNoEncontradoError(f"Multa con ID {id_multa} no encontrada.")
         return multa
 
+    # --- NUEVO MÉTODO ---
+    def listar_multas(self):
+        """ Retorna: Una lista de todos los objetos MultaDano."""
+        try:
+            return self.multa_dao.listar_multas()
+        except Exception as e:
+            raise ErrorDeAplicacion(f"Error al listar todas las multas: {e}")
+    # --------------------
+
     def buscar_multas_por_id_cliente(self, id_cliente: int):
         """ Retorna: Una lista de objetos MultaDano. """
         try:
