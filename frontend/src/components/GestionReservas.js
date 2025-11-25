@@ -25,6 +25,12 @@ const GestionReservas = ({ apiBaseUrl }) => {
 
     const [error, setError] = useState("");
 
+    // Función para parsear fecha en formato YYYY-MM-DD a objeto Date local
+    function parseFechaLocal(iso) {
+        const [y, m, d] = iso.split("-");
+        return new Date(y, m - 1, d);
+    }
+
     useEffect(() => {
         fetchReservas();
         fetchEmpleados(); 
@@ -219,8 +225,8 @@ const GestionReservas = ({ apiBaseUrl }) => {
                                         <td>{res.id_reserva}</td>
                                         <td>{res.cliente ? `${res.cliente.nombre} ${res.cliente.apellido}` : 'N/A'}</td>
                                         <td style={{ fontWeight: 'bold' }}>{res.vehiculo ? res.vehiculo.patente : <span style={{color:'#999'}}>Sin Asignar</span>}</td>
-                                        <td>{new Date(res.fecha_inicio_deseada).toLocaleDateString()}</td>
-                                        <td>{new Date(res.fecha_fin_deseada).toLocaleDateString()}</td>
+                                        <td>{parseFechaLocal(res.fecha_inicio_deseada).toLocaleDateString()}</td>
+                                        <td>{parseFechaLocal(res.fecha_fin_deseada).toLocaleDateString()}</td>
                                         <td><span style={getBadgeStyle(res.estado)}>{res.estado}</span></td>
                                         <td className="action-buttons-cell">
                                             {res.estado === 'Pendiente' && (
